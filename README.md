@@ -1,0 +1,1 @@
+# fastlane-plugin-ddg_release_automation
