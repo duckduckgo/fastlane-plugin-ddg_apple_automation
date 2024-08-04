@@ -1,5 +1,7 @@
 require "fastlane/action"
+require "fastlane_core/configuration/config_item"
 require_relative "../helper/ddg_release_automation_helper"
+require_relative "../helper/github_actions_helper"
 
 module Fastlane
   module Actions
@@ -45,7 +47,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :task_url,
                                        description: "Asana task URL",
                                        optional: false,
-                                       type: String),
+                                       type: String)
         ]
       end
 
