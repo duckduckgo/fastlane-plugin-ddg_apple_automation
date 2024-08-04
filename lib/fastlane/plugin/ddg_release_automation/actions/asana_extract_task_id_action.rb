@@ -16,7 +16,7 @@ module Fastlane
           task_id = match[1]
 
           if Helper.is_ci?
-            Helper::GitHubActionsHelper.set_output("ASANA_TASK_ID", task_id)
+            Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
           end
 
           task_id

@@ -21,6 +21,8 @@ gem 'rubocop-require_tools'
 # SimpleCov is a code coverage analysis tool for Ruby.
 gem 'simplecov'
 
+gem 'httparty'
+
 gemspec
 
 plugins_path = File.join(File.dirname(__FILE__), 'fastlane', 'Pluginfile')

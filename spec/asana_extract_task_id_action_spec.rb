@@ -33,7 +33,7 @@ describe Fastlane::Actions::AsanaExtractTaskIdAction do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(test_action("https://app.asana.com/0/12837864576817392/3465387322")).to eq("3465387322")
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("ASANA_TASK_ID", "3465387322")
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_task_id", "3465387322")
     end
 
     it "fails when garbage is passed" do
