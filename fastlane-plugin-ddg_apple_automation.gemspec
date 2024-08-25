@@ -1,15 +1,15 @@
 lib = File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'fastlane/plugin/ddg_release_automation/version'
+require 'fastlane/plugin/ddg_apple_automation/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'fastlane-plugin-ddg_release_automation'
-  spec.version       = Fastlane::DdgReleaseAutomation::VERSION
+  spec.name          = 'fastlane-plugin-ddg_apple_automation'
+  spec.version       = Fastlane::DdgAppleAutomation::VERSION
   spec.author        = 'DuckDuckGo'
   spec.email         = 'ios@duckduckgo.com'
 
-  spec.summary       = 'This plugin contains actions used in DuckDuckGo iOS and macOS release automation'
-  spec.homepage      = "https://github.com/duckduckgo/apple-toolbox"
+  spec.summary       = 'This plugin contains actions used for workflow automation in DuckDuckGo Apple repositories'
+  spec.homepage      = "https://github.com/duckduckgo/fastlane-plugin-ddg_apple_automation"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)

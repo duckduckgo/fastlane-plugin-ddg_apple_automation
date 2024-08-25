@@ -2,7 +2,7 @@ require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "httparty"
 require "json"
-require_relative "../helper/ddg_release_automation_helper"
+require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 
 module Fastlane
@@ -10,8 +10,8 @@ module Fastlane
     class AsanaExtractTaskAssigneeAction < Action
       def self.run(params)
         task_id = params[:task_id]
-        token = Helper::DdgReleaseAutomationHelper.fetch_asana_token
-        url = Helper::DdgReleaseAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}?opt_fields=assignee"
+        token = Helper::DdgAppleAutomationHelper.fetch_asana_token
+        url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}?opt_fields=assignee"
 
         response = HTTParty.get(url, headers: { 'Authorization' => "Bearer #{token}" })
 

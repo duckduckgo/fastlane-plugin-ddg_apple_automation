@@ -1,16 +1,16 @@
-# ddg_release_automation plugin
+# ddg_apple_automation plugin
 
-[![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-ddg_release_automation)
+[![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-ddg_apple_automation)
 
 ## Getting Started
 
-This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To get started with `fastlane-plugin-ddg_release_automation`, add it to your project by running:
+This project is a [_fastlane_](https://github.com/fastlane/fastlane) plugin. To get started with `fastlane-plugin-ddg_apple_automation`, add it to your project by running:
 
 ```bash
-fastlane add_plugin ddg_release_automation
+fastlane add_plugin ddg_apple_automation
 ```
 
-## About ddg_release_automation
+## About ddg_apple_automation
 
 This plugin contains actions used by DuckDuckGo iOS and macOS release automation. It's meant for internal use only. We do not accept contributions to this repository at this time.
 
