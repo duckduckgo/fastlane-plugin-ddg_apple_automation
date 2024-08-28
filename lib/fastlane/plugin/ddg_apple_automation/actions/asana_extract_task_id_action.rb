@@ -14,11 +14,7 @@ module Fastlane
 
         if (match = task_url.match(TASK_URL_REGEX))
           task_id = match[1]
-
-          if Helper.is_ci?
-            Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
-          end
-
+          Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
           task_id
         else
           UI.user_error!(ERROR_MESSAGE)

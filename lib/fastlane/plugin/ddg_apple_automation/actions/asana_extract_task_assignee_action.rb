@@ -10,22 +10,18 @@ module Fastlane
     class AsanaExtractTaskAssigneeAction < Action
       def self.run(params)
         task_id = params[:task_id]
-        token = Helper::DdgAppleAutomationHelper.fetch_asana_token
-        url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}?opt_fields=assignee"
+        token = params[:asana_access_token]
 
+        url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}?opt_fields=assignee"
         response = HTTParty.get(url, headers: { 'Authorization' => "Bearer #{token}" })
 
         if response.success?
           assignee_id = response.parsed_response.dig('data', 'assignee', 'gid')
+          Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
+          assignee_id
         else
           UI.user_error!("Failed to fetch task assignee: (#{response.code} #{response.message})")
         end
-
-        if Helper.is_ci?
-          Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
-        end
-
-        assignee_id
       end
 
       def self.description
@@ -47,6 +43,7 @@ module Fastlane
 
       def self.available_options
         [
+          FastlaneCore::ConfigItem.asana_access_token,
           FastlaneCore::ConfigItem.new(key: :task_id,
                                        description: "Asana task ID",
                                        optional: false,

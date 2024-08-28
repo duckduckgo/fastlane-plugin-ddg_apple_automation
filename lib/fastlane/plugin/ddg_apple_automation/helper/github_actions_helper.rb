@@ -7,7 +7,13 @@ module Fastlane
   module Helper
     class GitHubActionsHelper
       def self.set_output(key, value)
-        Action.sh("echo '#{key}=#{value}' >> #{ENV.fetch('GITHUB_OUTPUT', '/dev/null')}")
+        return unless Helper.is_ci?
+
+        if key.to_s.length == 0
+          UI.user_error!("Key cannot be empty")
+        elsif value.to_s.length > 0
+          Action.sh("echo '#{key}=#{value}' >> #{ENV.fetch('GITHUB_OUTPUT', '/dev/null')}")
+        end
       end
     end
   end

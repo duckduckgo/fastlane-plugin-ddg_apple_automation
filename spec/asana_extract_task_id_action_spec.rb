@@ -20,16 +20,7 @@ describe Fastlane::Actions::AsanaExtractTaskIdAction do
       expect(test_action("https://app.asana.com/0/0/1234/f")).to eq("1234")
     end
 
-    it "does not set GHA output when not in CI" do
-      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
-      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
-
-      expect(test_action("https://app.asana.com/0/12837864576817392/3465387322")).to eq("3465387322")
-      expect(Fastlane::Helper::GitHubActionsHelper).not_to have_received(:set_output)
-    end
-
-    it "sets GHA output in CI" do
-      allow(Fastlane::Helper).to receive(:is_ci?).and_return(true)
+    it "sets GHA output" do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(test_action("https://app.asana.com/0/12837864576817392/3465387322")).to eq("3465387322")
