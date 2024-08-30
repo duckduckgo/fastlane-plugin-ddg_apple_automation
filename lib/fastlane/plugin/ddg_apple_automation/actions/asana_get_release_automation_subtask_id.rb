@@ -16,6 +16,9 @@ module Fastlane
         token = params[:asana_access_token]
 
         task_id = AsanaExtractTaskIdAction.run(task_url: task_url, asana_access_token: token)
+
+        # Fetch release task assignee and set GHA output
+        # TODO: To be reworked for local execution
         AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
 
         url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}/subtasks?opt_fields=name,created_at"
