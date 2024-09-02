@@ -8,7 +8,6 @@ module Fastlane
   module Actions
     class AsanaGetUserIdForGithubHandleAction < Action
       def self.run(params)
-        token = params[:asana_access_token]
         github_handle = params[:github_handle]
 
         mapping_file = File.expand_path('assets/github-asana-user-id-mapping.yml', __dir__)
@@ -42,7 +41,6 @@ module Fastlane
 
       def self.available_options
         [
-          FastlaneCore::ConfigItem.asana_access_token,
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: false,
