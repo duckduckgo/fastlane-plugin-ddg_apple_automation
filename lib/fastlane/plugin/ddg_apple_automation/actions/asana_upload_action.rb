@@ -13,17 +13,16 @@ module Fastlane
 
         begin
           file = File.open(file_name)
+          url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}/attachments"
+          response = HTTParty.post(url,
+                                   headers: { 'Authorization' => "Bearer #{token}" },
+                                   body: { file: file })
+
+          unless response.success?
+            UI.user_error!("Failed to upload file to Asana task: (#{response.code} #{response.message})")
+          end
         rescue Errno::ENOENT
           UI.user_error!("Failed to open file: #{file_name}")
-        end
-
-        url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}/attachments"
-        response = HTTParty.post(url,
-                                 headers: { 'Authorization' => "Bearer #{token}" },
-                                 body: { file: file })
-
-        unless response.success?
-          UI.user_error!("Failed to upload file to Asana task: (#{response.code} #{response.message})")
         end
       end
 

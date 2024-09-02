@@ -24,6 +24,7 @@ describe Fastlane::Actions::AsanaUploadAction do
     it "shows error if file does not exist" do
       allow(HTTParty).to receive(:post).and_return(double(success?: true))
       expect(Fastlane::UI).to receive(:user_error!).with("Failed to open file: path/to/file.txt")
+      expect(HTTParty).not_to receive(:post)
       test_action("12345", "path/to/file.txt")
     end
   end
