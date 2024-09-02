@@ -21,7 +21,7 @@ module Fastlane
           unless response.success?
             UI.user_error!("Failed to upload file to Asana task: (#{response.code} #{response.message})")
           end
-        rescue Errno::ENOENT
+        rescue StandardError
           UI.user_error!("Failed to open file: #{file_name}")
         end
       end
