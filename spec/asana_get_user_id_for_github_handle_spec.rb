@@ -17,7 +17,7 @@ describe Fastlane::Actions::AsanaGetUserIdForGithubHandleAction do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(test_action("duck")).to eq("123")
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("user-id", "123")
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_user_id", "123")
     end
 
     it "shows error when handle does not exist" do
