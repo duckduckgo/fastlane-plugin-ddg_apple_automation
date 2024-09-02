@@ -15,7 +15,7 @@ module Fastlane
         asana_user_id = user_mapping[github_handle]
 
         if asana_user_id.nil? || asana_user_id.to_s.empty?
-          UI.user_error!("Asana User ID not found for GitHub handle: #{github_handle}")
+          UI.warning("Asana User ID not found for GitHub handle: #{github_handle}")
         else
           Helper::GitHubActionsHelper.set_output("user-id", asana_user_id)
           asana_user_id
