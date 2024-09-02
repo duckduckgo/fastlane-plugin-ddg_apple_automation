@@ -42,6 +42,18 @@ describe Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction do
       expect(test_action("https://app.asana.com/0/0/0")).to eq(nil)
     end
 
+    it "returns nil when response is empty" do
+      expect(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run)
+      expect(HTTParty).to receive(:get).and_return(
+        double(
+          success?: true,
+          parsed_response: {}
+        )
+      )
+
+      expect(test_action("https://app.asana.com/0/0/0")).to eq(nil)
+    end
+
     it "shows error when failed to fetch task subtasks" do
       expect(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run)
       expect(HTTParty).to receive(:get).and_return(

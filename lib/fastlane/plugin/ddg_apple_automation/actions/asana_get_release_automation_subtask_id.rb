@@ -17,19 +17,16 @@ module Fastlane
 
         task_id = AsanaExtractTaskIdAction.run(task_url: task_url, asana_access_token: token)
 
-        # Fetch release task assignee and set GHA output
-        # TODO: To be reworked for local execution
+        # Fetch release task assignee and set GHA output.
+        # This is to match current GHA action behavior.
+        # TODO: To be reworked for local execution.
         AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
 
         url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}/subtasks?opt_fields=name,created_at"
         response = HTTParty.get(url, headers: { 'Authorization' => "Bearer #{token}" })
 
         if response.success?
-          data = response.parsed_response['data']
-          automation_subtask_id = data
-                                  .find_all { |hash| hash['name'] == 'Automation' }
-                                  &.min_by { |x| Time.parse(x['created_at']) } # Get the oldest 'Automation' subtask
-                                  &.dig('gid')
+          automation_subtask_id = find_oldest_automation_subtask(response)
           Helper::GitHubActionsHelper.set_output("asana_automation_task_id", automation_subtask_id)
           automation_subtask_id
         else
@@ -66,6 +63,13 @@ module Fastlane
 
       def self.is_supported?(platform)
         true
+      end
+
+      def self.find_oldest_automation_subtask(response)
+        response.parsed_response['data']
+                &.find_all { |hash| hash['name'] == 'Automation' }
+                &.min_by { |x| Time.parse(x['created_at']) } # Get the oldest 'Automation' subtask
+                &.dig('gid')
       end
     end
   end
