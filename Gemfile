@@ -21,7 +21,9 @@ gem 'rubocop-require_tools'
 # SimpleCov is a code coverage analysis tool for Ruby.
 gem 'simplecov'
 
+gem 'climate_control'
 gem 'httparty'
+gem 'json'
 
 gemspec
 

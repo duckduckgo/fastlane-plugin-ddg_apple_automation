@@ -1,13 +1,21 @@
 require "fastlane_core/configuration/config_item"
-require 'fastlane_core/ui/ui'
+require "fastlane_core/ui/ui"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
 
   module Helper
     class DdgAppleAutomationHelper
+      class RSpecError < StandardError; end
+
       ASANA_API_URL = "https://app.asana.com/api/1.0"
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
+      def self.raise_user_error(message)
+        UI.user_error!(message)
+        if ENV['RACK_ENV'] == 'test'
+          raise RSpecError, message
+        end
+      end
     end
   end
 end
