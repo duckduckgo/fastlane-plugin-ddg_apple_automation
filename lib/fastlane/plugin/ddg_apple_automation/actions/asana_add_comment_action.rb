@@ -100,7 +100,7 @@ module Fastlane
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :template_name,
                                        description: "Name of a template file (without extension) for the comment. Templates can be found in assets/asana_add_comment/templates subdirectory.
-      The file is processed before being sent to Asana.",
+      The file is processed before being sent to Asana",
                                        optional: true,
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :workflow_url,
