@@ -38,7 +38,7 @@ module Fastlane
         end
 
         if template_name
-          template_file = File.expand_path("../assets/asana_add_comment/templates/#{template_name}.yml", __dir__)
+          template_file = Helper::DdgAppleAutomationHelper.load_asset_file("asana_add_comment/templates/#{template_name}.yml")
           begin
             template_content = File.read(template_file)
           rescue StandardError
@@ -50,7 +50,7 @@ module Fastlane
           processed_content = process_comment(comment, workflow_url)
         end
 
-        base64_encoded_payload = convert_to_json_and_encode_Base64(processed_content)
+        base64_encoded_payload = convert_to_json_and_encode_base64(processed_content)
 
         response = HTTParty.post(
           url,
@@ -127,7 +127,7 @@ module Fastlane
         }
       end
 
-      def self.convert_to_json_and_encode_Base64(data)
+      def self.convert_to_json_and_encode_base64(data)
         json_payload = data.to_json
         payload_base64 = Base64.strict_encode64(json_payload)
       end

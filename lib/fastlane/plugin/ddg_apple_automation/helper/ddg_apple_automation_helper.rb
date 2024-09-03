@@ -8,6 +8,9 @@ module Fastlane
     class DdgAppleAutomationHelper
       ASANA_API_URL = "https://app.asana.com/api/1.0"
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
+      def self.load_asset_file(file)
+        File.expand_path("../assets/#{file}", __dir__)
+      end
     end
   end
 end

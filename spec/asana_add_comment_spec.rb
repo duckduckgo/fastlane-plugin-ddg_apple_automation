@@ -61,7 +61,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     end
 
     it "converts to json and encodes with base64" do
-      result = Fastlane::Actions::AsanaAddCommentAction.convert_to_json_and_encode_Base64("Hello world!")
+      result = Fastlane::Actions::AsanaAddCommentAction.convert_to_json_and_encode_base64("Hello world!")
       expect(result).to eq("IkhlbGxvIHdvcmxkISI=")
     end
 
