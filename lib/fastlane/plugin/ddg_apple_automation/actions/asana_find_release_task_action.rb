@@ -3,6 +3,7 @@ require "fastlane_core/configuration/config_item"
 require "httparty"
 require "json"
 require "octokit"
+require "time"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 
@@ -37,19 +38,20 @@ module Fastlane
         setup_constants(platform)
 
         latest_marketing_version = find_latest_marketing_version(github_token)
-        release_task_id = find_release_task(latest_marketing_version, platform, asana_access_token)
+        release_task_id = find_release_task(latest_marketing_version, asana_access_token)
 
-        release_task_url = "#{Helper::DdgAppleAutomationHelper::ASANA_APP_URL}/#{release_task_id}/f"
+        release_task_url = Helper::DdgAppleAutomationHelper.asana_task_url(release_task_id)
+        release_branch = "release/#{latest_marketing_version}"
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
 
-        Helper::GitHubActionsHelper.set_output("release_branch", "release/#{latest_marketing_version}")
+        Helper::GitHubActionsHelper.set_output("release_branch", release_branch)
         Helper::GitHubActionsHelper.set_output("release_task_id", release_task_id)
         Helper::GitHubActionsHelper.set_output("release_task_url", release_task_url)
 
         {
           release_task_id: release_task_id,
           release_task_url: release_task_url,
-          release_branch: "release/#{latest_marketing_version}"
+          release_branch: release_branch
         }
       end
 
@@ -58,14 +60,29 @@ module Fastlane
 
         # NOTE: `client.latest_release` returns release marked as "latest", i.e. a public release
         latest_internal_release = client.releases(@constants[:repo_name], { per_page: 1 }).first
-        tag_name = latest_internal_release['tag_name']
-        version = tag_name&.split("-")&.first
-        Fastlane::UI.user_error!("Failed to fetch latest release") if version.nil?
+
+        version = extract_version_from_tag_name(latest_internal_release&.tag_name)
+        if version.to_s.empty?
+          Fastlane::UI.user_error!("Failed to find latest marketing version")
+          return
+        end
+        unless self.validate_semver(version)
+          Fastlane::UI.user_error!("Invalid marketing version: #{version}, expected format: MAJOR.MINOR.PATCH")
+          return
+        end
         version
       end
 
-      def self.find_release_task(version, platform, asana_access_token)
-        release_task_name = "#{@constants[:release_task_prefix]} #{version}"
+      def self.extract_version_from_tag_name(tag_name)
+        tag_name&.split("-")&.first
+      end
+
+      def self.validate_semver(version)
+        # we only need basic "x.y.z" validation here
+        version.match?(/\A\d+\.\d+\.\d+\z/)
+      end
+
+      def self.find_release_task(version, asana_access_token)
         # `completed_since=now` returns only incomplete tasks
         url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/sections/#{@constants[:release_section_id]}/tasks?opt_fields=name,created_at&limit=100&completed_since=now"
 
@@ -77,10 +94,16 @@ module Fastlane
         loop do
           response = HTTParty.get(url, headers: { 'Authorization' => "Bearer #{asana_access_token}" })
 
-          find_hotfix_task_in_response(response)
-          release_task_id ||= find_release_task_in_response(response, release_task_name)
+          unless response.success?
+            UI.user_error!("Failed to fetch release task: (#{response.code} #{response.message})")
+            return
+          end
+          parsed_response = response.parsed_response
 
-          url = response.dig('next_page', 'uri')
+          find_hotfix_task_in_response(parsed_response)
+          release_task_id ||= find_release_task_in_response(parsed_response, version)
+
+          url = parsed_response.dig('next_page', 'uri')
 
           # Don't return as soon as release task is found, as we want to ensure there's no hotfix task
           break if url.nil?
@@ -89,24 +112,14 @@ module Fastlane
         release_task_id
       end
 
-      def self.find_release_task_in_response(response, release_task_name)
+      def self.find_release_task_in_response(response, version)
+        release_task_name = "#{@constants[:release_task_prefix]} #{version}"
         release_task = response['data']&.find { |task| task['name'] == release_task_name }
         release_task_id = release_task&.dig('gid')
         created_at = release_task&.dig('created_at')
 
         ensure_task_not_too_old(release_task_id, created_at)
         release_task_id
-      end
-
-      def self.find_hotfix_task_in_response(response)
-        hotfix_task_id = response['data']
-                         &.find { |task| task['name']&.start_with?(@constants[:hotfix_task_prefix]) }
-                         &.dig('gid')
-
-        if hotfix_task_id
-          UI.user_error!("Found active hotfix task: #{Helper::DdgAppleAutomationHelper::ASANA_API_URL}/#{hotfix_task_id}")
-          return
-        end
       end
 
       # Only consider release tasks created in the last 5 days.
@@ -121,6 +134,17 @@ module Fastlane
             UI.user_error!("Found release task: #{release_task_id} but it's older than 5 days, skipping.")
             return
           end
+        end
+      end
+
+      def self.find_hotfix_task_in_response(response)
+        hotfix_task_id = response['data']
+                         &.find { |task| task['name']&.start_with?(@constants[:hotfix_task_prefix]) }
+                         &.dig('gid')
+
+        if hotfix_task_id
+          UI.user_error!("Found active hotfix task: #{Helper::DdgAppleAutomationHelper.asana_task_url(hotfix_task_id)}")
+          return
         end
       end
 

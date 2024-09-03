@@ -10,6 +10,14 @@ module Fastlane
       ASANA_APP_URL = "https://app.asana.com/0/0"
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
       ERROR_GITHUB_TOKEN_NOT_SET = "GITHUB_TOKEN is not set"
+
+      def self.asana_task_url(task_id)
+        if task_id.to_s.empty?
+          UI.user_error!("Task ID cannot be empty")
+          return
+        end
+        "#{ASANA_APP_URL}/#{task_id}/f"
+      end
     end
   end
 end
