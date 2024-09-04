@@ -2,14 +2,21 @@ require "climate_control"
 
 describe Fastlane::Actions::AsanaAddCommentAction do
   describe "#run" do
+    before do
+      @asana_client_stories = double
+      asana_client = double("Asana::Client")
+      allow(Asana::Client).to receive(:new).and_return(asana_client)
+      allow(asana_client).to receive(:stories).and_return(@asana_client_stories)
+    end
+
     it "does not call task id extraction if task id provided" do
-      allow(HTTParty).to receive(:post).and_return(double(success?: true))
+      allow(@asana_client_stories).to receive(:create_story_for_task).and_return(double)
       expect(Fastlane::Actions::AsanaExtractTaskIdAction).not_to receive(:run)
       test_action(task_id: "123", comment: "", workflow_url: "")
     end
 
     it "extracts task id if task id not provided" do
-      allow(HTTParty).to receive(:post).and_return(double(success?: true))
+      allow(@asana_client_stories).to receive(:create_story_for_task).and_return(double)
       expect(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run)
         .and_return("9999")
       test_action(task_url: "https://app.asana.com/0/753241/9999", comment: "", workflow_url: "")
@@ -39,6 +46,8 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     it "shows error if provided template does not exist" do
       allow(File).to receive(:read).and_raise(Errno::ENOENT)
       expect(Fastlane::UI).to receive(:user_error!).with("Error: The file 'non-existing.yml' does not exist.")
+      allow(Fastlane::Helper::DdgAppleAutomationHelper.asana_client).to receive(:stories).and_return(double('Asana::Stories'))
+      expect(double('Asana::Stories')).not_to receive(:create_story_for_task)
       test_action(task_id: "123", template_name: "non-existing")
     end
 
@@ -60,20 +69,28 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       expect(result).to eq("Hello, World! This is a test.")
     end
 
-    it "converts to json and encodes with base64" do
-      result = Fastlane::Actions::AsanaAddCommentAction.convert_to_json_and_encode_base64("Hello world!")
-      expect(result).to eq("IkhlbGxvIHdvcmxkISI=")
+    it "correctly builds html_text payload" do
+      allow(File).to receive(:read).and_return("   \nHello, \n  World!\n   This is a test.   \n")
+      allow(@asana_client_stories).to receive(:create_story_for_task)
+      test_action(task_id: "123", template_name: "whatever")
+      expect(@asana_client_stories).to have_received(:create_story_for_task).with(
+        task_gid: "123",
+        html_text: "Hello, World! This is a test."
+      )
     end
 
-    it "correctly builds comment payload" do
-      comment = "This is a test comment."
-      workflow_url = "http://github.com/duckduckgo/iOS/actions/runs/123"
-      result = Fastlane::Actions::AsanaAddCommentAction.process_comment(comment, workflow_url)
-      expect(result).to eq({ 'data' => { 'text' => "This is a test comment.\n\nWorkflow URL: http://github.com/duckduckgo/iOS/actions/runs/123" } })
+    it "correctly builds text payload" do
+      allow(@asana_client_stories).to receive(:create_story_for_task)
+      test_action(task_id: "123", comment: "This is a test comment.", workflow_url: "http://github.com/duckduckgo/iOS/actions/runs/123")
+      expect(@asana_client_stories).to have_received(:create_story_for_task).with(
+        task_gid: "123",
+        text: "This is a test comment.\n\nWorkflow URL: http://github.com/duckduckgo/iOS/actions/runs/123"
+      )
     end
 
-    it "does not raise any error if comment is posted successfully" do
-      expect(HTTParty).to receive(:post).and_return(double(success?: true))
+    it "fails when client raises error" do
+      allow(@asana_client_stories).to receive(:create_story_for_task).and_raise(StandardError, "API error")
+      expect(Fastlane::UI).to receive(:user_error!).with("Failed to post comment: API error")
       test_action(task_id: "123", comment: "", workflow_url: "")
     end
   end

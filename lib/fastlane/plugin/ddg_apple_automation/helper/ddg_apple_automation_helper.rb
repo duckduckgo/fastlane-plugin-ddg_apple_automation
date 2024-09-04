@@ -1,5 +1,6 @@
 require "fastlane_core/configuration/config_item"
-require 'fastlane_core/ui/ui'
+require "fastlane_core/ui/ui"
+require "asana"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -8,8 +9,15 @@ module Fastlane
     class DdgAppleAutomationHelper
       ASANA_API_URL = "https://app.asana.com/api/1.0"
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
+
       def self.load_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
+      end
+
+      def self.asana_client
+        @asana_client ||= Asana::Client.new do |c|
+          c.authentication(:access_token, "ASANA_ACCESS_TOKEN")
+        end
       end
     end
   end

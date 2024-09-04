@@ -1,22 +1,18 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
-require "httparty"
-require "json"
-require "Base64"
+require "asana"
 require_relative "../helper/ddg_apple_automation_helper"
 
 module Fastlane
   module Actions
     class AsanaAddCommentAction < Action
       def self.run(params)
-        token = params[:asana_access_token]
+        asana_access_token = params[:asana_access_token]
         task_id = params[:task_id]
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
         workflow_url = params[:workflow_url]
-
-        url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}/stories"
 
         if task_id.nil? && task_url.nil?
           UI.user_error!("Both task_id and task_url cannot be nil. At least one must be provided.")
@@ -38,31 +34,14 @@ module Fastlane
         end
 
         if template_name
-          template_file = Helper::DdgAppleAutomationHelper.load_asset_file("asana_add_comment/templates/#{template_name}.yml")
-          begin
-            template_content = File.read(template_file)
-          rescue StandardError
-            UI.user_error!("Error: The file '#{template_name}.yml' does not exist.")
-            return
-          end
-          processed_content = process_template_content(template_content)
+          template_content = load_template_file(template_name)
+          return unless template_content
+
+          html_text = process_template_content(template_content)
+          create_story(asana_access_token, task_id, html_text: html_text)
         else
-          processed_content = process_comment(comment, workflow_url)
-        end
-
-        base64_encoded_payload = convert_to_json_and_encode_base64(processed_content)
-
-        response = HTTParty.post(
-          url,
-          headers: {
-            'Authorization' => "Bearer #{token}",
-            'Content-Type' => 'application/json'
-            },
-          body: base64_encoded_payload
-        )
-
-        unless response.success?
-          UI.user_error!("Failed to post comment: (#{response.code} #{response.message})")
+          text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
+          create_story(asana_access_token, task_id, text: text)
         end
       end
 
@@ -114,22 +93,32 @@ module Fastlane
         true
       end
 
+      def self.load_template_file(template_name)
+        template_file = Helper::DdgAppleAutomationHelper.load_asset_file("asana_add_comment/templates/#{template_name}.yml")
+        File.read(template_file)
+      rescue StandardError
+        UI.user_error!("Error: The file '#{template_name}.yml' does not exist.")
+        nil
+      end
+
+      def self.create_story(asana_access_token, task_id, text: nil, html_text: nil)
+        client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+        end
+        begin
+          if text
+            response = client.stories.create_story_for_task(task_gid: task_id, text: text)
+          else
+            response = client.stories.create_story_for_task(task_gid: task_id, html_text: html_text)
+          end
+        rescue StandardError => e
+          UI.user_error!("Failed to post comment: #{e}")
+        end
+      end
+
       def self.process_template_content(template_content)
         processed_content = template_content.gsub(/\$\{(\w+)\}/) { ENV.fetch($1, '') }
         processed_content.gsub(/\s*\n\s*/, ' ').strip
-      end
-
-      def self.process_comment(comment, workflow_url)
-        payload_hash = {
-          'data' => {
-            'text' => "#{comment}\n\nWorkflow URL: #{workflow_url}"
-          }
-        }
-      end
-
-      def self.convert_to_json_and_encode_base64(data)
-        json_payload = data.to_json
-        payload_base64 = Base64.strict_encode64(json_payload)
       end
     end
   end
