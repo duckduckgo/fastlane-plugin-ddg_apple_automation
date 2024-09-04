@@ -40,14 +40,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     it "shows error if provided template does not exist" do
       allow(File).to receive(:read).and_raise(Errno::ENOENT)
       expect(Fastlane::UI).to receive(:user_error!).with("Error: The file 'non-existing.yml' does not exist.")
-      test_action(task_id: "123", template_name: "non-existing")
-    end
-
-    it "shows error if provided template does not exist" do
-      allow(File).to receive(:read).and_raise(Errno::ENOENT)
-      expect(Fastlane::UI).to receive(:user_error!).with("Error: The file 'non-existing.yml' does not exist.")
-      allow(Fastlane::Helper::DdgAppleAutomationHelper.asana_client).to receive(:stories).and_return(double('Asana::Stories'))
-      expect(double('Asana::Stories')).not_to receive(:create_story_for_task)
+      expect(@asana_client_stories).not_to receive(:create_story_for_task)
       test_action(task_id: "123", template_name: "non-existing")
     end
 

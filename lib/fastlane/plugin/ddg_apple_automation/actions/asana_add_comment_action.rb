@@ -15,24 +15,14 @@ module Fastlane
         comment = params[:comment]
         workflow_url = params[:workflow_url]
 
-        if task_id.nil? && task_url.nil?
-          UI.user_error!("Both task_id and task_url cannot be nil. At least one must be provided.")
+        begin
+          validate_params(task_id, task_url, comment, template_name, workflow_url)
+        rescue ArgumentError => e
+          UI.user_error!(e.message)
           return
         end
 
-        if comment.nil? && template_name.nil?
-          UI.user_error!("Both comment and template_name cannot be nil. At least one must be provided.")
-          return
-        end
-
-        if comment && workflow_url.nil?
-          UI.user_error!("If comment is provided, workflow_url cannot be nil")
-          return
-        end
-
-        if task_url
-          task_id = Fastlane::Actions::AsanaExtractTaskIdAction.run(task_url: task_url)
-        end
+        task_id = Fastlane::Actions::AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
 
         if template_name
           template_content = load_template_file(template_name)
@@ -92,6 +82,20 @@ module Fastlane
 
       def self.is_supported?(platform)
         true
+      end
+
+      def self.validate_params(task_id, task_url, comment, template_name, workflow_url)
+        if task_id.nil? && task_url.nil?
+          raise ArgumentError, "Both task_id and task_url cannot be nil. At least one must be provided."
+        end
+
+        if comment.nil? && template_name.nil?
+          raise ArgumentError, "Both comment and template_name cannot be nil. At least one must be provided."
+        end
+
+        if comment && workflow_url.nil?
+          raise ArgumentError, "If comment is provided, workflow_url cannot be nil"
+        end
       end
 
       def self.load_template_file(template_name)
