@@ -2,6 +2,7 @@ require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
 require_relative "../helper/ddg_apple_automation_helper"
+require_relative "asana_extract_task_id_action"
 
 module Fastlane
   module Actions
@@ -107,9 +108,9 @@ module Fastlane
         end
         begin
           if text
-            response = client.stories.create_story_for_task(task_gid: task_id, text: text)
+            client.stories.create_story_for_task(task_gid: task_id, text: text)
           else
-            response = client.stories.create_story_for_task(task_gid: task_id, html_text: html_text)
+            client.stories.create_story_for_task(task_gid: task_id, html_text: html_text)
           end
         rescue StandardError => e
           UI.user_error!("Failed to post comment: #{e}")
