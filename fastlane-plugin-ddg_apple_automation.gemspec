@@ -22,5 +22,6 @@ Gem::Specification.new do |spec|
 
   # spec.add_dependency 'your-dependency', '~> 1.0.0'
   spec.add_dependency('asana')
+  spec.add_dependency('climate_control')
   spec.add_dependency('httpparty')
 end
