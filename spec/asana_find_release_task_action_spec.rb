@@ -37,7 +37,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
     it "returns the latest marketing version" do
       allow(@client).to receive(:releases).and_return([double(tag_name: '1.0.0')])
 
-      expect(test_action).to eq("1.0.0")
+      expect(find_latest_marketing_version).to eq("1.0.0")
     end
 
     describe "when there is no latest release" do
@@ -45,7 +45,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         allow(@client).to receive(:releases).and_return([])
         allow(Fastlane::UI).to receive(:user_error!)
 
-        test_action
+        find_latest_marketing_version
 
         expect(Fastlane::UI).to have_received(:user_error!).with("Failed to find latest marketing version")
       end
@@ -56,42 +56,42 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         allow(@client).to receive(:releases).and_return([double(tag_name: '1.0')])
         allow(Fastlane::UI).to receive(:user_error!)
 
-        test_action
+        find_latest_marketing_version
 
         expect(Fastlane::UI).to have_received(:user_error!).with("Invalid marketing version: 1.0, expected format: MAJOR.MINOR.PATCH")
       end
     end
 
-    def test_action
+    def find_latest_marketing_version
       Fastlane::Actions::AsanaFindReleaseTaskAction.find_latest_marketing_version("token")
     end
   end
 
   describe "#extract_version_from_tag_name" do
     it "returns the version" do
-      expect(test_action("1.0.0")).to eq("1.0.0")
-      expect(test_action("v1.0.0")).to eq("v1.0.0")
-      expect(test_action("1.105.0-251")).to eq("1.105.0")
+      expect(extract_version_from_tag_name("1.0.0")).to eq("1.0.0")
+      expect(extract_version_from_tag_name("v1.0.0")).to eq("v1.0.0")
+      expect(extract_version_from_tag_name("1.105.0-251")).to eq("1.105.0")
     end
 
-    def test_action(tag_name)
+    def extract_version_from_tag_name(tag_name)
       Fastlane::Actions::AsanaFindReleaseTaskAction.extract_version_from_tag_name(tag_name)
     end
   end
 
   describe "#validate_semver" do
     it "validates semantic version" do
-      expect(test_action("1.0.0")).to be_truthy
-      expect(test_action("0.0.0")).to be_truthy
-      expect(test_action("7.136.1")).to be_truthy
+      expect(validate_semver("1.0.0")).to be_truthy
+      expect(validate_semver("0.0.0")).to be_truthy
+      expect(validate_semver("7.136.1")).to be_truthy
 
-      expect(test_action("v1.0.0")).to be_falsy
-      expect(test_action("7.1")).to be_falsy
-      expect(test_action("1.105.0-251")).to be_falsy
-      expect(test_action("1005")).to be_falsy
+      expect(validate_semver("v1.0.0")).to be_falsy
+      expect(validate_semver("7.1")).to be_falsy
+      expect(validate_semver("1.105.0-251")).to be_falsy
+      expect(validate_semver("1005")).to be_falsy
     end
 
-    def test_action(version)
+    def validate_semver(version)
       Fastlane::Actions::AsanaFindReleaseTaskAction.validate_semver(version)
     end
   end
@@ -113,7 +113,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
           expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
           expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task_in_response).and_return("1234567890")
 
-          expect(test_action("1.0.0")).to eq("1234567890")
+          expect(find_release_task("1.0.0")).to eq("1234567890")
         end
       end
 
@@ -130,7 +130,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
         it "returns the release task ID" do
           allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
-          expect(test_action("1.0.0")).to eq("1234567890")
+          expect(find_release_task("1.0.0")).to eq("1234567890")
           expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to have_received(:find_hotfix_task_in_response).twice
         end
       end
@@ -148,13 +148,13 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         expect(Fastlane::Actions::AsanaFindReleaseTaskAction).not_to receive(:find_release_task_in_response)
         allow(Fastlane::UI).to receive(:user_error!)
 
-        test_action("1.0.0")
+        find_release_task("1.0.0")
 
         expect(Fastlane::UI).to have_received(:user_error!).with("Failed to fetch release task: (401 Unauthorized)")
       end
     end
 
-    def test_action(version)
+    def find_release_task(version)
       Fastlane::Actions::AsanaFindReleaseTaskAction.find_release_task(version, "token")
     end
   end
@@ -175,7 +175,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         end
 
         it "returns the release task ID" do
-          expect(test_action(@response, "1.0.0")).to eq("1234567890")
+          expect(find_release_task_in_response(@response, "1.0.0")).to eq("1234567890")
         end
       end
 
@@ -186,7 +186,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
         it "shows error" do
           allow(Fastlane::UI).to receive(:user_error!)
-          test_action(@response, "1.0.0")
+          find_release_task_in_response(@response, "1.0.0")
 
           expect(Fastlane::UI).to have_received(:user_error!).with("Found release task: 1234567890 but it's older than 5 days, skipping.")
         end
@@ -200,9 +200,9 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         end
 
         it "returns nil" do
-          expect(test_action({ 'data' => [{ 'name' => 'iOS App Release 1.0.0' }] }, "1.0.1")).to be_nil
-          expect(test_action({ 'data' => [{ 'name' => 'iOS Release 1.0.1' }] }, "1.0.1")).to be_nil
-          expect(test_action({ 'data' => [{ 'name' => 'macOS App Release 1.0.1' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'iOS App Release 1.0.0' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'iOS Release 1.0.1' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'macOS App Release 1.0.1' }] }, "1.0.1")).to be_nil
         end
       end
 
@@ -212,14 +212,14 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         end
 
         it "returns nil" do
-          expect(test_action({ 'data' => [{ 'name' => 'macOS App Release 1.0.0' }] }, "1.0.1")).to be_nil
-          expect(test_action({ 'data' => [{ 'name' => 'macOS Release 1.0.1' }] }, "1.0.1")).to be_nil
-          expect(test_action({ 'data' => [{ 'name' => 'iOS App Release 1.0.1' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'macOS App Release 1.0.0' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'macOS Release 1.0.1' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'iOS App Release 1.0.1' }] }, "1.0.1")).to be_nil
         end
       end
     end
 
-    def test_action(response, version)
+    def find_release_task_in_response(response, version)
       Fastlane::Actions::AsanaFindReleaseTaskAction.find_release_task_in_response(response, version)
     end
   end
@@ -236,7 +236,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         end
         it "shows error" do
           allow(Fastlane::UI).to receive(:user_error!)
-          test_action(@response)
+          find_hotfix_task_in_response(@response)
           expect(Fastlane::UI).to have_received(:user_error!).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
         end
       end
@@ -253,7 +253,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
           allow(Fastlane::UI).to receive(:user_error!)
 
           @responses.each do |response|
-            test_action(response)
+            find_hotfix_task_in_response(response)
           end
           expect(Fastlane::UI).not_to have_received(:user_error!)
         end
@@ -272,7 +272,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
         it "shows error" do
           allow(Fastlane::UI).to receive(:user_error!)
-          test_action(@response)
+          find_hotfix_task_in_response(@response)
           expect(Fastlane::UI).to have_received(:user_error!).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
         end
       end
@@ -289,14 +289,14 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
           allow(Fastlane::UI).to receive(:user_error!)
 
           @responses.each do |response|
-            test_action(response)
+            find_hotfix_task_in_response(response)
           end
           expect(Fastlane::UI).not_to have_received(:user_error!)
         end
       end
     end
 
-    def test_action(response)
+    def find_hotfix_task_in_response(response)
       Fastlane::Actions::AsanaFindReleaseTaskAction.find_hotfix_task_in_response(response)
     end
   end
