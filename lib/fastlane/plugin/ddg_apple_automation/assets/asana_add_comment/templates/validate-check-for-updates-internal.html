@@ -1,11 +1,10 @@
-data:
-  html_text: |
-    <body>
-      <h2>Build ${TAG} is available for internal testing through Sparkle 🚀</h2>
-      <ul>
-        <li>🌟 New appcast file has been generated and uploaded to S3, together with binary delta files.</li>
-        <li>👀 <a data-asana-gid='${ASSIGNEE_ID}'/>, please proceed by following instructions in <a data-asana-gid='${TASK_ID}'/> which concludes the internal release process.</li>
-      </ul>
+<body>
+  <h2>Build ${TAG} is available for internal testing through Sparkle 🚀</h2>
+  <ul>
+    <li>🌟 New appcast file has been generated and uploaded to S3, together with binary delta files.</li>
+    <li>👀 <a data-asana-gid='${ASSIGNEE_ID}' />, please proceed by following instructions in <a
+        data-asana-gid='${TASK_ID}' /> which concludes the internal release process.</li>
+  </ul>
 
-      🔗 Workflow URL: <a href='${WORKFLOW_URL}'>${WORKFLOW_URL}</a>.
-    </body>
+  🔗 Workflow URL: <a href='${WORKFLOW_URL}'>${WORKFLOW_URL}</a>.
+</body>
