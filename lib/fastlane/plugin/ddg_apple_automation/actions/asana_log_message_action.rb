@@ -33,7 +33,7 @@ module Fastlane
         end
 
         asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
+          c.authentication(:access_token, token)
         end
 
         begin
