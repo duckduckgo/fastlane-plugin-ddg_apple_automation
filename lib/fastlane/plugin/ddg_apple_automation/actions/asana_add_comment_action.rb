@@ -24,15 +24,15 @@ module Fastlane
 
         task_id = Fastlane::Actions::AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
 
-        if template_name
+        if template_name.to_s.empty?
+          text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
+          create_story(asana_access_token, task_id, text: text)
+        else
           template_content = load_template_file(template_name)
           return unless template_content
 
           html_text = process_template_content(template_content)
           create_story(asana_access_token, task_id, html_text: html_text)
-        else
-          text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
-          create_story(asana_access_token, task_id, text: text)
         end
       end
 
