@@ -25,6 +25,10 @@ module Fastlane
           task_id = AsanaExtractTaskIdAction.run(task_url: task_url)
           assignee_id = AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
         else
+          if github_handle.to_s.empty?
+            UI.user_error!("Github handle cannot be empty for manual release")
+            return
+          end
           assignee_id = AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle, asana_access_token: token)
         end
 

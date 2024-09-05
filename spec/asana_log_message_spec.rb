@@ -38,6 +38,11 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
     end
 
+    it "raises an error when github handle is empty and is manual release" do
+      expect(Fastlane::UI).to receive(:user_error!).with("Github handle cannot be empty for manual release")
+      test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: "")
+    end
+
     it "adds a assignee as a follower to the automation task" do
       expect(@asana_client_tasks).to receive(:add_followers_for_task).with(task_gid: automation_subtask_id, followers: [assignee_id])
       test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)

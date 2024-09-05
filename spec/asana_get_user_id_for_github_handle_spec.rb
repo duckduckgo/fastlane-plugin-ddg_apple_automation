@@ -21,17 +21,17 @@ describe Fastlane::Actions::AsanaGetUserIdForGithubHandleAction do
     end
 
     it "shows warning when handle does not exist" do
-      expect(Fastlane::UI).to receive(:warning).with("Asana User ID not found for GitHub handle: chicken")
+      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: chicken")
       test_action("chicken")
     end
 
     it "shows warning when handle is nil" do
-      expect(Fastlane::UI).to receive(:warning).with("Asana User ID not found for GitHub handle: pigeon")
+      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: pigeon")
       test_action("pigeon")
     end
 
     it "shows warning when handle is empty" do
-      expect(Fastlane::UI).to receive(:warning).with("Asana User ID not found for GitHub handle: hawk")
+      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: hawk")
       test_action("hawk")
     end
   end
