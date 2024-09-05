@@ -1,5 +1,5 @@
 require "fastlane_core/configuration/config_item"
-require 'fastlane_core/ui/ui'
+require "fastlane_core/ui/ui"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -17,6 +17,10 @@ module Fastlane
           return
         end
         "#{ASANA_APP_URL}/#{task_id}/f"
+      end
+
+      def self.path_for_asset_file(file)
+        File.expand_path("../assets/#{file}", __dir__)
       end
     end
   end
