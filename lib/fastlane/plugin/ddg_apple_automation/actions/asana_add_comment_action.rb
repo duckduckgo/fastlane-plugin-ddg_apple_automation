@@ -113,7 +113,6 @@ module Fastlane
           if text
             client.stories.create_story_for_task(task_gid: task_id, text: text)
           else
-            puts(html_text)
             client.stories.create_story_for_task(task_gid: task_id, html_text: html_text)
           end
         rescue StandardError => e
