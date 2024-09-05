@@ -24,4 +24,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency('asana')
   spec.add_dependency('climate_control')
   spec.add_dependency('httpparty')
+  spec.add_dependency('octokit')
 end

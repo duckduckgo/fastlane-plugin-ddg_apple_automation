@@ -7,7 +7,17 @@ module Fastlane
   module Helper
     class DdgAppleAutomationHelper
       ASANA_API_URL = "https://app.asana.com/api/1.0"
+      ASANA_APP_URL = "https://app.asana.com/0/0"
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
+      ERROR_GITHUB_TOKEN_NOT_SET = "GITHUB_TOKEN is not set"
+
+      def self.asana_task_url(task_id)
+        if task_id.to_s.empty?
+          UI.user_error!("Task ID cannot be empty")
+          return
+        end
+        "#{ASANA_APP_URL}/#{task_id}/f"
+      end
 
       def self.path_for_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
@@ -27,6 +37,18 @@ module FastlaneCore
                                    type: String,
                                    verify_block: proc do |value|
                                      UI.user_error!(Fastlane::Helper::DdgAppleAutomationHelper::ERROR_ASANA_ACCESS_TOKEN_NOT_SET) if value.to_s.length == 0
+                                   end)
+    end
+
+    def self.github_token
+      FastlaneCore::ConfigItem.new(key: :github_token,
+                                   env_name: "GITHUB_TOKEN",
+                                   description: "GitHub token",
+                                   optional: false,
+                                   sensitive: true,
+                                   type: String,
+                                   verify_block: proc do |value|
+                                     UI.user_error!(Fastlane::Helper::DdgAppleAutomationHelper::ERROR_GITHUB_TOKEN_NOT_SET) if value.to_s.length == 0
                                    end)
     end
   end
