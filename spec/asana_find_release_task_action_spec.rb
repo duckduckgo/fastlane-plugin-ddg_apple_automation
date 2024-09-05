@@ -99,14 +99,16 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
   describe "#find_release_task" do
     before do
       Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("ios")
+
+      @tasks = double
+      asana_client = double("Asana::Client", tasks: @tasks)
+      allow(Asana::Client).to receive(:new).and_return(asana_client)
     end
 
     describe "when release task is found" do
       describe "on the first page" do
         before do
-          expect(HTTParty).to receive(:get).and_return(
-            double(success?: true, parsed_response: { 'data' => {}, 'next_page' => nil })
-          )
+          expect(@tasks).to receive(:find_all).and_return(double(next_page: nil))
         end
 
         it "returns the release task ID" do
@@ -119,11 +121,8 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
       describe "on the next page" do
         before do
-          url = "https://example.com"
-          expect(HTTParty).to receive(:get).twice.and_return(
-            double(success?: true, parsed_response: { 'data' => {}, 'next_page' => { 'uri' => url } }),
-            double(success?: true, parsed_response: { 'data' => {}, 'next_page' => nil })
-          )
+          non_nil_next_page = double(next_page: nil)
+          expect(@tasks).to receive(:find_all).and_return(double(next_page: non_nil_next_page))
           expect(Fastlane::Actions::AsanaFindReleaseTaskAction)
             .to receive(:find_release_task_in_response).twice.and_return(nil, "1234567890")
         end
@@ -138,9 +137,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
     describe "when fetching tasks in section fails" do
       before do
-        expect(HTTParty).to receive(:get).and_return(
-          double(success?: false, code: 401, message: "Unauthorized")
-        )
+        expect(@tasks).to receive(:find_all).and_raise(StandardError, "API error")
       end
 
       it "shows error" do
@@ -150,7 +147,25 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
         find_release_task("1.0.0")
 
-        expect(Fastlane::UI).to have_received(:user_error!).with("Failed to fetch release task: (401 Unauthorized)")
+        expect(Fastlane::UI).to have_received(:user_error!).with("Failed to fetch release task: API error")
+      end
+    end
+
+    describe "when fetching next page fails" do
+      before do
+        next_page = double
+        expect(@tasks).to receive(:find_all).and_return(double(next_page: next_page))
+        expect(next_page).to receive(:next_page).and_raise(StandardError, "API error")
+      end
+
+      it "shows error" do
+        allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
+        allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task_in_response).and_return(nil)
+        allow(Fastlane::UI).to receive(:user_error!)
+
+        find_release_task("1.0.0")
+
+        expect(Fastlane::UI).to have_received(:user_error!).with("Failed to fetch release task: API error")
       end
     end
 
@@ -162,11 +177,12 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
   describe "#find_release_task_in_response" do
     describe "when release task is found" do
       before do
-        @response = { 'data' => [{
-          'name' => 'iOS App Release 1.0.0',
-          'gid' => '1234567890',
-          'created_at' => '2024-01-01'
-        }] }
+        Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("ios")
+        @tasks = [double(
+          name: 'iOS App Release 1.0.0',
+          gid: '1234567890',
+          created_at: '2024-01-01'
+        )]
       end
 
       describe "and the task is not too old" do
@@ -175,7 +191,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         end
 
         it "returns the release task ID" do
-          expect(find_release_task_in_response(@response, "1.0.0")).to eq("1234567890")
+          expect(find_release_task_in_response(@tasks, "1.0.0")).to eq("1234567890")
         end
       end
 
@@ -186,7 +202,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
         it "shows error" do
           allow(Fastlane::UI).to receive(:user_error!)
-          find_release_task_in_response(@response, "1.0.0")
+          find_release_task_in_response(@tasks, "1.0.0")
 
           expect(Fastlane::UI).to have_received(:user_error!).with("Found release task: 1234567890 but it's older than 5 days, skipping.")
         end
@@ -200,21 +216,21 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         end
 
         it "returns nil" do
-          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'iOS App Release 1.0.0' }] }, "1.0.1")).to be_nil
-          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'iOS Release 1.0.1' }] }, "1.0.1")).to be_nil
-          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'macOS App Release 1.0.1' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response([double(name: 'iOS App Release 1.0.0')], "1.0.1")).to be_nil
+          expect(find_release_task_in_response([double(name: 'iOS Release 1.0.1')], "1.0.1")).to be_nil
+          expect(find_release_task_in_response([double(name: 'macOS App Release 1.0.1')], "1.0.1")).to be_nil
         end
       end
 
       describe "on macOS" do
         before do
-          Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("macOS")
+          Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("macos")
         end
 
         it "returns nil" do
-          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'macOS App Release 1.0.0' }] }, "1.0.1")).to be_nil
-          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'macOS Release 1.0.1' }] }, "1.0.1")).to be_nil
-          expect(find_release_task_in_response({ 'data' => [{ 'name' => 'iOS App Release 1.0.1' }] }, "1.0.1")).to be_nil
+          expect(find_release_task_in_response([double(name: 'macOS App Release 1.0.0')], "1.0.1")).to be_nil
+          expect(find_release_task_in_response([double(name: 'macOS Release 1.0.1')], "1.0.1")).to be_nil
+          expect(find_release_task_in_response([double(name: 'iOS App Release 1.0.1')], "1.0.1")).to be_nil
         end
       end
     end
@@ -232,28 +248,28 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
       describe "when hotfix task is present" do
         before do
-          @response = { 'data' => [{ 'name' => 'iOS App Hotfix Release 1.0.0', 'gid' => '1234567890' }] }
+          @tasks = [double(name: 'iOS App Hotfix Release 1.0.0', gid: '1234567890')]
         end
         it "shows error" do
           allow(Fastlane::UI).to receive(:user_error!)
-          find_hotfix_task_in_response(@response)
+          find_hotfix_task_in_response(@tasks)
           expect(Fastlane::UI).to have_received(:user_error!).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
         end
       end
 
       describe "when hotfix task is not present" do
         before do
-          @responses = [
-            { 'data' => [{ 'name' => 'iOS App Release 1.0.0', 'gid' => '1234567890' }] },
-            { 'data' => [{ 'name' => 'iOS App Hotfix 1.0.0', 'gid' => '123456789' }] },
-            { 'data' => [{ 'name' => 'macOS App Hotfix 1.0.0', 'gid' => '12345678' }] }
+          @tasks_lists = [
+            [double(name: 'iOS App Release 1.0.0', gid: '1234567890')],
+            [double(name: 'iOS App Hotfix 1.0.0', gid: '123456789')],
+            [double(name: 'macOS App Hotfix 1.0.0', gid: '12345678')]
           ]
         end
         it "does not show error" do
           allow(Fastlane::UI).to receive(:user_error!)
 
-          @responses.each do |response|
-            find_hotfix_task_in_response(response)
+          @tasks_lists.each do |tasks|
+            find_hotfix_task_in_response(tasks)
           end
           expect(Fastlane::UI).not_to have_received(:user_error!)
         end
@@ -267,29 +283,29 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
       describe "when hotfix task is present" do
         before do
-          @response = { 'data' => [{ 'name' => 'macOS App Hotfix Release 1.0.0', 'gid' => '1234567890' }] }
+          @tasks = [double(name: 'macOS App Hotfix Release 1.0.0', gid: '1234567890')]
         end
 
         it "shows error" do
           allow(Fastlane::UI).to receive(:user_error!)
-          find_hotfix_task_in_response(@response)
+          find_hotfix_task_in_response(@tasks)
           expect(Fastlane::UI).to have_received(:user_error!).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
         end
       end
 
       describe "when hotfix task is not present" do
         before do
-          @responses = [
-            { 'data' => [{ 'name' => 'macOS App Release 1.0.0', 'gid' => '1234567890' }] },
-            { 'data' => [{ 'name' => 'macOS App Hotfix 1.0.0', 'gid' => '123456789' }] },
-            { 'data' => [{ 'name' => 'iOS App Hotfix 1.0.0', 'gid' => '12345678' }] }
+          @tasks_lists = [
+            [double(name: 'macOS App Release 1.0.0', gid: '1234567890')],
+            [double(name: 'macOS App Hotfix 1.0.0', gid: '123456789')],
+            [double(name: 'iOS App Hotfix 1.0.0', gid: '12345678')]
           ]
         end
         it "does not show error" do
           allow(Fastlane::UI).to receive(:user_error!)
 
-          @responses.each do |response|
-            find_hotfix_task_in_response(response)
+          @tasks_lists.each do |tasks|
+            find_hotfix_task_in_response(tasks)
           end
           expect(Fastlane::UI).not_to have_received(:user_error!)
         end
