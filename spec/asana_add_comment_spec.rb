@@ -7,19 +7,21 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       asana_client = double("Asana::Client")
       allow(Asana::Client).to receive(:new).and_return(asana_client)
       allow(asana_client).to receive(:stories).and_return(@asana_client_stories)
+
+      ENV["WORKFLOW_URL"] = "http://www.example.com"
     end
 
     it "does not call task id extraction if task id provided" do
       allow(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run)
       allow(@asana_client_stories).to receive(:create_story_for_task).and_return(double)
-      test_action(task_id: "123", comment: "comment", workflow_url: "http://www.example.com")
+      test_action(task_id: "123", comment: "comment")
       expect(Fastlane::Actions::AsanaExtractTaskIdAction).not_to have_received(:run)
     end
 
     it "extracts task id if task id not provided" do
       allow(@asana_client_stories).to receive(:create_story_for_task).and_return(double)
       allow(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run)
-      test_action(task_url: "https://app.asana.com/0/753241/9999", comment: "comment", workflow_url: "http://www.example.com")
+      test_action(task_url: "https://app.asana.com/0/753241/9999", comment: "comment")
       expect(Fastlane::Actions::AsanaExtractTaskIdAction).to have_received(:run).with(
         task_url: "https://app.asana.com/0/753241/9999"
       )
@@ -46,6 +48,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
 
     it "shows error if provided template does not exist" do
       allow(File).to receive(:read).and_raise(Errno::ENOENT)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:path_for_asset_file).and_return("non-existing.html")
       expect(Fastlane::UI).to receive(:user_error!).with("Error: The file 'non-existing.html' does not exist.")
       expect(@asana_client_stories).not_to receive(:create_story_for_task)
       test_action(task_id: "123", template_name: "non-existing")
@@ -81,7 +84,11 @@ describe Fastlane::Actions::AsanaAddCommentAction do
 
     it "correctly builds text payload" do
       allow(@asana_client_stories).to receive(:create_story_for_task)
-      test_action(task_id: "123", comment: "This is a test comment.", workflow_url: "http://github.com/duckduckgo/iOS/actions/runs/123")
+      ClimateControl.modify(
+        WORKFLOW_URL: "http://github.com/duckduckgo/iOS/actions/runs/123"
+      ) do
+        test_action(task_id: "123", comment: "This is a test comment.")
+      end
       expect(@asana_client_stories).to have_received(:create_story_for_task).with(
         task_gid: "123",
         text: "This is a test comment.\n\nWorkflow URL: http://github.com/duckduckgo/iOS/actions/runs/123"
@@ -91,7 +98,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     it "fails when client raises error" do
       allow(@asana_client_stories).to receive(:create_story_for_task).and_raise(StandardError, "API error")
       expect(Fastlane::UI).to receive(:user_error!).with("Failed to post comment: API error")
-      test_action(task_id: "123", comment: "comment", workflow_url: "http://www.example.com")
+      test_action(task_id: "123", comment: "comment")
     end
   end
 
@@ -99,7 +106,6 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     Fastlane::Actions::AsanaAddCommentAction.run(task_id: task_id,
                                                  task_url: task_url,
                                                  comment: comment,
-                                                 template_name: template_name,
-                                                 workflow_url: workflow_url)
+                                                 template_name: template_name)
   end
 end
