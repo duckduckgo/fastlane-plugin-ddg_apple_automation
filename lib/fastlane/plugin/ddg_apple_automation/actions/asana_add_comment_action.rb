@@ -13,10 +13,9 @@ module Fastlane
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
-        workflow_url = params[:workflow_url]
 
         begin
-          validate_params(task_id, task_url, comment, template_name, workflow_url)
+          validate_params(task_id, task_url, comment, template_name)
         rescue ArgumentError => e
           UI.user_error!(e.message)
           return
@@ -25,10 +24,11 @@ module Fastlane
         task_id = Fastlane::Actions::AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
 
         if template_name.to_s.empty?
-          text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
+          text = "#{comment}\n\nWorkflow URL: #{ENV.fetch('WORKFLOW_URL')}"
           create_story(asana_access_token, task_id, text: text)
         else
-          template_content = load_template_file(template_name)
+          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
+          template_content = Helper::DdgAppleAutomationHelper.load_template_file(template_file)
           return unless template_content
 
           html_text = process_template_content(template_content)
@@ -72,10 +72,6 @@ module Fastlane
                                        description: "Name of a template file (without extension) for the comment. Templates can be found in assets/asana_add_comment/templates subdirectory.
       The file is processed before being sent to Asana",
                                        optional: true,
-                                       type: String),
-          FastlaneCore::ConfigItem.new(key: :workflow_url,
-                                       description: "Workflow URL to include in the comment",
-                                       optional: true,
                                        type: String)
         ]
       end
@@ -84,7 +80,7 @@ module Fastlane
         true
       end
 
-      def self.validate_params(task_id, task_url, comment, template_name, workflow_url)
+      def self.validate_params(task_id, task_url, comment, template_name)
         if task_id.to_s.empty? && task_url.to_s.empty?
           raise ArgumentError, "Both task_id and task_url cannot be empty. At least one must be provided."
         end
@@ -93,7 +89,7 @@ module Fastlane
           raise ArgumentError, "Both comment and template_name cannot be empty. At least one must be provided."
         end
 
-        if comment && workflow_url.to_s.empty?
+        if comment && ENV.fetch('WORKFLOW_URL').to_s.empty?
           raise ArgumentError, "If comment is provided, workflow_url cannot be empty"
         end
       end

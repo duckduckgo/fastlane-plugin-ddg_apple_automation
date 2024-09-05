@@ -36,8 +36,12 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     end
 
     it "shows error if comment is provided but workflow_url is not" do
-      expect(Fastlane::UI).to receive(:user_error!).with("If comment is provided, workflow_url cannot be empty")
-      test_action(task_id: "123", comment: "comment")
+      ClimateControl.modify(
+        WORKFLOW_URL: ''
+      ) do
+        expect(Fastlane::UI).to receive(:user_error!).with("If comment is provided, workflow_url cannot be empty")
+        test_action(task_id: "123", comment: "comment")
+      end
     end
 
     it "shows error if provided template does not exist" do
