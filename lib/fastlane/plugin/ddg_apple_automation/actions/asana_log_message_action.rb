@@ -5,16 +5,18 @@ require_relative "../helper/ddg_apple_automation_helper"
 require_relative "asana_add_comment_action"
 require_relative "asana_get_release_automation_subtask_id_action"
 require_relative "asana_get_user_id_for_github_handle_action"
+require_relative "asana_extract_task_id_action"
+require_relative "asana_extract_task_assignee_action"
 
 module Fastlane
   module Actions
     class AsanaLogMessageAction < Action
       def self.run(params)
-        asana_access_token = params[:asana_access_token]
+        token = params[:asana_access_token]
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
-        is_scheduled_release = params[:is_scheduled_release] || true
+        is_scheduled_release = params[:is_scheduled_release] || false
         github_handle = params[:github_handle]
 
         automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
@@ -31,7 +33,7 @@ module Fastlane
         end
 
         begin
-          asana_client.tasks.add_followers_for_task(task_gid: task_id, followers: [assignee_id])
+          asana_client.tasks.add_followers_for_task(task_gid: automation_subtask_id, followers: [assignee_id])
         rescue StandardError => e
           UI.user_error!("Failed to add a collaborator to the release task: #{e}")
         end
