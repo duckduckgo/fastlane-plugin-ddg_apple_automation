@@ -85,25 +85,24 @@ module Fastlane
       end
 
       def self.validate_params(task_id, task_url, comment, template_name, workflow_url)
-        if task_id.nil? && task_url.nil?
-          raise ArgumentError, "Both task_id and task_url cannot be nil. At least one must be provided."
+        if task_id.to_s.empty? && task_url.to_s.empty?
+          raise ArgumentError, "Both task_id and task_url cannot be empty. At least one must be provided."
         end
 
-        if comment.nil? && template_name.nil?
-          raise ArgumentError, "Both comment and template_name cannot be nil. At least one must be provided."
+        if comment.to_s.empty? && template_name.to_s.empty?
+          raise ArgumentError, "Both comment and template_name cannot be empty. At least one must be provided."
         end
 
-        if comment && workflow_url.nil?
-          raise ArgumentError, "If comment is provided, workflow_url cannot be nil"
+        if comment && workflow_url.to_s.empty?
+          raise ArgumentError, "If comment is provided, workflow_url cannot be empty"
         end
       end
 
       def self.load_template_file(template_name)
-        template_file = Helper::DdgAppleAutomationHelper.load_asset_file("asana_add_comment/templates/#{template_name}.yml")
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
         File.read(template_file)
       rescue StandardError
-        UI.user_error!("Error: The file '#{template_name}.yml' does not exist.")
-        nil
+        UI.user_error!("Error: The file '#{template_name}.html' does not exist.")
       end
 
       def self.create_story(asana_access_token, task_id, text: nil, html_text: nil)
@@ -114,6 +113,7 @@ module Fastlane
           if text
             client.stories.create_story_for_task(task_gid: task_id, text: text)
           else
+            puts(html_text)
             client.stories.create_story_for_task(task_gid: task_id, html_text: html_text)
           end
         rescue StandardError => e
@@ -122,8 +122,11 @@ module Fastlane
       end
 
       def self.process_template_content(template_content)
-        processed_content = template_content.gsub(/\$\{(\w+)\}/) { ENV.fetch($1, '') }
-        processed_content.gsub(/\s*\n\s*/, ' ').strip
+        template_content.gsub(/\$\{(\w+)\}/) { ENV.fetch($1, '') }  # replace environment variables
+                        .gsub(/\s+/, ' ')                           # replace multiple whitespaces with a single space
+                        .gsub(/>\s+</, '><')                        # remove spaces between HTML tags
+                        .strip                                      # remove leading and trailing whitespaces
+                        .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
       end
     end
   end
