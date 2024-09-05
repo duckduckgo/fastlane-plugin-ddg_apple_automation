@@ -1,5 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
+require "asana"
 require "httparty"
 require "json"
 require "octokit"
@@ -83,40 +84,43 @@ module Fastlane
       end
 
       def self.find_release_task(version, asana_access_token)
-        # `completed_since=now` returns only incomplete tasks
-        url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/sections/#{@constants[:release_section_id]}/tasks?opt_fields=name,created_at&limit=100&completed_since=now"
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+        end
 
         release_task_id = nil
 
-        # Go through all tasks in the section (there may be multiple requests in case
-        # there are more than 100 tasks in the section).
-        # Repeat until no more pages are left (next_page.uri is null).
-        loop do
-          response = HTTParty.get(url, headers: { 'Authorization' => "Bearer #{asana_access_token}" })
+        begin
+          tasks = asana_client.tasks.find_all(
+            section: @constants[:release_section_id],
+            per_page: 100,
+            completed_since: 'now', # return only incomplete tasks
+            options: { fields: ['name', 'created_at'] }
+          )
 
-          unless response.success?
-            UI.user_error!("Failed to fetch release task: (#{response.code} #{response.message})")
-            return
+          # Go through all tasks in the section (there may be multiple requests in case
+          # there are more than 100 tasks in the section).
+          # Repeat until no more pages are left (next_page.uri is null).
+          loop do
+            find_hotfix_task_in_response(tasks)
+            release_task_id ||= find_release_task_in_response(tasks, version)
+
+            tasks = tasks.next_page
+            # Don't return as soon as release task is found, as we want to ensure there's no hotfix task
+            break if tasks.nil?
           end
-          parsed_response = response.parsed_response
-
-          find_hotfix_task_in_response(parsed_response)
-          release_task_id ||= find_release_task_in_response(parsed_response, version)
-
-          url = parsed_response.dig('next_page', 'uri')
-
-          # Don't return as soon as release task is found, as we want to ensure there's no hotfix task
-          break if url.nil?
+        rescue StandardError => e
+          UI.user_error!("Failed to fetch release task: #{e}")
         end
 
         release_task_id
       end
 
-      def self.find_release_task_in_response(response, version)
+      def self.find_release_task_in_response(tasks, version)
         release_task_name = "#{@constants[:release_task_prefix]} #{version}"
-        release_task = response['data']&.find { |task| task['name'] == release_task_name }
-        release_task_id = release_task&.dig('gid')
-        created_at = release_task&.dig('created_at')
+        release_task = tasks.find { |task| task.name == release_task_name }
+        release_task_id = release_task&.gid
+        created_at = release_task&.created_at
 
         ensure_task_not_too_old(release_task_id, created_at)
         release_task_id
@@ -137,10 +141,8 @@ module Fastlane
         end
       end
 
-      def self.find_hotfix_task_in_response(response)
-        hotfix_task_id = response['data']
-                         &.find { |task| task['name']&.start_with?(@constants[:hotfix_task_prefix]) }
-                         &.dig('gid')
+      def self.find_hotfix_task_in_response(tasks)
+        hotfix_task_id = tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
 
         if hotfix_task_id
           UI.user_error!("Found active hotfix task: #{Helper::DdgAppleAutomationHelper.asana_task_url(hotfix_task_id)}")
