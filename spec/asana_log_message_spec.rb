@@ -21,7 +21,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       allow(Fastlane::Actions::AsanaAddCommentAction).to receive(:run)
     end
 
-    it "does extract assignee id from release task when is scheduled release" do
+    it "extracts assignee id from release task when is scheduled release" do
       expect(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run).with(task_url: task_url)
       expect(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).with(
         task_id: task_id,
@@ -30,7 +30,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       test_action(task_url: task_url, comment: comment, is_scheduled_release: true)
     end
 
-    it "does takes assignee id from github handle when is manual release" do
+    it "takes assignee id from github handle when is manual release" do
       expect(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).with(
         github_handle: github_handle,
         asana_access_token: anything
@@ -43,7 +43,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: "")
     end
 
-    it "adds a assignee as a follower to the automation task" do
+    it "adds an assignee as follower to the automation task" do
       expect(@asana_client_tasks).to receive(:add_followers_for_task).with(task_gid: automation_subtask_id, followers: [assignee_id])
       test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
     end

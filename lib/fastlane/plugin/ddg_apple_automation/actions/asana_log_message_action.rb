@@ -16,7 +16,7 @@ module Fastlane
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
-        is_scheduled_release = params[:is_scheduled_release] || false
+        is_scheduled_release = params[:is_scheduled_release]
         github_handle = params[:github_handle]
 
         automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
@@ -39,7 +39,7 @@ module Fastlane
         begin
           asana_client.tasks.add_followers_for_task(task_gid: automation_subtask_id, followers: [assignee_id])
         rescue StandardError => e
-          UI.user_error!("Failed to add a collaborator to the release task: #{e}")
+          UI.user_error!("Failed to add user #{assignee_id} as collaborator on task #{automation_subtask_id}: #{e}")
         end
 
         AsanaAddCommentAction.run(task_id: automation_subtask_id, comment: comment, template_name: template_name, asana_access_token: token)
@@ -84,7 +84,8 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :is_scheduled_release,
                                        description: "Indicates whether the release was scheduled or started manually",
                                        optional: true,
-                                       type: Boolean)
+                                       type: Boolean,
+                                       default_value: false)
         ]
       end
 
