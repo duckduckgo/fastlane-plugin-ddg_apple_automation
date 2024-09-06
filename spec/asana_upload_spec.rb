@@ -1,30 +1,25 @@
 describe Fastlane::Actions::AsanaUploadAction do
   describe "#run" do
+    before do
+      @task = double("task")
+      @asana_client_tasks = double("asana_client_tasks")
+      asana_client = double("asana_client")
+      allow(Asana::Client).to receive(:new).and_return(asana_client)
+      allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
+    end
     it "uploads a file successfully" do
-      allow(HTTParty).to receive(:post).and_return(double(success?: true))
-      allow(File).to receive(:open).with("path/to/file.txt").and_return(double)
+      allow(@asana_client_tasks).to receive(:find_by_id).with("123").and_return(@task)
+      allow(@task).to receive(:attach).with(filename: "path/to/file.txt", mime: "application/octet-stream")
 
-      expect { test_action("12345", "path/to/file.txt") }.not_to raise_error
+      expect { test_action("123", "path/to/file.txt") }.not_to raise_error
     end
 
-    it "shows error if HTTP failure" do
-      allow(HTTParty).to receive(:post).and_return(
-        double(
-          success?: false,
-          code: 500,
-          message: "Internal Server Error"
-        )
-      )
-      allow(File).to receive(:open).with("path/to/file.txt").and_return(double)
+    it "shows error if failure" do
+      allow(@asana_client_tasks).to receive(:find_by_id).with("123").and_return(@task)
+      allow(@task).to receive(:attach).and_raise(StandardError.new("API Error"))
 
-      expect(Fastlane::UI).to receive(:user_error!).with("Failed to upload file to Asana task: (500 Internal Server Error)")
-      test_action("12345", "path/to/file.txt")
-    end
-
-    it "shows error if file does not exist" do
-      expect(Fastlane::UI).to receive(:user_error!).with("Failed to open file: path/to/file.txt")
-      expect(HTTParty).not_to receive(:post)
-      test_action("12345", "path/to/file.txt")
+      expect(Fastlane::UI).to receive(:user_error!).with("Failed to upload file to Asana task: API Error")
+      test_action("123", "path/to/file.txt")
     end
   end
 

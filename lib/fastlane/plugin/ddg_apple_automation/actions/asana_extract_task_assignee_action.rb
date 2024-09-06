@@ -1,7 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
-require "json"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 
