@@ -13,7 +13,8 @@ module Fastlane
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
-        workflow_url = params[:workflow_url]
+
+        workflow_url = ENV.fetch('WORKFLOW_URL', '')
 
         begin
           validate_params(task_id, task_url, comment, template_name, workflow_url)
@@ -28,7 +29,8 @@ module Fastlane
           text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
           create_story(asana_access_token, task_id, text: text)
         else
-          template_content = load_template_file(template_name)
+          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
+          template_content = Helper::DdgAppleAutomationHelper.load_template_file(template_file)
           return unless template_content
 
           html_text = process_template_content(template_content)
@@ -71,10 +73,6 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :template_name,
                                        description: "Name of a template file (without extension) for the comment. Templates can be found in assets/asana_add_comment/templates subdirectory.
       The file is processed before being sent to Asana",
-                                       optional: true,
-                                       type: String),
-          FastlaneCore::ConfigItem.new(key: :workflow_url,
-                                       description: "Workflow URL to include in the comment",
                                        optional: true,
                                        type: String)
         ]

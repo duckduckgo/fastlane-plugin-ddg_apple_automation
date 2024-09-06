@@ -22,6 +22,12 @@ module Fastlane
       def self.path_for_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
       end
+
+      def self.load_template_file(template_file)
+        File.read(template_file)
+      rescue StandardError
+        UI.user_error!("Error: The file '#{template_file}' does not exist.")
+      end
     end
   end
 end
