@@ -2,7 +2,7 @@ describe Fastlane::Actions::AsanaExtractTaskAssigneeAction do
   describe "#run" do
     before do
       @asana_client_tasks = double
-      asana_client = double("Asana::Client")
+      asana_client = double("asana_client")
       allow(Asana::Client).to receive(:new).and_return(asana_client)
       allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
       allow(@asana_client_tasks).to receive(:get_task)

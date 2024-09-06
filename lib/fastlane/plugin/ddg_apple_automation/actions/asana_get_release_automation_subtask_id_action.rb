@@ -1,7 +1,5 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
-require "httparty"
-require "json"
 require "time"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
@@ -33,7 +31,7 @@ module Fastlane
           return
         end
 
-        automation_subtask_id = find_oldest_automation_subtask(subtasks).gid
+        automation_subtask_id = find_oldest_automation_subtask(subtasks)&.gid
         Helper::GitHubActionsHelper.set_output("asana_automation_task_id", automation_subtask_id)
         automation_subtask_id
       end
@@ -70,14 +68,9 @@ module Fastlane
       end
 
       def self.find_oldest_automation_subtask(subtasks)
-        automation_subtask = subtasks
-                             .find_all { |task| task.name == 'Automation' }
-                             &.min_by { |task| Time.parse(task.created_at) }
-        if automation_subtask.nil?
-          UI.user_error!("There is no 'Automation' subtask in task: #{task_id}")
-          return
-        end
-        automation_subtask
+        subtasks
+          .find_all { |task| task.name == 'Automation' }
+          &.min_by { |task| Time.parse(task.created_at) }
       end
     end
   end
