@@ -14,6 +14,8 @@ module Fastlane
         template_name = params[:template_name]
         comment = params[:comment]
 
+        workflow_url = ENV.fetch('WORKFLOW_URL', '')
+
         begin
           validate_params(task_id, task_url, comment, template_name)
         rescue ArgumentError => e
@@ -24,7 +26,7 @@ module Fastlane
         task_id = Fastlane::Actions::AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
 
         if template_name.to_s.empty?
-          text = "#{comment}\n\nWorkflow URL: #{ENV.fetch('WORKFLOW_URL')}"
+          text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
           create_story(asana_access_token, task_id, text: text)
         else
           template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
@@ -89,7 +91,7 @@ module Fastlane
           raise ArgumentError, "Both comment and template_name cannot be empty. At least one must be provided."
         end
 
-        if comment && ENV.fetch('WORKFLOW_URL').to_s.empty?
+        if comment && workflow_url.to_s.empty?
           raise ArgumentError, "If comment is provided, workflow_url cannot be empty"
         end
       end
