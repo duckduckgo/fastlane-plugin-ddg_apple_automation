@@ -17,7 +17,7 @@ module Fastlane
         workflow_url = ENV.fetch('WORKFLOW_URL', '')
 
         begin
-          validate_params(task_id, task_url, comment, template_name)
+          validate_params(task_id, task_url, comment, template_name, workflow_url)
         rescue ArgumentError => e
           UI.user_error!(e.message)
           return
@@ -82,7 +82,7 @@ module Fastlane
         true
       end
 
-      def self.validate_params(task_id, task_url, comment, template_name)
+      def self.validate_params(task_id, task_url, comment, template_name, workflow_url)
         if task_id.to_s.empty? && task_url.to_s.empty?
           raise ArgumentError, "Both task_id and task_url cannot be empty. At least one must be provided."
         end
