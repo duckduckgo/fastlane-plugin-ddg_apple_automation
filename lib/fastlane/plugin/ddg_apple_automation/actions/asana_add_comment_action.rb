@@ -23,14 +23,14 @@ module Fastlane
           return
         end
 
-        task_id = Fastlane::Actions::AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
+        task_id = AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
 
         if template_name.to_s.empty?
           text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
           create_story(asana_access_token, task_id, text: text)
         else
           template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
-          template_content = Helper::DdgAppleAutomationHelper.load_template_file(template_file)
+          template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
           return unless template_content
 
           html_text = process_template_content(template_content)
@@ -94,13 +94,6 @@ module Fastlane
         if comment && workflow_url.to_s.empty?
           raise ArgumentError, "If comment is provided, workflow_url cannot be empty"
         end
-      end
-
-      def self.load_template_file(template_name)
-        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
-        File.read(template_file)
-      rescue StandardError
-        UI.user_error!("Error: The file '#{template_name}.html' does not exist.")
       end
 
       def self.create_story(asana_access_token, task_id, text: nil, html_text: nil)
