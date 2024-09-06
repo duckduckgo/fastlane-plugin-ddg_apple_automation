@@ -27,7 +27,7 @@ module Fastlane
         end
 
         begin
-          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, opt_fields: ["name", "created_at"])
+          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["name", "created_at"] })
         rescue StandardError => e
           UI.user_error!("Failed to fetch 'Automation' subtasks for task #{task_id}: #{e}")
           return

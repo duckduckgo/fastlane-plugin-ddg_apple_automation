@@ -22,7 +22,7 @@ module Fastlane
           return
         end
 
-        assignee_id = task.assignee.gid
+        assignee_id = task.assignee["gid"]
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
         assignee_id
       end
