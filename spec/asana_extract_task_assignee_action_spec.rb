@@ -11,7 +11,7 @@ describe Fastlane::Actions::AsanaExtractTaskAssigneeAction do
     it "returns the assignee ID and sets GHA output when Asana task is assigned" do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
       expect(@asana_client_tasks).to receive(:get_task).and_return(
-        double(assignee: double(gid: "67890"))
+        double(assignee: { "gid" => "67890" })
       )
 
       expect(test_action("12345")).to eq("67890")
@@ -20,7 +20,7 @@ describe Fastlane::Actions::AsanaExtractTaskAssigneeAction do
 
     it "returns nil when Asana task is not assigned" do
       expect(@asana_client_tasks).to receive(:get_task).and_return(
-        double(assignee: double(gid: nil))
+        double(assignee: { "gid" => nil })
       )
 
       expect(test_action("12345")).to eq(nil)
