@@ -52,7 +52,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       allow(Fastlane::UI).to receive(:user_error!)
       allow(@asana_client_tasks).to receive(:add_followers_for_task).and_raise(StandardError, 'some error')
       test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
-      expect(Fastlane::UI).to have_received(:user_error!).with("Failed to add a collaborator to the release task: some error")
+      expect(Fastlane::UI).to have_received(:user_error!).with("Failed to add user 11 as collaborator on task 2: some error")
     end
 
     it "adds a comment to the automation subtask" do
