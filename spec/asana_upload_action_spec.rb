@@ -7,6 +7,7 @@ describe Fastlane::Actions::AsanaUploadAction do
       allow(Asana::Client).to receive(:new).and_return(asana_client)
       allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
     end
+
     it "uploads a file successfully" do
       allow(@asana_client_tasks).to receive(:find_by_id).with("123").and_return(@task)
       allow(@task).to receive(:attach).with(filename: "path/to/file.txt", mime: "application/octet-stream")
