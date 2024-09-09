@@ -6,7 +6,6 @@ module Fastlane
 
   module Helper
     class DdgAppleAutomationHelper
-      ASANA_API_URL = "https://app.asana.com/api/1.0"
       ASANA_APP_URL = "https://app.asana.com/0/0"
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
       ERROR_GITHUB_TOKEN_NOT_SET = "GITHUB_TOKEN is not set"
