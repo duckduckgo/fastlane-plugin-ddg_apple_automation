@@ -16,7 +16,7 @@ module Fastlane
         end
 
         begin
-          task = client.tasks.get_task(task_gid: task_id)
+          task = client.tasks.get_task(task_gid: task_id, options: { fields: ["assignee"] })
         rescue StandardError => e
           UI.user_error!("Failed to fetch task assignee: #{e}")
           return
