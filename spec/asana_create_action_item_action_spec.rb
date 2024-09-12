@@ -2,6 +2,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
   describe "#run" do
     let(:task_url) { "https://app.asana.com/4/753241/9999" }
     let(:task_id) { "1" }
+    let(:automation_subtask_id) { "2" }
     let(:assignee_id) { "11" }
     let(:github_handle) { "user" }
     let(:task_name) { "example name" }
@@ -16,6 +17,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
 
       allow(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run).and_return(task_id)
       allow(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).and_return(assignee_id)
+      allow(Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction).to receive(:run).with(task_url: task_url, asana_access_token: anything).and_return(automation_subtask_id)
       allow(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).and_return(assignee_id)
       allow(@asana_client_tasks).to receive(:create_subtask_for_task)
 
@@ -50,7 +52,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     it "correctly builds payload if notes input is given" do
       test_action(task_url: task_url, task_name: task_name, notes: "notes", is_scheduled_release: true)
       expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
-        task_gid: task_id,
+        task_gid: automation_subtask_id,
         name: task_name,
         notes: "notes",
         assignee: assignee_id
@@ -60,7 +62,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     it "correctly builds payload if html_notes input is given" do
       test_action(task_url: task_url, task_name: task_name, html_notes: "html_notes", is_scheduled_release: true)
       expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
-        task_gid: task_id,
+        task_gid: automation_subtask_id,
         name: task_name,
         html_notes: "html_notes",
         assignee: assignee_id
@@ -72,7 +74,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       allow(YAML).to receive(:safe_load).and_return(parsed_yaml_content)
       test_action(task_url: task_url, task_name: task_name, template_name: "template_name", is_scheduled_release: true)
       expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
-        task_gid: task_id,
+        task_gid: automation_subtask_id,
         name: "test task",
         html_notes: "<p>Some notes</p>",
         assignee: assignee_id

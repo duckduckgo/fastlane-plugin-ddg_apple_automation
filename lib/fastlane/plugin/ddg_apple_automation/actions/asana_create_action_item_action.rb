@@ -24,6 +24,7 @@ module Fastlane
         github_handle = params[:github_handle]
 
         task_id = AsanaExtractTaskIdAction.run(task_url: task_url)
+        automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
         if is_scheduled_release
           assignee_id = AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
         else
@@ -45,7 +46,7 @@ module Fastlane
 
         begin
           subtask = create_subtask(
-            task_id: task_id,
+            task_id: automation_subtask_id,
             assignee_id: assignee_id,
             task_name: task_name,
             notes: notes,
