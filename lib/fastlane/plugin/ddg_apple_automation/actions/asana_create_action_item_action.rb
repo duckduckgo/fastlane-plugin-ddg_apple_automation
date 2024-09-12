@@ -36,10 +36,6 @@ module Fastlane
 
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, token)
-        end
-
         if template_name
           template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml")
           template_content = YAML.safe_load(Helper::DdgAppleAutomationHelper.load_file(template_file))
@@ -47,14 +43,17 @@ module Fastlane
           html_notes = Helper::DdgAppleAutomationHelper.sanitize_and_replace_env_vars(template_content["html_notes"])
         end
 
-        subtask_options = {
-          task_gid: task_id,
-          assignee: assignee_id,
-          name: task_name
-        }
-        subtask_options[:notes] = notes unless notes.nil?
-        subtask_options[:html_notes] = html_notes unless html_notes.nil?
-        subtask = asana_client.tasks.create_subtask_for_task(**subtask_options)
+        begin
+          subtask = create_subtask(
+            task_id: task_id,
+            assignee_id: assignee_id,
+            task_name: task_name,
+            notes: notes,
+            html_notes: html_notes
+          )
+        rescue StandardError => e
+          UI.user_error!("Failed to create subtask for task: #{e}")
+        end
 
         Helper::GitHubActionsHelper.set_output("new_task_id", subtask.gid) if subtask&.gid
       end
@@ -113,6 +112,21 @@ module Fastlane
 
       def self.is_supported?(platform)
         true
+      end
+
+      def self.create_subtask(task_id:, assignee_id:, task_name:, notes: nil, html_notes: nil)
+        subtask_options = {
+          task_gid: task_id,
+          assignee: assignee_id,
+          name: task_name
+        }
+        subtask_options[:notes] = notes unless notes.nil?
+        subtask_options[:html_notes] = html_notes unless html_notes.nil?
+
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, token)
+        end
+        asana_client.tasks.create_subtask_for_task(**subtask_options)
       end
     end
   end

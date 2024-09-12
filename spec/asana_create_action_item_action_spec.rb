@@ -4,6 +4,9 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     let(:task_id) { "1" }
     let(:assignee_id) { "11" }
     let(:github_handle) { "user" }
+    let(:task_name) { "example name" }
+
+    let(:parsed_yaml_content) { { 'name' => 'test task', 'html_notes' => '<p>Some notes</p>' } }
 
     before do
       @asana_client_tasks = double
@@ -44,27 +47,50 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       expect(Fastlane::Helper::GitHubActionsHelper).not_to have_received(:set_output)
     end
 
-    # it "adds an assignee as follower to the automation task" do
-    #   expect(@asana_client_tasks).to receive(:add_followers_for_task).with(task_gid: automation_subtask_id, followers: [assignee_id])
-    #   test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
-    # end
+    it "correctly builds payload if notes input is given" do
+      test_action(task_url: task_url, task_name: task_name, notes: "notes", is_scheduled_release: true)
+      expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
+        task_gid: task_id,
+        name: task_name,
+        notes: "notes",
+        assignee: assignee_id
+      )
+    end
 
-    # it "raises an error if adding a collaborator fails" do
-    #   allow(Fastlane::UI).to receive(:user_error!)
-    #   allow(@asana_client_tasks).to receive(:add_followers_for_task).and_raise(StandardError, 'some error')
-    #   test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
-    #   expect(Fastlane::UI).to have_received(:user_error!).with("Failed to add user 11 as collaborator on task 2: some error")
-    # end
+    it "correctly builds payload if html_notes input is given" do
+      test_action(task_url: task_url, task_name: task_name, html_notes: "html_notes", is_scheduled_release: true)
+      expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
+        task_gid: task_id,
+        name: task_name,
+        html_notes: "html_notes",
+        assignee: assignee_id
+      )
+    end
 
-    # it "adds a comment to the automation subtask" do
-    #   expect(Fastlane::Actions::AsanaAddCommentAction).to receive(:run).with(
-    #     task_id: automation_subtask_id,
-    #     comment: comment,
-    #     template_name: nil,
-    #     asana_access_token: anything
-    #   )
-    #   test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
-    # end
+    it "correctly builds payload if template_name input is given" do
+      allow(File).to receive(:read)
+      allow(YAML).to receive(:safe_load).and_return(parsed_yaml_content)
+      test_action(task_url: task_url, task_name: task_name, template_name: "template_name", is_scheduled_release: true)
+      expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
+        task_gid: task_id,
+        name: "test task",
+        html_notes: "<p>Some notes</p>",
+        assignee: assignee_id
+      )
+    end
+
+    it "raises an error if adding subtask fails" do
+      allow(Fastlane::UI).to receive(:user_error!)
+      allow(@asana_client_tasks).to receive(:create_subtask_for_task).and_raise(StandardError, 'API Error')
+      test_action(task_url: task_url, task_name: task_name, notes: "notes", is_scheduled_release: true)
+      expect(Fastlane::UI).to have_received(:user_error!).with("Failed to create subtask for task: API Error")
+    end
+
+    it "correctly sets output" do
+      allow(@asana_client_tasks).to receive(:create_subtask_for_task).and_return(double('subtask', gid: "42"))
+      test_action(task_url: task_url, task_name: task_name, notes: "notes", is_scheduled_release: true)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("new_task_id", "42")
+    end
   end
 
   def test_action(task_url:, task_name: nil, notes: nil, html_notes: nil, template_name: nil, is_scheduled_release: false, github_handle: nil)
