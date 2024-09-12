@@ -1,7 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
-require "httparty"
-require "json"
+require "asana"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 
@@ -12,16 +11,20 @@ module Fastlane
         task_id = params[:task_id]
         token = params[:asana_access_token]
 
-        url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}?opt_fields=assignee"
-        response = HTTParty.get(url, headers: { 'Authorization' => "Bearer #{token}" })
-
-        if response.success?
-          assignee_id = response.parsed_response.dig('data', 'assignee', 'gid')
-          Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
-          assignee_id
-        else
-          UI.user_error!("Failed to fetch task assignee: (#{response.code} #{response.message})")
+        client = Asana::Client.new do |c|
+          c.authentication(:access_token, token)
         end
+
+        begin
+          task = client.tasks.get_task(task_gid: task_id, options: { fields: ["assignee"] })
+        rescue StandardError => e
+          UI.user_error!("Failed to fetch task assignee: #{e}")
+          return
+        end
+
+        assignee_id = task.assignee["gid"]
+        Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
+        assignee_id
       end
 
       def self.description

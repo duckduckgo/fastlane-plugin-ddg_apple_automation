@@ -1,8 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
-require "httparty"
-require "json"
 require "octokit"
 require "time"
 require_relative "../helper/ddg_apple_automation_helper"

@@ -1,6 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
-require "httparty"
+require "asana"
 require_relative "../helper/ddg_apple_automation_helper"
 
 module Fastlane
@@ -11,18 +11,15 @@ module Fastlane
         token = params[:asana_access_token]
         file_name = params[:file_name]
 
-        begin
-          file = File.open(file_name)
-          url = Helper::DdgAppleAutomationHelper::ASANA_API_URL + "/tasks/#{task_id}/attachments"
-          response = HTTParty.post(url,
-                                   headers: { 'Authorization' => "Bearer #{token}" },
-                                   body: { file: file })
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, token)
+        end
 
-          unless response.success?
-            UI.user_error!("Failed to upload file to Asana task: (#{response.code} #{response.message})")
-          end
-        rescue StandardError
-          UI.user_error!("Failed to open file: #{file_name}")
+        begin
+          asana_client.tasks.find_by_id(task_id).attach(filename: file_name, mime: "application/octet-stream")
+        rescue StandardError => e
+          UI.user_error!("Failed to upload file to Asana task: #{e}")
+          return
         end
       end
 

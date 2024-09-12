@@ -6,7 +6,6 @@ module Fastlane
 
   module Helper
     class DdgAppleAutomationHelper
-      ASANA_API_URL = "https://app.asana.com/api/1.0"
       ASANA_APP_URL = "https://app.asana.com/0/0"
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
       ERROR_GITHUB_TOKEN_NOT_SET = "GITHUB_TOKEN is not set"
@@ -23,10 +22,10 @@ module Fastlane
         File.expand_path("../assets/#{file}", __dir__)
       end
 
-      def self.load_template_file(template_file)
-        File.read(template_file)
+      def self.load_file(file)
+        File.read(file)
       rescue StandardError
-        UI.user_error!("Error: The file '#{template_file}' does not exist.")
+        UI.user_error!("Error: The file '#{file}' does not exist.")
       end
     end
   end

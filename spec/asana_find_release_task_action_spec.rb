@@ -141,9 +141,9 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
       end
 
       it "shows error" do
+        allow(Fastlane::UI).to receive(:user_error!)
         expect(Fastlane::Actions::AsanaFindReleaseTaskAction).not_to receive(:find_hotfix_task_in_response)
         expect(Fastlane::Actions::AsanaFindReleaseTaskAction).not_to receive(:find_release_task_in_response)
-        allow(Fastlane::UI).to receive(:user_error!)
 
         find_release_task("1.0.0")
 
