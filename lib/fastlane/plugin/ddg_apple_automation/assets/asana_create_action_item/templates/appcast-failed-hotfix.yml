@@ -1,8 +1,7 @@
 name: Generate appcast2.xml for ${TAG} hotfix release and upload assets to S3
 html_notes: |
   <body>
-    Publishing ${TAG} hotfix release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.
-  
+    Publishing ${TAG} hotfix release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
     <ol>
       <li>Create a new file called <code>release-notes.txt</code> on your disk.
         <ul>
