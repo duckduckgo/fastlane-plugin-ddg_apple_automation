@@ -55,7 +55,7 @@ module Fastlane
           UI.user_error!("Failed to create subtask for task: #{e}")
         end
 
-        Helper::GitHubActionsHelper.set_output("new_task_id", subtask.gid) if subtask&.gid
+        Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid) if subtask&.gid
       end
 
       def self.description

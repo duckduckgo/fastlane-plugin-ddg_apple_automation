@@ -89,7 +89,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     it "correctly sets output" do
       allow(@asana_client_tasks).to receive(:create_subtask_for_task).and_return(double('subtask', gid: "42"))
       test_action(task_url: task_url, task_name: task_name, notes: "notes", is_scheduled_release: true)
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("new_task_id", "42")
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_new_task_id", "42")
     end
   end
 
