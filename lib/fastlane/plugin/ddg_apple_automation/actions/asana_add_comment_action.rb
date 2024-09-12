@@ -33,7 +33,7 @@ module Fastlane
           template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
           return unless template_content
 
-          html_text = Helper::DdgAppleAutomationHelper.sanitize_and_replace_env_vars(template_content)
+          html_text = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content)
           create_story(asana_access_token, task_id, html_text: html_text)
         end
       end

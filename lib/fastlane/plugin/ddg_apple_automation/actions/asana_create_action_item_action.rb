@@ -40,8 +40,8 @@ module Fastlane
         if template_name
           template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml")
           template_content = YAML.safe_load(Helper::DdgAppleAutomationHelper.load_file(template_file))
-          task_name = Helper::DdgAppleAutomationHelper.sanitize_and_replace_env_vars(template_content["name"])
-          html_notes = Helper::DdgAppleAutomationHelper.sanitize_and_replace_env_vars(template_content["html_notes"])
+          task_name = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content["name"])
+          html_notes = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content["html_notes"])
         end
 
         begin
