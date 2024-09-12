@@ -18,6 +18,19 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
   end
 
+  describe "#load_file" do
+    it "shows error if provided file does not exist" do
+      allow(Fastlane::UI).to receive(:user_error!)
+      allow(File).to receive(:read).and_raise(Errno::ENOENT)
+      load_file("file")
+      expect(Fastlane::UI).to have_received(:user_error!).with("Error: The file 'file' does not exist.")
+    end
+
+    def load_file(file)
+      Fastlane::Helper::DdgAppleAutomationHelper.load_file(file)
+    end
+  end
+
   describe "#sanitize_and_replace_env_vars" do
     it "substitutes all env variables" do
       content = "<h2>${ASSIGNEE_ID} is publishing ${TAG} hotfix release</h2>"

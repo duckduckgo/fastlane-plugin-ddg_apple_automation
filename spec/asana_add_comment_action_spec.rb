@@ -46,14 +46,6 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       end
     end
 
-    it "shows error if provided template does not exist" do
-      allow(File).to receive(:read).and_raise(Errno::ENOENT)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:path_for_asset_file).and_return("non-existing.html")
-      expect(Fastlane::UI).to receive(:user_error!).with("Error: The file 'non-existing.html' does not exist.")
-      expect(@asana_client_stories).not_to receive(:create_story_for_task)
-      test_action(task_id: "123", template_name: "non-existing")
-    end
-
     it "correctly builds html_text payload" do
       allow(File).to receive(:read).and_return("   \nHello, \n  World!\n   This is a test.   \n")
       allow(@asana_client_stories).to receive(:create_story_for_task)
