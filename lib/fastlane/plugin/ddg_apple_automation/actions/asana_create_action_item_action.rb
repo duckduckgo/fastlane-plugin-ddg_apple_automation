@@ -42,20 +42,21 @@ module Fastlane
 
         if template_name
           template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml")
-          template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
-          template_content = YAML.safe_load(template_content)
-
+          template_content = YAML.safe_load(Helper::DdgAppleAutomationHelper.load_file(template_file))
           task_name = Helper::DdgAppleAutomationHelper.sanitize_and_replace_env_vars(template_content["name"])
           html_notes = Helper::DdgAppleAutomationHelper.sanitize_and_replace_env_vars(template_content["html_notes"])
-          subtask = asana_client.tasks.create_subtask_for_task(task_gid: task_id, assignee: assignee_id, name: task_name, html_notes: html_notes)
-        elsif notes
-          subtask = asana_client.tasks.create_subtask_for_task(task_gid: task_id, assignee: assignee_id, name: task_name, notes: notes)
-        elsif html_notes
-          subtask = asana_client.tasks.create_subtask_for_task(task_gid: task_id, assignee: assignee_id, name: task_name, html_notes: html_notes)
         end
 
-        puts(subtask&.gid)
-        Helper::GitHubActionsHelper.set_output("new_task_id", subtask.gid)
+        subtask_options = {
+          task_gid: task_id,
+          assignee: assignee_id,
+          name: task_name
+        }
+        subtask_options[:notes] = notes unless notes.nil?
+        subtask_options[:html_notes] = html_notes unless html_notes.nil?
+        subtask = asana_client.tasks.create_subtask_for_task(**subtask_options)
+
+        Helper::GitHubActionsHelper.set_output("new_task_id", subtask.gid) if subtask.gid
       end
 
       def self.description
