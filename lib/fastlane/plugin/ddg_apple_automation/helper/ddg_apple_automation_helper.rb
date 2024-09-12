@@ -27,6 +27,14 @@ module Fastlane
       rescue StandardError
         UI.user_error!("Error: The file '#{file}' does not exist.")
       end
+
+      def self.sanitize_and_replace_env_vars(content)
+        content.gsub(/\$\{(\w+)\}/) { ENV.fetch($1, '') }  # replace environment variables
+               .gsub(/\s+/, ' ')                           # replace multiple whitespaces with a single space
+               .gsub(/>\s+</, '><')                        # remove spaces between HTML tags
+               .strip                                      # remove leading and trailing whitespaces
+               .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
+      end
     end
   end
 end

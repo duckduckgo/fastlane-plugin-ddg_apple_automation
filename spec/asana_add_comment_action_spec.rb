@@ -54,24 +54,6 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       test_action(task_id: "123", template_name: "non-existing")
     end
 
-    it "correctly substitutes all variables" do
-      template_content = "<h2>${ASSIGNEE_ID} is publishing ${TAG} hotfix release</h2>"
-      ClimateControl.modify(
-        ASSIGNEE_ID: '12345',
-        TAG: 'v1.0.0'
-      ) do
-        result = Fastlane::Actions::AsanaAddCommentAction.process_template_content(template_content)
-        expected_output = "<h2>12345 is publishing v1.0.0 hotfix release</h2>"
-        expect(result).to eq(expected_output)
-      end
-    end
-
-    it "removes newlines and leading/trailing spaces" do
-      template_content = "   \nHello, \n\n  World!\n   This is a test.   \n"
-      result = Fastlane::Actions::AsanaAddCommentAction.process_template_content(template_content)
-      expect(result).to eq("Hello, World! This is a test.")
-    end
-
     it "correctly builds html_text payload" do
       allow(File).to receive(:read).and_return("   \nHello, \n  World!\n   This is a test.   \n")
       allow(@asana_client_stories).to receive(:create_story_for_task)

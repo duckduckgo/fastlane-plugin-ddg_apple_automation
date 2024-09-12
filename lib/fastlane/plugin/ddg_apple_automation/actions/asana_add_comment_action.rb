@@ -33,7 +33,7 @@ module Fastlane
           template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
           return unless template_content
 
-          html_text = process_template_content(template_content)
+          html_text = Helper::DdgAppleAutomationHelper.sanitize_and_replace_env_vars(template_content)
           create_story(asana_access_token, task_id, html_text: html_text)
         end
       end
@@ -109,14 +109,6 @@ module Fastlane
         rescue StandardError => e
           UI.user_error!("Failed to post comment: #{e}")
         end
-      end
-
-      def self.process_template_content(template_content)
-        template_content.gsub(/\$\{(\w+)\}/) { ENV.fetch($1, '') }  # replace environment variables
-                        .gsub(/\s+/, ' ')                           # replace multiple whitespaces with a single space
-                        .gsub(/>\s+</, '><')                        # remove spaces between HTML tags
-                        .strip                                      # remove leading and trailing whitespaces
-                        .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
       end
     end
   end
