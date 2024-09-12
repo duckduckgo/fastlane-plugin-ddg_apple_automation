@@ -62,6 +62,11 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(sanitize_html_and_replace_env_vars(content)).to eq("<h2>Hello, World!\n This is a test.</h2>")
     end
 
+    it "preserves HTML-escaped characters" do
+      content = "<body>Hello -&gt; World!</body>"
+      expect(sanitize_html_and_replace_env_vars(content)).to eq("<body>Hello -&gt; World!</body>")
+    end
+
     def sanitize_html_and_replace_env_vars(content)
       Fastlane::Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(content)
     end
