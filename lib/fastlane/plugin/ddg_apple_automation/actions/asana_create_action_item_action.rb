@@ -56,7 +56,7 @@ module Fastlane
         subtask_options[:html_notes] = html_notes unless html_notes.nil?
         subtask = asana_client.tasks.create_subtask_for_task(**subtask_options)
 
-        Helper::GitHubActionsHelper.set_output("new_task_id", subtask.gid) if subtask.gid
+        Helper::GitHubActionsHelper.set_output("new_task_id", subtask.gid) if subtask&.gid
       end
 
       def self.description
