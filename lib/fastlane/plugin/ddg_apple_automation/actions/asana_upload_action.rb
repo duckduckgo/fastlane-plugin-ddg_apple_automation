@@ -48,7 +48,7 @@ module Fastlane
                                        optional: false,
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :file_name,
-                                       description: "Path to the file that will be uploaded",
+                                       description: "Path to a file that will be uploaded",
                                        optional: false,
                                        type: String)
         ]
