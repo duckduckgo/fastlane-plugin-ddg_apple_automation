@@ -46,6 +46,7 @@ module Fastlane
 
         begin
           subtask = create_subtask(
+            token: token,
             task_id: automation_subtask_id,
             assignee_id: assignee_id,
             task_name: task_name,
@@ -115,7 +116,7 @@ module Fastlane
         true
       end
 
-      def self.create_subtask(task_id:, assignee_id:, task_name:, notes: nil, html_notes: nil)
+      def self.create_subtask(token:, task_id:, assignee_id:, task_name:, notes: nil, html_notes: nil)
         subtask_options = {
           task_gid: task_id,
           assignee: assignee_id,
