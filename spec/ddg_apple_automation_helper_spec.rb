@@ -71,44 +71,34 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
   end
 
-  describe "#sanitize_html_and_replace_env_vars" do
-    it "substitutes all env variables" do
-      content = "<h2>${ASSIGNEE_ID} is publishing ${TAG} hotfix release</h2>"
-      ClimateControl.modify(
-        ASSIGNEE_ID: '12345',
-        TAG: 'v1.0.0'
-      ) do
-        expect(sanitize_html_and_replace_env_vars(content)).to eq("<h2>12345 is publishing v1.0.0 hotfix release</h2>")
-      end
-    end
-
+  describe "#sanitize_asana_html_notes" do
     it "removes newlines and leading/trailing spaces" do
       content = "   \nHello, \n\n World!\n This is a test.   \n"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("Hello, World! This is a test.")
+      expect(sanitize_asana_html_notes(content)).to eq("Hello, World! This is a test.")
     end
 
     it "removes spaces between html tags" do
       content = "<body> <h2>Hello, World! This is a test.</h2> </body>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<body><h2>Hello, World! This is a test.</h2></body>")
+      expect(sanitize_asana_html_notes(content)).to eq("<body><h2>Hello, World! This is a test.</h2></body>")
     end
 
     it "replaces multiple whitespaces with a single space" do
       content = "<h2>Hello,   World! This   is a test.</h2>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<h2>Hello, World! This is a test.</h2>")
+      expect(sanitize_asana_html_notes(content)).to eq("<h2>Hello, World! This is a test.</h2>")
     end
 
     it "replaces <br> tags with new lines" do
       content = "<h2>Hello, World!<br> This is a test.</h2>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<h2>Hello, World!\n This is a test.</h2>")
+      expect(sanitize_asana_html_notes(content)).to eq("<h2>Hello, World!\n This is a test.</h2>")
     end
 
     it "preserves HTML-escaped characters" do
       content = "<body>Hello -&gt; World!</body>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<body>Hello -&gt; World!</body>")
+      expect(sanitize_asana_html_notes(content)).to eq("<body>Hello -&gt; World!</body>")
     end
 
-    def sanitize_html_and_replace_env_vars(content)
-      Fastlane::Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(content)
+    def sanitize_asana_html_notes(content)
+      Fastlane::Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(content)
     end
   end
 end

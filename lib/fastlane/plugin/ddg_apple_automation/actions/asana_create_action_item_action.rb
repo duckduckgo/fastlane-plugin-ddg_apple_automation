@@ -48,8 +48,8 @@ module Fastlane
 
           task_data = YAML.safe_load(yaml)
 
-          task_name = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(task_data["name"])
-          html_notes = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(task_data["html_notes"])
+          task_name = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(task_data["name"])
+          html_notes = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(task_data["html_notes"])
         end
 
         begin
