@@ -1,0 +1,9 @@
+<body>
+  <h2>Hotfix branch <%= args['branch'] %> ready ⚙️</h2>
+  <ul>
+    <li>🔱 <code><%= args['branch'] %></code> branch has been created off <code><%= args['release_tag'] %></code> tag.</li>
+    <li>Point any pull requests with changes required for the hotfix release to that branch.</li>
+  </ul>
+  <br>
+  🔗 Workflow URL: <a href='<%= args['worklow_url'] %>'><%= args['worklow_url'] %></a>.
+</body>

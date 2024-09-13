@@ -8,7 +8,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       allow(Asana::Client).to receive(:new).and_return(asana_client)
       allow(asana_client).to receive(:stories).and_return(@asana_client_stories)
 
-      ENV["WORKFLOW_URL"] = "http://www.example.com"
+      ENV["workflow_url"] = "http://www.example.com"
     end
 
     it "does not call task id extraction if task id provided" do
@@ -37,7 +37,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
 
     it "shows error if comment is provided but workflow_url is not" do
       ClimateControl.modify(
-        WORKFLOW_URL: ''
+        workflow_url: ''
       ) do
         expect(Fastlane::UI).to receive(:user_error!).with("If comment is provided, workflow_url cannot be empty")
         test_action(task_id: "123", comment: "comment")

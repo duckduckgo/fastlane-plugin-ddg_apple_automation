@@ -1,6 +1,7 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
+require "erb"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "asana_extract_task_id_action"
 
@@ -13,8 +14,9 @@ module Fastlane
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys(&:downcase))
 
-        workflow_url = ENV.fetch('WORKFLOW_URL', '')
+        workflow_url = args["workflow_url"]
 
         begin
           validate_params(task_id, task_url, comment, template_name, workflow_url)
@@ -29,11 +31,14 @@ module Fastlane
           text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
           create_story(asana_access_token, task_id, text: text)
         else
-          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
+          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html.erb")
           template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
           return unless template_content
 
-          html_text = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content)
+          erb_template = ERB.new(template_content)
+          html_text = erb_template.result(binding)
+
+          html_text = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(html_text)
           create_story(asana_access_token, task_id, html_text: html_text)
         end
       end
@@ -74,7 +79,12 @@ module Fastlane
                                        description: "Name of a template file (without extension) for the comment. Templates can be found in assets/asana_add_comment/templates subdirectory.
       The file is processed before being sent to Asana",
                                        optional: true,
-                                       type: String)
+                                       type: String),
+          FastlaneCore::ConfigItem.new(key: :template_args,
+                                       description: "Template arguments. For backward compatibility, environment variables are added to this hash",
+                                       optional: true,
+                                       type: Hash,
+                                       default_value: {})
         ]
       end
 
