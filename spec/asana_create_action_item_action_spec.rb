@@ -72,6 +72,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     it "correctly builds payload if template_name input is given" do
       allow(File).to receive(:read)
       allow(YAML).to receive(:safe_load).and_return(parsed_yaml_content)
+      allow(ERB).to receive(:new).and_return(double('erb', result: "yaml"))
       test_action(task_url: task_url, task_name: task_name, template_name: "template_name", is_scheduled_release: true)
       expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
         task_gid: automation_subtask_id,

@@ -1,0 +1,28 @@
+name: Merge <%= args['branch'] %> to <%= args['base_branch'] %>
+html_notes: |
+  <body>
+    The <code><%= args['tag'] %></code> release has been successfully tagged and published in GitHub releases, 
+    but merging to <code><%= args['base_branch'] %></code> failed. Please resolve conflicts and merge <code><%= args['branch'] %></code> to <code><%= args['base_branch'] %></code> manually.<br>
+    <br>
+    Issue the following git commands:
+    <ul>
+      <li><code>git fetch origin</code></li>
+      <li><code>git checkout <%= args['branch'] %></code> switch to the release branch</li>
+      <li><code>git pull origin <%= args['branch'] %></code> pull latest changes</li>
+      <li><code>git checkout <%= args['base_branch'] %></code> switch to <%= args['base_branch'] %></li>
+      <li><code>git pull origin <%= args['base_branch'] %></code> pull the latest code</li>
+      <li><code>git merge <%= args['branch'] %></code>
+        <ul>
+          <li>Resolve conflicts as needed</li>
+          <li>When merging a hotfix branch into an internal release branch, you will get conflicts in version and build number xcconfig files:
+            <ul>
+              <li>In the version file: accept the internal version number (higher).</li>
+              <li>In the build number file: accept the hotfix build number (higher). This step is very important in order to calculate the build number of the next internal release correctly.</li>
+            </ul></li>
+        </ul></li>
+      <li><code>git push origin <%= args['base_branch'] %></code> push merged branch</li>
+    </ul>
+    Complete this task when ready and proceed with testing the build.<br>
+    <br>
+    🔗 Workflow URL: <a href='<%= args['worklow_url'] %>'><%= args['worklow_url'] %></a>.
+  </body>

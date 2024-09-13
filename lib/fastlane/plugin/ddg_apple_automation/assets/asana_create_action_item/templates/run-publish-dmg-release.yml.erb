@@ -4,15 +4,15 @@ html_notes: |
     <h1>Using GH CLI</h1>
     Run the following command:<br>
     <br>
-    <code>gh workflow run publish_dmg_release.yml --ref ${BRANCH} -f asana-task-url=${ASANA_TASK_URL} -f tag=${TAG} -f release-type=internal</code>
+    <code>gh workflow run publish_dmg_release.yml --ref <%= args['branch'] %> -f asana-task-url=<%= args['asana_task_url'] %> -f tag=<%= args['tag'] %> -f release-type=internal</code>
     <h1>Using GitHub web UI</h1>
     <ol>
       <li>Open <a href='https://github.com/duckduckgo/macos-browser/actions/workflows/publish_dmg_release.yml'>Publish DMG Release workflow page</a>.</li>
       <li>Click "Run Workflow" and fill in the form as follows:
         <ul>
-          <li><b>Branch</b> <code>${BRANCH}</code></li>
-          <li><b>Asana release task URL</b> <code>${ASANA_TASK_URL}</code></li>
-          <li><b>Tag to publish</b> <code>${TAG}</code></li>
+          <li><b>Branch</b> <code><%= args['branch'] %></code></li>
+          <li><b>Asana release task URL</b> <code><%= args['asana_task_url'] %></code></li>
+          <li><b>Tag to publish</b> <code><%= args['tag'] %></code></li>
           <li><b>Release Type</b> <code>internal</code></li>
         </ul></li>
     </ol><br>
@@ -28,5 +28,5 @@ html_notes: |
     </ul><br>
     Complete this task when ready and proceed with testing the build. If GitHub Actions is unavailable, you'll find manual instructions in the <em>Run Publish DMG Release GitHub Actions workflow</em> subtask of <em>Make Internal Release</em> task.<br>
     <br>
-    🔗 Workflow URL: <a href='${WORKFLOW_URL}'>${WORKFLOW_URL}</a>.
+    🔗 Workflow URL: <a href='<%= args['workflow_url'] %>'><%= args['workflow_url'] %></a>.
   </body>

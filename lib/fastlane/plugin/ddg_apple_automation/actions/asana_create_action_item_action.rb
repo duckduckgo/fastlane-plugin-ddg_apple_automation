@@ -1,6 +1,7 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
+require "erb"
 require "yaml"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
@@ -22,6 +23,7 @@ module Fastlane
         template_name = params[:template_name]
         is_scheduled_release = params[:is_scheduled_release]
         github_handle = params[:github_handle]
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys(&:downcase))
 
         task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
         automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
@@ -38,10 +40,16 @@ module Fastlane
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
         if template_name
-          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml")
-          template_content = YAML.safe_load(Helper::DdgAppleAutomationHelper.load_file(template_file))
-          task_name = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content["name"])
-          html_notes = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content["html_notes"])
+          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml.erb")
+          template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
+
+          erb_template = ERB.new(template_content)
+          yaml = erb_template.result(binding)
+
+          task_data = YAML.safe_load(yaml)
+
+          task_name = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(task_data["name"])
+          html_notes = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(task_data["html_notes"])
         end
 
         begin
@@ -100,6 +108,11 @@ module Fastlane
       The file is processed before being sent to Asana",
                                        optional: true,
                                        type: String),
+          FastlaneCore::ConfigItem.new(key: :template_args,
+                                       description: "Template arguments. For backward compatibility, environment variables are added to this hash",
+                                       optional: true,
+                                       type: Hash,
+                                       default_value: {}),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,

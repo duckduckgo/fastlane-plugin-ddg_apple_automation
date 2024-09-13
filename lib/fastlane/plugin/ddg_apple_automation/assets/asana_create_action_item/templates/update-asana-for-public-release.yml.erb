@@ -3,7 +3,7 @@ html_notes: |
   <body>
     Automation failed to update Asana for the public release. Please follow the steps below.
     <ol>
-      <li>Open <a data-asana-gid='${APP_BOARD_ASANA_PROJECT_ID}'/> and select the List view</li>
+      <li>Open <a data-asana-gid='<%= args['app_board_asana_project_id'] %>'/> and select the List view</li>
       <li>Scroll to the "Validation" section.</li>
       <li>Select all the tasks in that section.</li>
       <li>Drag and drop all the selected tasks to the "Done" section</li>
@@ -11,5 +11,5 @@ html_notes: |
     </ol><br>
     Complete this task when ready.<br>
     <br>
-    🔗 Workflow URL: <a href='${WORKFLOW_URL}'>${WORKFLOW_URL}</a>.
+    🔗 Workflow URL: <a href='<%= args['workflow_url'] %>'><%= args['workflow_url'] %></a>.
   </body>
