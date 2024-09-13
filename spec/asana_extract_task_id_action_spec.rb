@@ -1,36 +1,9 @@
 describe Fastlane::Actions::AsanaExtractTaskIdAction do
   describe "#run" do
-    it "extracts task ID" do
+    it "calls helper" do
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id)
+        .with("https://app.asana.com/0/0/0").and_return("0")
       expect(test_action("https://app.asana.com/0/0/0")).to eq("0")
-    end
-
-    it "extracts task ID when project ID is non-zero" do
-      expect(test_action("https://app.asana.com/0/753241/9999")).to eq("9999")
-    end
-
-    it "extracts task ID when first digit is non-zero" do
-      expect(test_action("https://app.asana.com/4/753241/9999")).to eq("9999")
-    end
-
-    it "extracts long task ID" do
-      expect(test_action("https://app.asana.com/0/0/12837864576817392")).to eq("12837864576817392")
-    end
-
-    it "extracts task ID from a URL with a trailing /f" do
-      expect(test_action("https://app.asana.com/0/0/1234/f")).to eq("1234")
-    end
-
-    it "sets GHA output" do
-      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
-
-      expect(test_action("https://app.asana.com/0/12837864576817392/3465387322")).to eq("3465387322")
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_task_id", "3465387322")
-    end
-
-    it "fails when garbage is passed" do
-      expect(Fastlane::UI).to receive(:user_error!).with(Fastlane::Actions::AsanaExtractTaskIdAction::ERROR_MESSAGE)
-
-      test_action("not a URL")
     end
   end
 

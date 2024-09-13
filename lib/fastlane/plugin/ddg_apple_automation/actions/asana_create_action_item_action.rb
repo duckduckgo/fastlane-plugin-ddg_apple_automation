@@ -23,7 +23,7 @@ module Fastlane
         is_scheduled_release = params[:is_scheduled_release]
         github_handle = params[:github_handle]
 
-        task_id = AsanaExtractTaskIdAction.run(task_url: task_url)
+        task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
         automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
         if is_scheduled_release
           assignee_id = AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)

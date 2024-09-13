@@ -23,7 +23,7 @@ module Fastlane
           return
         end
 
-        task_id = AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
+        task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url) if task_url
 
         if template_name.to_s.empty?
           text = "#{comment}\n\nWorkflow URL: #{workflow_url}"

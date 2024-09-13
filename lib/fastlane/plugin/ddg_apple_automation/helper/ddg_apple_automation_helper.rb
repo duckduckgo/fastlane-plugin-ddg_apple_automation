@@ -1,5 +1,6 @@
 require "fastlane_core/configuration/config_item"
 require "fastlane_core/ui/ui"
+require_relative "github_actions_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -7,6 +8,7 @@ module Fastlane
   module Helper
     class DdgAppleAutomationHelper
       ASANA_APP_URL = "https://app.asana.com/0/0"
+      ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
       ERROR_GITHUB_TOKEN_NOT_SET = "GITHUB_TOKEN is not set"
 
@@ -16,6 +18,16 @@ module Fastlane
           return
         end
         "#{ASANA_APP_URL}/#{task_id}/f"
+      end
+
+      def self.extract_asana_task_id(task_url)
+        if (match = task_url.match(ASANA_TASK_URL_REGEX))
+          task_id = match[1]
+          Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
+          task_id
+        else
+          UI.user_error!("URL has incorrect format (attempted to match #{ASANA_TASK_URL_REGEX})")
+        end
       end
 
       def self.path_for_asset_file(file)

@@ -12,19 +12,17 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     end
 
     it "does not call task id extraction if task id provided" do
-      allow(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id)
       allow(@asana_client_stories).to receive(:create_story_for_task).and_return(double)
       test_action(task_id: "123", comment: "comment")
-      expect(Fastlane::Actions::AsanaExtractTaskIdAction).not_to have_received(:run)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).not_to have_received(:extract_asana_task_id)
     end
 
     it "extracts task id if task id not provided" do
       allow(@asana_client_stories).to receive(:create_story_for_task).and_return(double)
-      allow(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id)
       test_action(task_url: "https://app.asana.com/0/753241/9999", comment: "comment")
-      expect(Fastlane::Actions::AsanaExtractTaskIdAction).to have_received(:run).with(
-        task_url: "https://app.asana.com/0/753241/9999"
-      )
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:extract_asana_task_id).with("https://app.asana.com/0/753241/9999")
     end
 
     it "shows error if both task id and task url are not provided" do

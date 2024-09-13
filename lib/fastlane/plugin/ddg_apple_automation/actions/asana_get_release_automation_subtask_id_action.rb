@@ -13,7 +13,7 @@ module Fastlane
         task_url = params[:task_url]
         token = params[:asana_access_token]
 
-        task_id = AsanaExtractTaskIdAction.run(task_url: task_url, asana_access_token: token)
+        task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
 
         # Fetch release task assignee and set GHA output.
         # This is to match current GHA action behavior.

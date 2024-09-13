@@ -14,7 +14,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
 
       allow(Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction).to receive(:run).and_return(automation_subtask_id)
-      allow(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run).and_return(task_id)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).and_return(task_id)
       allow(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).and_return(assignee_id)
       allow(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).and_return(assignee_id)
       allow(@asana_client_tasks).to receive(:add_followers_for_task)
@@ -22,7 +22,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
     end
 
     it "extracts assignee id from release task when is scheduled release" do
-      expect(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run).with(task_url: task_url)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).with(task_url)
       expect(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).with(
         task_id: task_id,
         asana_access_token: anything

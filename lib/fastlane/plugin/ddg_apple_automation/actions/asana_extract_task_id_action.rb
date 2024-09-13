@@ -6,19 +6,8 @@ require_relative "../helper/github_actions_helper"
 module Fastlane
   module Actions
     class AsanaExtractTaskIdAction < Action
-      TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
-      ERROR_MESSAGE = "URL has incorrect format (attempted to match #{TASK_URL_REGEX})"
-
       def self.run(params)
-        task_url = params[:task_url]
-
-        if (match = task_url.match(TASK_URL_REGEX))
-          task_id = match[1]
-          Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
-          task_id
-        else
-          UI.user_error!(ERROR_MESSAGE)
-        end
+        Helper::DdgAppleAutomationHelper.extract_asana_task_id(params[:task_url])
       end
 
       def self.description
