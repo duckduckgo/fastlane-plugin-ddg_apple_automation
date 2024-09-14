@@ -13,7 +13,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       allow(Asana::Client).to receive(:new).and_return(asana_client)
       allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
 
-      allow(Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction).to receive(:run).and_return(automation_subtask_id)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_release_automation_subtask_id).and_return(automation_subtask_id)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).and_return(task_id)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_assignee).and_return(assignee_id)
       allow(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).and_return(assignee_id)

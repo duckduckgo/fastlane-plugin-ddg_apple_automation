@@ -17,7 +17,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).and_return(task_id)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_assignee).and_return(assignee_id)
-      allow(Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction).to receive(:run).with(task_url: task_url, asana_access_token: anything).and_return(automation_subtask_id)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_release_automation_subtask_id).with(task_url, anything).and_return(automation_subtask_id)
       allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:fetch_assignee_id).and_return(assignee_id)
       allow(@asana_client_tasks).to receive(:create_subtask_for_task)
 

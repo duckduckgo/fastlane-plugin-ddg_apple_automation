@@ -3,37 +3,12 @@ require "fastlane_core/configuration/config_item"
 require "time"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
-require_relative "asana_extract_task_id_action"
-require_relative "asana_extract_task_assignee_action"
 
 module Fastlane
   module Actions
     class AsanaGetReleaseAutomationSubtaskIdAction < Action
       def self.run(params)
-        task_url = params[:task_url]
-        token = params[:asana_access_token]
-
-        task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
-
-        # Fetch release task assignee and set GHA output.
-        # This is to match current GHA action behavior.
-        # TODO: To be reworked for local execution.
-        AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
-
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, token)
-        end
-
-        begin
-          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["name", "created_at"] })
-        rescue StandardError => e
-          UI.user_error!("Failed to fetch 'Automation' subtasks for task #{task_id}: #{e}")
-          return
-        end
-
-        automation_subtask_id = find_oldest_automation_subtask(subtasks)&.gid
-        Helper::GitHubActionsHelper.set_output("asana_automation_task_id", automation_subtask_id)
-        automation_subtask_id
+        Helper::DdgAppleAutomationHelper.get_release_automation_subtask_id(params[:task_url], params[:asana_access_token])
       end
 
       def self.description
@@ -65,12 +40,6 @@ module Fastlane
 
       def self.is_supported?(platform)
         true
-      end
-
-      def self.find_oldest_automation_subtask(subtasks)
-        subtasks
-          .find_all { |task| task.name == 'Automation' }
-          &.min_by { |task| Time.parse(task.created_at) }
       end
     end
   end

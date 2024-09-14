@@ -3,7 +3,6 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "asana_add_comment_action"
-require_relative "asana_get_release_automation_subtask_id_action"
 require_relative "asana_get_user_id_for_github_handle_action"
 
 module Fastlane
@@ -18,7 +17,7 @@ module Fastlane
         github_handle = params[:github_handle]
         args = params[:template_args]
 
-        automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
+        automation_subtask_id = Helper::DdgAppleAutomationHelper.get_release_automation_subtask_id(task_url, token)
 
         if is_scheduled_release
           task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)

@@ -48,6 +48,34 @@ module Fastlane
         assignee_id
       end
 
+      def self.get_release_automation_subtask_id(task_url, asana_access_token)
+        task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
+
+        # Fetch release task assignee and set GHA output.
+        # This is to match current GHA action behavior.
+        # TODO: To be reworked for local execution.
+        Helper::DdgAppleAutomationHelper.extract_asana_task_assignee(task_id, asana_access_token)
+
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+        end
+
+        begin
+          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["name", "created_at"] })
+        rescue StandardError => e
+          UI.user_error!("Failed to fetch 'Automation' subtasks for task #{task_id}: #{e}")
+          return
+        end
+
+        # Find oldest 'Automation' subtask
+        automation_subtask_id = subtasks
+                                .find_all { |task| task.name == 'Automation' }
+                                &.min_by { |task| Time.parse(task.created_at) }
+                                &.gid
+        Helper::GitHubActionsHelper.set_output("asana_automation_task_id", automation_subtask_id)
+        automation_subtask_id
+      end
+
       def self.path_for_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
       end

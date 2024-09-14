@@ -3,7 +3,6 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require "erb"
 require_relative "../helper/ddg_apple_automation_helper"
-require_relative "asana_extract_task_id_action"
 
 module Fastlane
   module Actions
