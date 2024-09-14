@@ -89,6 +89,19 @@ module Fastlane
         end
       end
 
+      def self.upload_file_to_asana_task(task_id, file_path, asana_access_token)
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+        end
+
+        begin
+          asana_client.tasks.find_by_id(task_id).attach(filename: file_path, mime: "application/octet-stream")
+        rescue StandardError => e
+          UI.user_error!("Failed to upload file to Asana task: #{e}")
+          return
+        end
+      end
+
       def self.path_for_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
       end

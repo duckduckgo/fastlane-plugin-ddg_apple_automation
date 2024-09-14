@@ -7,20 +7,7 @@ module Fastlane
   module Actions
     class AsanaUploadAction < Action
       def self.run(params)
-        task_id = params[:task_id]
-        token = params[:asana_access_token]
-        file_name = params[:file_name]
-
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, token)
-        end
-
-        begin
-          asana_client.tasks.find_by_id(task_id).attach(filename: file_name, mime: "application/octet-stream")
-        rescue StandardError => e
-          UI.user_error!("Failed to upload file to Asana task: #{e}")
-          return
-        end
+        Helper::DdgAppleAutomationHelper.upload_file_to_asana_task(params[:task_id], params[:file_name], params[:asana_access_token])
       end
 
       def self.description
