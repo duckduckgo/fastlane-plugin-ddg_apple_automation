@@ -58,6 +58,45 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
   end
 
+  describe "#extract_asana_task_assignee" do
+    before do
+      @asana_client_tasks = double
+      asana_client = double("asana_client")
+      allow(Asana::Client).to receive(:new).and_return(asana_client)
+      allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
+      allow(@asana_client_tasks).to receive(:get_task)
+    end
+
+    it "returns the assignee ID and sets GHA output when Asana task is assigned" do
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+      expect(@asana_client_tasks).to receive(:get_task).and_return(
+        double(assignee: { "gid" => "67890" })
+      )
+
+      expect(extract_asana_task_assignee("12345")).to eq("67890")
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_assignee_id", "67890")
+    end
+
+    it "returns nil when Asana task is not assigned" do
+      expect(@asana_client_tasks).to receive(:get_task).and_return(
+        double(assignee: { "gid" => nil })
+      )
+
+      expect(extract_asana_task_assignee("12345")).to eq(nil)
+    end
+
+    it "shows error when failed to fetch task assignee" do
+      expect(@asana_client_tasks).to receive(:get_task).and_raise(StandardError, "API error")
+      expect(Fastlane::UI).to receive(:user_error!).with("Failed to fetch task assignee: API error")
+
+      extract_asana_task_assignee("12345")
+    end
+
+    def extract_asana_task_assignee(task_id)
+      Fastlane::Helper::DdgAppleAutomationHelper.extract_asana_task_assignee(task_id, anything)
+    end
+  end
+
   describe "#load_file" do
     it "shows error if provided file does not exist" do
       allow(Fastlane::UI).to receive(:user_error!)

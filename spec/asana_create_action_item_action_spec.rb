@@ -16,7 +16,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).and_return(task_id)
-      allow(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).and_return(assignee_id)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_assignee).and_return(assignee_id)
       allow(Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction).to receive(:run).with(task_url: task_url, asana_access_token: anything).and_return(automation_subtask_id)
       allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:fetch_assignee_id).and_return(assignee_id)
       allow(@asana_client_tasks).to receive(:create_subtask_for_task)
@@ -85,10 +85,8 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
 
   describe "#fetch_assignee_id" do
     it "extracts assignee id from release task when is scheduled release" do
-      expect(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).with(
-        task_id: task_id,
-        asana_access_token: anything
-      ).and_return(assignee_id)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_assignee)
+        .with(task_id, anything).and_return(assignee_id)
       expect(fetch_assignee_id(
                task_id: task_id,
                github_handle: github_handle,

@@ -1,5 +1,6 @@
 require "fastlane_core/configuration/config_item"
 require "fastlane_core/ui/ui"
+require "asana"
 require_relative "github_actions_helper"
 
 module Fastlane
@@ -28,6 +29,23 @@ module Fastlane
         else
           UI.user_error!("URL has incorrect format (attempted to match #{ASANA_TASK_URL_REGEX})")
         end
+      end
+
+      def self.extract_asana_task_assignee(task_id, asana_access_token)
+        client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+        end
+
+        begin
+          task = client.tasks.get_task(task_gid: task_id, options: { fields: ["assignee"] })
+        rescue StandardError => e
+          UI.user_error!("Failed to fetch task assignee: #{e}")
+          return
+        end
+
+        assignee_id = task.assignee["gid"]
+        Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
+        assignee_id
       end
 
       def self.path_for_asset_file(file)

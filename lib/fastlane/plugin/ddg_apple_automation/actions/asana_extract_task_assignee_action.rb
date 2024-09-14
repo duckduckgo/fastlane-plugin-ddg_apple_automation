@@ -8,23 +8,7 @@ module Fastlane
   module Actions
     class AsanaExtractTaskAssigneeAction < Action
       def self.run(params)
-        task_id = params[:task_id]
-        token = params[:asana_access_token]
-
-        client = Asana::Client.new do |c|
-          c.authentication(:access_token, token)
-        end
-
-        begin
-          task = client.tasks.get_task(task_gid: task_id, options: { fields: ["assignee"] })
-        rescue StandardError => e
-          UI.user_error!("Failed to fetch task assignee: #{e}")
-          return
-        end
-
-        assignee_id = task.assignee["gid"]
-        Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
-        assignee_id
+        Helper::DdgAppleAutomationHelper.extract_asana_task_assignee(params[:task_id], params[:asana_access_token])
       end
 
       def self.description

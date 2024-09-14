@@ -5,8 +5,6 @@ require_relative "../helper/ddg_apple_automation_helper"
 require_relative "asana_add_comment_action"
 require_relative "asana_get_release_automation_subtask_id_action"
 require_relative "asana_get_user_id_for_github_handle_action"
-require_relative "asana_extract_task_id_action"
-require_relative "asana_extract_task_assignee_action"
 
 module Fastlane
   module Actions
@@ -24,7 +22,7 @@ module Fastlane
 
         if is_scheduled_release
           task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
-          assignee_id = AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
+          assignee_id = Helper::DdgAppleAutomationHelper.extract_asana_task_assignee(task_id, token)
         else
           if github_handle.to_s.empty?
             UI.user_error!("Github handle cannot be empty for manual release")
