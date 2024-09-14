@@ -202,6 +202,404 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       expect(notes).to eq(expected_notes)
     end
 
+    it "processes appcast-failed-public template" do
+      expected_name = "Generate appcast2.xml for 1.0.0-123 public release and upload assets to S3"
+      expected_notes = <<~EXPECTED
+        <body>
+          Publishing 1.0.0-123 release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
+          <ol>
+            <li>Create a new file called <code>release-notes.txt</code> on your disk.
+              <ul>
+                <li>Add each release note as a separate line and don't add bullet points (•) – the script will add them automatically.</li>
+              </ul></li>
+            <li>Run <code>appcastManager</code>:
+              <ul>
+                <li><code>./scripts/appcast_manager/appcastManager.swift --release-to-public-channel --version 1.0.0.123 --release-notes release-notes.txt</code></li>
+              </ul></li>
+            <li>Verify that the new build is in the appcast file with the latest release notes, the phased rollout tag (below) and no internal channel tag:
+              <ul>
+                <li><code>&lt;sparkle:phasedRolloutInterval&gt;43200&lt;/sparkle:phasedRolloutInterval&gt;</code></li>
+              </ul></li>
+            <li>Run <code>upload_to_s3.sh</code> script:
+              <ul>
+                <li><code>./scripts/upload_to_s3/upload_to_s3.sh --run --overwrite-duckduckgo-dmg 1.0.0.123</code></li>
+              </ul></li>
+          </ol>
+          When done, please verify that "Check for Updates" works correctly:
+          <ol>
+            <li>Launch a debug version of the app with an old version number.</li>
+            <li>Make sure you're not identified as an internal user in the app.</li>
+            <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
+            <li>Verify that you're being offered to update to 1.0.0-123.</li>
+            <li>Verify that the update works.</li>
+          </ol><br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("appcast-failed-public", {
+        "tag" => "1.0.0-123",
+        "version" => "1.0.0.123",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes delete-branch-failed template" do
+      expected_name = "Delete release/1.0.0 branch"
+      expected_notes = <<~EXPECTED
+        <body>
+          The <code>1.0.0-123</code> public release has been successfully tagged and published in GitHub releases,#{' '}
+          but deleting <code>release/1.0.0</code> branch failed. Please delete it manually:
+          <ul>
+            <li><code>git push origin --delete release/1.0.0</code></li>
+          </ul>
+          Complete this task when ready, or if the release branch has already been deleted.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("delete-branch-failed", {
+        "branch" => "release/1.0.0",
+        "tag" => "1.0.0-123",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes internal-release-tag-failed template" do
+      expected_name = "Tag release/1.1.0 branch and create GitHub release"
+      expected_notes = <<~EXPECTED
+        <body>
+          Failed to tag the release with <code>1.1.0-123</code> tag.<br>
+          Please follow instructions below to tag the branch, make GitHub release and merge release branch to <code>main</code> manually.<br>
+          <br>
+          Issue the following git commands to tag the release and merge the branch:
+          <ul>
+            <li><code>git fetch origin</code></li>
+            <li><code>git checkout release/1.1.0</code> switch to the release branch</li>
+            <li><code>git pull origin release/1.1.0</code> pull latest changes</li>
+            <li><code>git tag 1.1.0-123</code> tag the release</li>
+            <li><code>git push origin 1.1.0-123</code> push the tag</li>
+            <li><code>git checkout main</code> switch to main</li>
+            <li><code>git pull origin main</code> pull the latest code</li>
+            <li><code>git merge release/1.1.0</code>
+              <ul>
+                <li>Resolve conflicts as needed</li>
+                <li>When merging a hotfix branch into an internal release branch, you will get conflicts in version and build number xcconfig files:
+                  <ul>
+                    <li>In the version file: accept the internal version number (higher).</li>
+                    <li>In the build number file: accept the hotfix build number (higher). This step is very important in order to calculate the build number of the next internal release correctly.</li>
+                  </ul></li>
+              </ul></li>
+            <li><code>git push origin main</code> push merged branch</li>
+          </ul><br>
+          To create GitHub release:
+          <ul>
+            <li>Set up GH CLI if you haven't yet: <a data-asana-gid='1203791243007683'/></li>
+            <li>Run the following command:
+            <ul>
+              <li><code>gh release create 1.1.0-123 --generate-notes --prerelease --notes-start-tag 1.0.0</code></li>
+            </ul></li>
+          </ul><br>
+          Complete this task when ready and proceed with testing the build. If you're bumping an internal release, you should get another task asking you to publish the release in Sparkle.#{' '}
+          Look for other tasks in <a data-asana-gid='12345'/> task and handle them as needed.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("internal-release-tag-failed", {
+        "branch" => "release/1.1.0",
+        "tag" => "1.1.0-123",
+        "base_branch" => "main",
+        "last_release_tag" => "1.0.0",
+        "automation_task_id" => "12345",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes merge-failed template" do
+      expected_name = "Merge release/1.0.0 to main"
+      expected_notes = <<~EXPECTED
+        <body>
+          The <code>1.0.0-123</code> release has been successfully tagged and published in GitHub releases,#{' '}
+          but merging to <code>main</code> failed. Please resolve conflicts and merge <code>release/1.0.0</code> to <code>main</code> manually.<br>
+          <br>
+          Issue the following git commands:
+          <ul>
+            <li><code>git fetch origin</code></li>
+            <li><code>git checkout release/1.0.0</code> switch to the release branch</li>
+            <li><code>git pull origin release/1.0.0</code> pull latest changes</li>
+            <li><code>git checkout main</code> switch to main</li>
+            <li><code>git pull origin main</code> pull the latest code</li>
+            <li><code>git merge release/1.0.0</code>
+              <ul>
+                <li>Resolve conflicts as needed</li>
+                <li>When merging a hotfix branch into an internal release branch, you will get conflicts in version and build number xcconfig files:
+                  <ul>
+                    <li>In the version file: accept the internal version number (higher).</li>
+                    <li>In the build number file: accept the hotfix build number (higher). This step is very important in order to calculate the build number of the next internal release correctly.</li>
+                  </ul></li>
+              </ul></li>
+            <li><code>git push origin main</code> push merged branch</li>
+          </ul>
+          Complete this task when ready and proceed with testing the build.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("merge-failed", {
+        "branch" => "release/1.0.0",
+        "base_branch" => "main",
+        "tag" => "1.0.0-123",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes public-release-tag-failed template" do
+      expected_name = "Tag release/1.1.0 branch, delete it, and create GitHub release"
+      expected_notes = <<~EXPECTED
+        <body>
+          Failed to tag the release with <code>1.1.0-123</code> tag.<br>
+          Please follow instructions below to tag the branch, make GitHub release and delete the release branch manually.
+          <ul>
+            <li>If the tag has already been created, please proceed with creating GitHub release and deleting the branch.</li>
+            <li>If both tag and GitHub release have already been created, please close this task already.</li>
+          </ul><br>
+          Issue the following git commands to tag the release and delete the branch:
+          <ul>
+            <li><code>git fetch origin</code></li>
+            <li><code>git checkout release/1.1.0</code> switch to the release branch</li>
+            <li><code>git pull origin release/1.1.0</code> pull latest changes</li>
+            <li><code>git tag 1.1.0-123</code> tag the release</li>
+            <li><code>git push origin 1.1.0-123</code> push the tag</li>
+            <li><code>git checkout main</code> switch to main</li>
+            <li><code>git push origin --delete release/1.1.0</code> delete the release branch</li>
+          </ul><br>
+          To create GitHub release:
+          <ul>
+            <li>Set up GH CLI if you haven't yet: <a data-asana-gid='1203791243007683'/></li>
+            <li>Run the following command:
+            <ul>
+              <li><code>gh release create 1.1.0-123 --generate-notes --latest --notes-start-tag 1.0.0</code></li>
+            </ul></li>
+          </ul><br>
+          Complete this task when ready.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("public-release-tag-failed", {
+        "branch" => "release/1.1.0",
+        "tag" => "1.1.0-123",
+        "base_branch" => "main",
+        "last_release_tag" => "1.0.0",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes run-publish-dmg-release template" do
+      expected_name = "Run Publish DMG Release GitHub Actions workflow"
+      expected_notes = <<~EXPECTED
+        <body>
+          <h1>Using GH CLI</h1>
+          Run the following command:<br>
+          <br>
+          <code>gh workflow run publish_dmg_release.yml --ref release/1.1.0 -f asana-task-url=https://app.asana.com/0/0/12345/f -f tag=1.1.0-123 -f release-type=internal</code>
+          <h1>Using GitHub web UI</h1>
+          <ol>
+            <li>Open <a href='https://github.com/duckduckgo/macos-browser/actions/workflows/publish_dmg_release.yml'>Publish DMG Release workflow page</a>.</li>
+            <li>Click "Run Workflow" and fill in the form as follows:
+              <ul>
+                <li><b>Branch</b> <code>release/1.1.0</code></li>
+                <li><b>Asana release task URL</b> <code>https://app.asana.com/0/0/12345/f</code></li>
+                <li><b>Tag to publish</b> <code>1.1.0-123</code></li>
+                <li><b>Release Type</b> <code>internal</code></li>
+              </ul></li>
+          </ol><br>
+          The GitHub Action workflow does the following:
+          <ul>
+            <li>Fetches the release DMG from staticcdn.duckduckgo.com</li>
+            <li>Extracts release notes from the Asana task description</li>
+            <li>Runs <code>appcastManager</code> to generate the new appcast2.xml file</li>
+            <li>Stores the diff against previous version and the copy of the old appcast2.xml file</li>
+            <li>Uploads new appcast, DMG and binary delta files to S3</li>
+            <li>On success, creates a task for the release DRI to validate that "Check for Updates" works, with instructions on how to revert that change if "Check for Updates" is broken.</li>
+            <li>On failure, creates a task for the release DRI with manual instructions on generating the appcast and uploading to S3.</li>
+          </ul><br>
+          Complete this task when ready and proceed with testing the build. If GitHub Actions is unavailable, you'll find manual instructions in the <em>Run Publish DMG Release GitHub Actions workflow</em> subtask of <em>Make Internal Release</em> task.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("run-publish-dmg-release", {
+        "branch" => "release/1.1.0",
+        "asana_task_url" => "https://app.asana.com/0/0/12345/f",
+        "tag" => "1.1.0-123",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes update-asana-for-public-release template" do
+      expected_name = "Move release task and included items to \"Done\" section in macOS App Board and close them if possible"
+      expected_notes = <<~EXPECTED
+        <body>
+          Automation failed to update Asana for the public release. Please follow the steps below.
+          <ol>
+            <li>Open <a data-asana-gid='1234567890'/> and select the List view</li>
+            <li>Scroll to the "Validation" section.</li>
+            <li>Select all the tasks in that section.</li>
+            <li>Drag and drop all the selected tasks to the "Done" section</li>
+            <li>Close all tasks that are not incidents and don't belong to <a data-asana-gid='72649045549333'/> project, including the release task itself.</li>
+          </ol><br>
+          Complete this task when ready.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("update-asana-for-public-release", {
+        "app_board_asana_project_id" => "1234567890",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes validate-check-for-updates-internal template" do
+      expected_name = "Validate that 'Check For Updates' upgrades to 1.1.0 for internal users"
+      expected_notes = <<~EXPECTED
+        <body>
+          <h1>Build 1.1.0 has been released internally via Sparkle 🎉</h1>
+          Please verify that "Check for Updates" works correctly:
+          <ol>
+            <li>Launch a debug version of the app with an old version number.</li>
+            <li>Identify as an internal user in the app.</li>
+            <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
+            <li>Verify that you're being offered to update to 1.1.0.</li>
+            <li>Verify that the update works.</li>
+          </ol>
+          <h1>🚨In case "Check for Updates" is broken</h1>
+          You can restore previous version of the appcast2.xml:
+          <ol>
+            <li>Download the appcast-1.0.0.xml file attached to this task.</li>
+            <li>Log in to AWS session:
+              <ul>
+                <li><code>aws --profile ddg-macos sso login</code></li>
+              </ul></li>
+            <li>Overwrite appcast2.xml with the old version:
+              <ul>
+                <li><code>aws --profile ddg-macos s3 cp appcast-1.0.0.xml s3://duckduckgo-releases/macos-browser/appcast2.xml --acl public-read</code></li>
+              </ul></li>
+          </ol><br>
+          <hr>
+          <h1>Summary of automated changes</h1>
+          <h2>Changes to appcast2.xml</h2>
+          See the attached <em>appcast-1.1.0-123.patch</em> file.
+          <h2>Release notes</h2>
+          See the attached <em>release-notes.txt</em> file for release notes extracted automatically from <a data-asana-gid='12345' data-asana-dynamic='false'>the release task</a> description.
+          <h2>List of files uploaded to S3</h2>
+          <ol>
+            <li>appcast-1.1.0-123.xml</li><li>duckduckgo-1.1.0-123.dmg</li><li>duckduckgo-1.1.0-123.delta</li>
+          </ol><br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("validate-check-for-updates-internal", {
+        "tag" => "1.1.0",
+        "old_appcast_name" => "appcast-1.0.0.xml",
+        "release_bucket_name" => "duckduckgo-releases",
+        "release_bucket_prefix" => "macos-browser",
+        "appcast_patch_name" => "appcast-1.1.0-123.patch",
+        "release_notes_file" => "release-notes.txt",
+        "release_task_id" => "12345",
+        "files_uploaded" => "<li>appcast-1.1.0-123.xml</li><li>duckduckgo-1.1.0-123.dmg</li><li>duckduckgo-1.1.0-123.delta</li>",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes validate-check-for-updates-public template" do
+      expected_name = "Validate that 'Check For Updates' upgrades to 1.1.0"
+      expected_notes = <<~EXPECTED
+        <body>
+          <h1>Build 1.1.0 has been released publicly via Sparkle 🎉</h1>
+          Please verify that "Check for Updates" works correctly:
+          <ol>
+            <li>Launch a debug version of the app with an old version number.</li>
+            <li>Make sure you're not identified as an internal user in the app.</li>
+            <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
+            <li>Verify that you're being offered to update to 1.1.0.</li>
+            <li>Verify that the update works.</li>
+          </ol>
+          <h1>🚨In case "Check for Updates" is broken</h1>
+          You can restore previous version of the appcast2.xml:
+          <ol>
+            <li>Download the appcast-1.0.0.xml file attached to this task.</li>
+            <li>Log in to AWS session:
+              <ul>
+                <li><code>aws --profile ddg-macos sso login</code></li>
+              </ul></li>
+            <li>Overwrite appcast2.xml with the old version:
+              <ul>
+                <li><code>aws --profile ddg-macos s3 cp appcast-1.0.0.xml s3://duckduckgo-releases/macos-browser/appcast2.xml --acl public-read</code></li>
+              </ul></li>
+          </ol><br>
+          <hr>
+          <h1>Summary of automated changes</h1>
+          <h2>Changes to appcast2.xml</h2>
+          See the attached <em>appcast-1.1.0-123.patch</em> file.
+          <h2>Release notes</h2>
+          See the attached <em>release-notes.txt</em> file for release notes extracted automatically from <a data-asana-gid='12345' data-asana-dynamic='false'>the release task</a> description.
+          <h2>List of files uploaded to S3</h2>
+          <ol>
+            <li>appcast-1.1.0-123.xml</li><li>duckduckgo-1.1.0-123.dmg</li><li>duckduckgo-1.1.0-123.delta</li>
+          </ol><br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("validate-check-for-updates-public", {
+        "tag" => "1.1.0",
+        "old_appcast_name" => "appcast-1.0.0.xml",
+        "release_bucket_name" => "duckduckgo-releases",
+        "release_bucket_prefix" => "macos-browser",
+        "appcast_patch_name" => "appcast-1.1.0-123.patch",
+        "release_notes_file" => "release-notes.txt",
+        "release_task_id" => "12345",
+        "files_uploaded" => "<li>appcast-1.1.0-123.xml</li><li>duckduckgo-1.1.0-123.dmg</li><li>duckduckgo-1.1.0-123.delta</li>",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
     def process_yaml_template(template_name, args)
       Fastlane::Actions::AsanaCreateActionItemAction.process_yaml_template(template_name, args)
     end
