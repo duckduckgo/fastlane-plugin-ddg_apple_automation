@@ -17,33 +17,27 @@ module Fastlane
       def self.run(params)
         token = params[:asana_access_token]
         task_url = params[:task_url]
-        task_name = params[:task_name]
-        notes = params[:notes]
-        html_notes = params[:html_notes]
-        template_name = params[:template_name]
-        is_scheduled_release = params[:is_scheduled_release]
-        github_handle = params[:github_handle]
         args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys(&:downcase))
 
         task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
         automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
-        if is_scheduled_release
-          assignee_id = AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
-        else
-          if github_handle.to_s.empty?
-            UI.user_error!("Github handle cannot be empty for manual release")
-            return
-          end
-          assignee_id = AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle, asana_access_token: token)
-        end
+        assignee_id = fetch_assignee_id(
+          task_id: task_id,
+          github_handle: params[:github_handle],
+          asana_access_token: token,
+          is_scheduled_release: params[:is_scheduled_release]
+        )
 
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
-        if template_name
+        if (template_name = params[:template_name])
           raw_name, raw_html_notes = process_yaml_template(template_name, args)
 
           task_name = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(raw_name)
           html_notes = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(raw_html_notes)
+        else
+          task_name = params[:task_name]
+          html_notes = params[:html_notes]
         end
 
         begin
@@ -52,7 +46,7 @@ module Fastlane
             task_id: automation_subtask_id,
             assignee_id: assignee_id,
             task_name: task_name,
-            notes: notes,
+            notes: params[:notes],
             html_notes: html_notes
           )
         rescue StandardError => e
@@ -60,6 +54,18 @@ module Fastlane
         end
 
         Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid) if subtask&.gid
+      end
+
+      def self.fetch_assignee_id(task_id:, github_handle:, asana_access_token:, is_scheduled_release:)
+        if is_scheduled_release
+          AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: asana_access_token)
+        else
+          if github_handle.to_s.empty?
+            UI.user_error!("Github handle cannot be empty for manual release")
+            return
+          end
+          AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle, asana_access_token: asana_access_token)
+        end
       end
 
       def self.process_yaml_template(template_name, args)

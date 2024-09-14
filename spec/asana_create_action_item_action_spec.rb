@@ -1,12 +1,12 @@
 describe Fastlane::Actions::AsanaCreateActionItemAction do
-  describe "#run" do
-    let(:task_url) { "https://app.asana.com/4/753241/9999" }
-    let(:task_id) { "1" }
-    let(:automation_subtask_id) { "2" }
-    let(:assignee_id) { "11" }
-    let(:github_handle) { "user" }
-    let(:task_name) { "example name" }
+  let(:task_url) { "https://app.asana.com/4/753241/9999" }
+  let(:task_id) { "1" }
+  let(:automation_subtask_id) { "2" }
+  let(:assignee_id) { "11" }
+  let(:github_handle) { "user" }
+  let(:task_name) { "example name" }
 
+  describe "#run" do
     let(:parsed_yaml_content) { { 'name' => 'test task', 'html_notes' => '<p>Some notes</p>' } }
 
     before do
@@ -18,35 +18,10 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).and_return(task_id)
       allow(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).and_return(assignee_id)
       allow(Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction).to receive(:run).with(task_url: task_url, asana_access_token: anything).and_return(automation_subtask_id)
-      allow(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).and_return(assignee_id)
+      allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:fetch_assignee_id).and_return(assignee_id)
       allow(@asana_client_tasks).to receive(:create_subtask_for_task)
 
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
-    end
-
-    it "extracts assignee id from release task when is scheduled release" do
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).with(task_url)
-      expect(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).with(
-        task_id: task_id,
-        asana_access_token: anything
-      )
-      test_action(task_url: task_url, is_scheduled_release: true)
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_assignee_id", "11")
-    end
-
-    it "takes assignee id from github handle when is manual release" do
-      expect(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).with(
-        github_handle: github_handle,
-        asana_access_token: anything
-      )
-      test_action(task_url: task_url, is_scheduled_release: false, github_handle: github_handle)
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_assignee_id", "11")
-    end
-
-    it "raises an error when github handle is empty and is manual release" do
-      expect(Fastlane::UI).to receive(:user_error!).with("Github handle cannot be empty for manual release")
-      test_action(task_url: task_url, is_scheduled_release: false, github_handle: "")
-      expect(Fastlane::Helper::GitHubActionsHelper).not_to have_received(:set_output)
     end
 
     it "correctly builds payload if notes input is given" do
@@ -104,6 +79,53 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
         template_name: template_name,
         is_scheduled_release: is_scheduled_release,
         github_handle: github_handle
+      )
+    end
+  end
+
+  describe "#fetch_assignee_id" do
+    it "extracts assignee id from release task when is scheduled release" do
+      expect(Fastlane::Actions::AsanaExtractTaskAssigneeAction).to receive(:run).with(
+        task_id: task_id,
+        asana_access_token: anything
+      ).and_return(assignee_id)
+      expect(fetch_assignee_id(
+               task_id: task_id,
+               github_handle: github_handle,
+               asana_access_token: anything,
+               is_scheduled_release: true
+             )).to eq(assignee_id)
+    end
+
+    it "takes assignee id from github handle when is manual release" do
+      expect(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).with(
+        github_handle: github_handle,
+        asana_access_token: anything
+      ).and_return(assignee_id)
+      expect(fetch_assignee_id(
+               task_id: task_id,
+               github_handle: github_handle,
+               asana_access_token: anything,
+               is_scheduled_release: false
+             )).to eq(assignee_id)
+    end
+
+    it "shows error when github handle is empty and is manual release" do
+      expect(Fastlane::UI).to receive(:user_error!).with("Github handle cannot be empty for manual release")
+      fetch_assignee_id(
+        task_id: task_id,
+        github_handle: "",
+        asana_access_token: anything,
+        is_scheduled_release: false
+      )
+    end
+
+    def fetch_assignee_id(task_id:, github_handle:, asana_access_token:, is_scheduled_release:)
+      Fastlane::Actions::AsanaCreateActionItemAction.fetch_assignee_id(
+        task_id: task_id,
+        github_handle: github_handle,
+        asana_access_token: asana_access_token,
+        is_scheduled_release: is_scheduled_release
       )
     end
   end
