@@ -1,14 +1,14 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
-require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/asana_helper"
 require_relative "../helper/github_actions_helper"
 
 module Fastlane
   module Actions
     class AsanaExtractTaskAssigneeAction < Action
       def self.run(params)
-        Helper::DdgAppleAutomationHelper.extract_asana_task_assignee(params[:task_id], params[:asana_access_token])
+        Helper::AsanaHelper.extract_asana_task_assignee(params[:task_id], params[:asana_access_token])
       end
 
       def self.description

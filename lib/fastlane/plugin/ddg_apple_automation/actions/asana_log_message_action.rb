@@ -1,7 +1,7 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
-require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/asana_helper"
 require_relative "asana_add_comment_action"
 require_relative "asana_get_user_id_for_github_handle_action"
 
@@ -17,17 +17,17 @@ module Fastlane
         github_handle = params[:github_handle]
         args = params[:template_args]
 
-        automation_subtask_id = Helper::DdgAppleAutomationHelper.get_release_automation_subtask_id(task_url, token)
+        automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
 
         if is_scheduled_release
-          task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
-          assignee_id = Helper::DdgAppleAutomationHelper.extract_asana_task_assignee(task_id, token)
+          task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
+          assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(task_id, token)
         else
           if github_handle.to_s.empty?
             UI.user_error!("Github handle cannot be empty for manual release")
             return
           end
-          assignee_id = Helper::DdgAppleAutomationHelper.get_asana_user_id_for_github_handle(github_handle)
+          assignee_id = Helper::AsanaHelper.get_asana_user_id_for_github_handle(github_handle)
         end
 
         asana_client = Asana::Client.new do |c|

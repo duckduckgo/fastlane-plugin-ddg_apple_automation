@@ -3,6 +3,7 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require "erb"
 require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/asana_helper"
 
 module Fastlane
   module Actions
@@ -24,14 +25,14 @@ module Fastlane
           return
         end
 
-        task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url) if task_url
+        task_id = Helper::AsanaHelper.extract_asana_task_id(task_url) if task_url
 
         if template_name.to_s.empty?
           text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
           create_story(asana_access_token, task_id, text: text)
         else
           html_text = process_template(template_name, args)
-          sanitized_html_text = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(html_text)
+          sanitized_html_text = Helper::AsanaHelper.sanitize_asana_html_notes(html_text)
           create_story(asana_access_token, task_id, html_text: sanitized_html_text)
         end
       end

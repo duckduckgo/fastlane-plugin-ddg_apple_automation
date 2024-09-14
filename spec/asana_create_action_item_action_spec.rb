@@ -15,9 +15,9 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       allow(Asana::Client).to receive(:new).and_return(asana_client)
       allow(asana_client).to receive(:tasks).and_return(@asana_client_tasks)
 
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).and_return(task_id)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_assignee).and_return(assignee_id)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_release_automation_subtask_id).with(task_url, anything).and_return(automation_subtask_id)
+      allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_id).and_return(task_id)
+      allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_assignee).and_return(assignee_id)
+      allow(Fastlane::Helper::AsanaHelper).to receive(:get_release_automation_subtask_id).with(task_url, anything).and_return(automation_subtask_id)
       allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:fetch_assignee_id).and_return(assignee_id)
       allow(@asana_client_tasks).to receive(:create_subtask_for_task)
 
@@ -85,7 +85,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
 
   describe "#fetch_assignee_id" do
     it "extracts assignee id from release task when is scheduled release" do
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_assignee)
+      expect(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_assignee)
         .with(task_id, anything).and_return(assignee_id)
       expect(fetch_assignee_id(
                task_id: task_id,
@@ -96,7 +96,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     end
 
     it "takes assignee id from github handle when is manual release" do
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_asana_user_id_for_github_handle).with(github_handle).and_return(assignee_id)
+      expect(Fastlane::Helper::AsanaHelper).to receive(:get_asana_user_id_for_github_handle).with(github_handle).and_return(assignee_id)
       expect(fetch_assignee_id(
                task_id: task_id,
                github_handle: github_handle,

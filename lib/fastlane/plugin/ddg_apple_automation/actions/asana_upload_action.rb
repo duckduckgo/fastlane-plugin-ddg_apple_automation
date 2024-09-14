@@ -1,13 +1,13 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
-require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/asana_helper"
 
 module Fastlane
   module Actions
     class AsanaUploadAction < Action
       def self.run(params)
-        Helper::DdgAppleAutomationHelper.upload_file_to_asana_task(params[:task_id], params[:file_name], params[:asana_access_token])
+        Helper::AsanaHelper.upload_file_to_asana_task(params[:task_id], params[:file_name], params[:asana_access_token])
       end
 
       def self.description

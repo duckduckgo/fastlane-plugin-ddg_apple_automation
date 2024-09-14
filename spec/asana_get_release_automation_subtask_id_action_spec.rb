@@ -4,7 +4,7 @@ describe Fastlane::Actions::AsanaGetReleaseAutomationSubtaskIdAction do
       task_url = "https://app.asana.com/0/0/12345/f"
       asana_access_token = "secret-token"
       automation_subtask_id = "67890"
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_release_automation_subtask_id)
+      expect(Fastlane::Helper::AsanaHelper).to receive(:get_release_automation_subtask_id)
         .with(task_url, asana_access_token).and_return(automation_subtask_id)
       expect(test_action(task_url, asana_access_token)).to eq(automation_subtask_id)
     end

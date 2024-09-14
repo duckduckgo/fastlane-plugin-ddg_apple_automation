@@ -1,14 +1,14 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "yaml"
-require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/asana_helper"
 require_relative "../helper/github_actions_helper"
 
 module Fastlane
   module Actions
     class AsanaGetUserIdForGithubHandleAction < Action
       def self.run(params)
-        Helper::DdgAppleAutomationHelper.get_asana_user_id_for_github_handle(params[:github_handle])
+        Helper::AsanaHelper.get_asana_user_id_for_github_handle(params[:github_handle])
       end
 
       def self.description

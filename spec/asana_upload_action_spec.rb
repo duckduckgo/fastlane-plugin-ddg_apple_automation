@@ -4,7 +4,7 @@ describe Fastlane::Actions::AsanaUploadAction do
       task_id = "12345"
       file_name = "file.txt"
       asana_access_token = "secret-token"
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:upload_file_to_asana_task)
+      expect(Fastlane::Helper::AsanaHelper).to receive(:upload_file_to_asana_task)
         .with(task_id, file_name, asana_access_token)
       test_action(task_id, file_name, asana_access_token)
     end

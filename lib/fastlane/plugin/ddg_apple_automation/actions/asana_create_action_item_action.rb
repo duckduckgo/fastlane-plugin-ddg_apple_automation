@@ -3,6 +3,7 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require "erb"
 require "yaml"
+require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 require_relative "asana_add_comment_action"
@@ -16,8 +17,8 @@ module Fastlane
         task_url = params[:task_url]
         args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys(&:downcase))
 
-        task_id = Helper::DdgAppleAutomationHelper.extract_asana_task_id(task_url)
-        automation_subtask_id = Helper::DdgAppleAutomationHelper.get_release_automation_subtask_id(task_url, token)
+        task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
+        automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
         assignee_id = fetch_assignee_id(
           task_id: task_id,
           github_handle: params[:github_handle],
@@ -30,8 +31,8 @@ module Fastlane
         if (template_name = params[:template_name])
           raw_name, raw_html_notes = process_yaml_template(template_name, args)
 
-          task_name = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(raw_name)
-          html_notes = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(raw_html_notes)
+          task_name = Helper::AsanaHelper.sanitize_asana_html_notes(raw_name)
+          html_notes = Helper::AsanaHelper.sanitize_asana_html_notes(raw_html_notes)
         else
           task_name = params[:task_name]
           html_notes = params[:html_notes]
@@ -55,13 +56,13 @@ module Fastlane
 
       def self.fetch_assignee_id(task_id:, github_handle:, asana_access_token:, is_scheduled_release:)
         if is_scheduled_release
-          Helper::DdgAppleAutomationHelper.extract_asana_task_assignee(task_id, asana_access_token)
+          Helper::AsanaHelper.extract_asana_task_assignee(task_id, asana_access_token)
         else
           if github_handle.to_s.empty?
             UI.user_error!("Github handle cannot be empty for manual release")
             return
           end
-          Helper::DdgAppleAutomationHelper.get_asana_user_id_for_github_handle(github_handle)
+          Helper::AsanaHelper.get_asana_user_id_for_github_handle(github_handle)
         end
       end
 

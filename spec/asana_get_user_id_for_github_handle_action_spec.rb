@@ -3,7 +3,7 @@ describe Fastlane::Actions::AsanaGetUserIdForGithubHandleAction do
     it "calls helper" do
       github_handle = "user"
       asana_user_id = "12345"
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_asana_user_id_for_github_handle)
+      expect(Fastlane::Helper::AsanaHelper).to receive(:get_asana_user_id_for_github_handle)
         .with(github_handle).and_return(asana_user_id)
       expect(test_action(github_handle)).to eq(asana_user_id)
     end
