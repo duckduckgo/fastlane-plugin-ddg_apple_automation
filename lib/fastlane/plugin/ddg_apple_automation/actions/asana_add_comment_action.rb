@@ -31,16 +31,19 @@ module Fastlane
           text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
           create_story(asana_access_token, task_id, text: text)
         else
-          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html.erb")
-          template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
-          return unless template_content
-
-          erb_template = ERB.new(template_content)
-          html_text = erb_template.result(binding)
-
-          html_text = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(html_text)
-          create_story(asana_access_token, task_id, html_text: html_text)
+          html_text = process_template(template_name, args)
+          sanitized_html_text = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(html_text)
+          create_story(asana_access_token, task_id, html_text: sanitized_html_text)
         end
+      end
+
+      def self.process_template(template_name, args)
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html.erb")
+        template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
+        return unless template_content
+
+        erb_template = ERB.new(template_content)
+        erb_template.result(binding)
       end
 
       def self.description

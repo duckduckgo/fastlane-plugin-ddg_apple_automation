@@ -94,17 +94,17 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       test_action(task_url: task_url, task_name: task_name, notes: "notes", is_scheduled_release: true)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_new_task_id", "42")
     end
-  end
 
-  def test_action(task_url:, task_name: nil, notes: nil, html_notes: nil, template_name: nil, is_scheduled_release: false, github_handle: nil)
-    Fastlane::Actions::AsanaCreateActionItemAction.run(
-      task_url: task_url,
-      task_name: task_name,
-      notes: notes,
-      html_notes: html_notes,
-      template_name: template_name,
-      is_scheduled_release: is_scheduled_release,
-      github_handle: github_handle
-    )
+    def test_action(task_url:, task_name: nil, notes: nil, html_notes: nil, template_name: nil, is_scheduled_release: false, github_handle: nil)
+      Fastlane::Actions::AsanaCreateActionItemAction.run(
+        task_url: task_url,
+        task_name: task_name,
+        notes: notes,
+        html_notes: html_notes,
+        template_name: template_name,
+        is_scheduled_release: is_scheduled_release,
+        github_handle: github_handle
+      )
+    end
   end
 end
