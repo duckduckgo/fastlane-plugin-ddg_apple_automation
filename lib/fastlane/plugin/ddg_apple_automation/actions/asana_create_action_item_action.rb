@@ -61,7 +61,7 @@ module Fastlane
             UI.user_error!("Github handle cannot be empty for manual release")
             return
           end
-          AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle, asana_access_token: asana_access_token)
+          Helper::DdgAppleAutomationHelper.get_asana_user_id_for_github_handle(github_handle)
         end
       end
 

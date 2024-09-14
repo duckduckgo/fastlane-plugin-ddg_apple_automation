@@ -76,6 +76,19 @@ module Fastlane
         automation_subtask_id
       end
 
+      def self.get_asana_user_id_for_github_handle(github_handle)
+        mapping_file = File.expand_path('../assets/github-asana-user-id-mapping.yml', __dir__)
+        user_mapping = YAML.load_file(mapping_file)
+        asana_user_id = user_mapping[github_handle]
+
+        if asana_user_id.nil? || asana_user_id.to_s.empty?
+          UI.message("Asana User ID not found for GitHub handle: #{github_handle}")
+        else
+          Helper::GitHubActionsHelper.set_output("asana_user_id", asana_user_id)
+          asana_user_id
+        end
+      end
+
       def self.path_for_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
       end

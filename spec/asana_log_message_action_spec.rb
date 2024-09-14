@@ -16,7 +16,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_release_automation_subtask_id).and_return(automation_subtask_id)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_id).and_return(task_id)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:extract_asana_task_assignee).and_return(assignee_id)
-      allow(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).and_return(assignee_id)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_asana_user_id_for_github_handle).and_return(assignee_id)
       allow(@asana_client_tasks).to receive(:add_followers_for_task)
       allow(Fastlane::Actions::AsanaAddCommentAction).to receive(:run)
     end
@@ -28,10 +28,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
     end
 
     it "takes assignee id from github handle when is manual release" do
-      expect(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).with(
-        github_handle: github_handle,
-        asana_access_token: anything
-      )
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_asana_user_id_for_github_handle).with(github_handle)
       test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
     end
 

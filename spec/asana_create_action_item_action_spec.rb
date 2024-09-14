@@ -96,10 +96,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     end
 
     it "takes assignee id from github handle when is manual release" do
-      expect(Fastlane::Actions::AsanaGetUserIdForGithubHandleAction).to receive(:run).with(
-        github_handle: github_handle,
-        asana_access_token: anything
-      ).and_return(assignee_id)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_asana_user_id_for_github_handle).with(github_handle).and_return(assignee_id)
       expect(fetch_assignee_id(
                task_id: task_id,
                github_handle: github_handle,

@@ -141,6 +141,47 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
   end
 
+  describe "#get_asana_user_id_for_github_handle" do
+    let(:yaml_content) do
+      {
+        "duck" => "123",
+        "goose" => "456",
+        "pigeon" => nil,
+        "hawk" => ""
+      }
+    end
+
+    before do
+      allow(YAML).to receive(:load_file).and_return(yaml_content)
+    end
+
+    it "sets the user ID output and GHA output correctly" do
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+
+      expect(get_asana_user_id_for_github_handle("duck")).to eq("123")
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_user_id", "123")
+    end
+
+    it "shows warning when handle does not exist" do
+      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: chicken")
+      get_asana_user_id_for_github_handle("chicken")
+    end
+
+    it "shows warning when handle is nil" do
+      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: pigeon")
+      get_asana_user_id_for_github_handle("pigeon")
+    end
+
+    it "shows warning when handle is empty" do
+      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: hawk")
+      get_asana_user_id_for_github_handle("hawk")
+    end
+
+    def get_asana_user_id_for_github_handle(github_handle)
+      Fastlane::Helper::DdgAppleAutomationHelper.get_asana_user_id_for_github_handle(github_handle)
+    end
+  end
+
   describe "#load_file" do
     it "shows error if provided file does not exist" do
       allow(Fastlane::UI).to receive(:user_error!)

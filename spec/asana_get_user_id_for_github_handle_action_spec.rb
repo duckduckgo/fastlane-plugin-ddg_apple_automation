@@ -1,42 +1,15 @@
 describe Fastlane::Actions::AsanaGetUserIdForGithubHandleAction do
   describe "#run" do
-    let(:yaml_content) do
-      {
-        "duck" => "123",
-        "goose" => "456",
-        "pigeon" => nil,
-        "hawk" => ""
-      }
+    it "calls helper" do
+      github_handle = "user"
+      asana_user_id = "12345"
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:get_asana_user_id_for_github_handle)
+        .with(github_handle).and_return(asana_user_id)
+      expect(test_action(github_handle)).to eq(asana_user_id)
     end
 
-    before do
-      allow(YAML).to receive(:load_file).and_return(yaml_content)
+    def test_action(github_handle)
+      Fastlane::Actions::AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle)
     end
-
-    it "sets the user ID output and GHA output correctly" do
-      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
-
-      expect(test_action("duck")).to eq("123")
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_user_id", "123")
-    end
-
-    it "shows warning when handle does not exist" do
-      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: chicken")
-      test_action("chicken")
-    end
-
-    it "shows warning when handle is nil" do
-      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: pigeon")
-      test_action("pigeon")
-    end
-
-    it "shows warning when handle is empty" do
-      expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: hawk")
-      test_action("hawk")
-    end
-  end
-
-  def test_action(github_handle)
-    Fastlane::Actions::AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle)
   end
 end
