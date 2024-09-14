@@ -107,4 +107,103 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       )
     end
   end
+
+  describe "#process_yaml_template" do
+    it "processes appcast-failed-hotfix template" do
+      expected_name = "Generate appcast2.xml for 1.0.0-123 hotfix release and upload assets to S3"
+      expected_notes = <<~EXPECTED
+        <body>
+          Publishing 1.0.0-123 hotfix release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
+          <ol>
+            <li>Create a new file called <code>release-notes.txt</code> on your disk.
+              <ul>
+                <li>Add each release note as a separate line and don't add bullet points (•) – the script will add them automatically.</li>
+              </ul></li>
+            <li>Run <code>appcastManager</code>:
+              <ul>
+                <li><code>./scripts/appcast_manager/appcastManager.swift --release-hotfix-to-public-channel --dmg ~/Downloads/duckduckgo-1.0.0.123.dmg --release-notes release-notes.txt</code></li>
+              </ul></li>
+            <li>Verify that the new build is in the appcast file with the latest release notes and no internal channel tag. The phased rollout tag should <em>not</em> be present:
+              <ul>
+                <li><code>&lt;sparkle:phasedRolloutInterval&gt;43200&lt;/sparkle:phasedRolloutInterval&gt;</code></li>
+              </ul></li>
+            <li>Run <code>upload_to_s3.sh</code> script:
+              <ul>
+                <li><code>./scripts/upload_to_s3/upload_to_s3.sh --run --overwrite-duckduckgo-dmg 1.0.0.123</code></li>
+              </ul></li>
+          </ol>
+          When done, please verify that "Check for Updates" works correctly:
+          <ol>
+            <li>Launch a debug version of the app with an old version number.</li>
+            <li>Make sure you're not identified as an internal user in the app.</li>
+            <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
+            <li>Verify that you're being offered to update to 1.0.0-123.</li>
+            <li>Verify that the update works.</li>
+          </ol><br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("appcast-failed-hotfix", {
+        "tag" => "1.0.0-123",
+        "dmg_name" => "duckduckgo-1.0.0.123.dmg",
+        "version" => "1.0.0.123",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes appcast-failed-internal template" do
+      expected_name = "Generate appcast2.xml for 1.0.0-123 internal release and upload assets to S3"
+      expected_notes = <<~EXPECTED
+        <body>
+          Publishing 1.0.0-123 internal release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
+          <ol>
+            <li>Download <a href='https://cdn.com/duckduckgo-1.0.0.123.dmg'>the DMG for 1.0.0-123 release</a>.</li>
+            <li>Create a new file called <code>release-notes.txt</code> on your disk.
+              <ul>
+                <li>Add each release note as a separate line and don't add bullet points (•) – the script will add them automatically.</li>
+              </ul></li>
+            <li>Run <code>appcastManager</code>:
+              <ul>
+                <li><code>./scripts/appcast_manager/appcastManager.swift --release-to-internal-channel --dmg ~/Downloads/duckduckgo-1.0.0.123.dmg --release-notes release-notes.txt</code></li>
+              </ul></li>
+            <li>Verify that the new build is in the appcast file with the following internal channel tag:
+              <ul>
+                <li><code>&lt;sparkle:channel&gt;internal-channel&lt;/sparkle:channel&gt;</code></li>
+              </ul></li>
+            <li>Run <code>upload_to_s3.sh</code> script:
+              <ul>
+                <li><code>./scripts/upload_to_s3/upload_to_s3.sh --run</code></li>
+              </ul></li>
+          </ol>
+          When done, please verify that "Check for Updates" works correctly:
+          <ol>
+            <li>Launch a debug version of the app with an old version number.</li>
+            <li>Identify as an internal user in the app.</li>
+            <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
+            <li>Verify that you're being offered to update to 1.0.0-123.</li>
+            <li>Verify that the update works.</li>
+          </ol><br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("appcast-failed-internal", {
+        "tag" => "1.0.0-123",
+        "dmg_url" => "https://cdn.com/duckduckgo-1.0.0.123.dmg",
+        "dmg_name" => "duckduckgo-1.0.0.123.dmg",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    def process_yaml_template(template_name, args)
+      Fastlane::Actions::AsanaCreateActionItemAction.process_yaml_template(template_name, args)
+    end
+  end
 end

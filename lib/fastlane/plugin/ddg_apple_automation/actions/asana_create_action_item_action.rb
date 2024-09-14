@@ -40,16 +40,10 @@ module Fastlane
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
         if template_name
-          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml.erb")
-          template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
+          raw_name, raw_html_notes = process_yaml_template(template_name, args)
 
-          erb_template = ERB.new(template_content)
-          yaml = erb_template.result(binding)
-
-          task_data = YAML.safe_load(yaml)
-
-          task_name = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(task_data["name"])
-          html_notes = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(task_data["html_notes"])
+          task_name = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(raw_name)
+          html_notes = Helper::DdgAppleAutomationHelper.sanitize_asana_html_notes(raw_html_notes)
         end
 
         begin
@@ -66,6 +60,18 @@ module Fastlane
         end
 
         Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid) if subtask&.gid
+      end
+
+      def self.process_yaml_template(template_name, args)
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml.erb")
+        template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
+
+        erb_template = ERB.new(template_content)
+        yaml = erb_template.result(binding)
+
+        task_data = YAML.safe_load(yaml)
+
+        return task_data["name"], task_data["html_notes"]
       end
 
       def self.description
