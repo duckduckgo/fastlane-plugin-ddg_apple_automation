@@ -48,7 +48,7 @@ module Fastlane
           tag_and_release_output[:merge_or_delete_failed] = true
         end
 
-        report_status(params.merge(tag_and_release_output))
+        report_status(params.values.merge(tag_and_release_output))
       end
 
       def self.report_status(params)
