@@ -29,6 +29,7 @@ module Fastlane
           end
           assignee_id = Helper::AsanaHelper.get_asana_user_id_for_github_handle(github_handle)
         end
+        args[:assignee_id] = assignee_id
 
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, token)
