@@ -140,6 +140,8 @@ module Fastlane
         begin
           client = Octokit::Client.new(access_token: github_token)
           latest_public_release = client.latest_release(@constants[:repo_name])
+          UI.message("Latest public release: #{latest_public_release.tag_name}")
+          UI.message("Generating release notes for GitHub release for tag: #{tag}")
 
           # Octokit doesn't provide the API to generate release notes for a specific tag
           # So we need to use the GitHub API directly
