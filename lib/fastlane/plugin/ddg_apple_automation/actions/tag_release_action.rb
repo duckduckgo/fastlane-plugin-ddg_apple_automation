@@ -147,6 +147,7 @@ module Fastlane
           # Octokit doesn't provide the API to generate release notes for a specific tag
           # So we need to use the GitHub API directly
           generate_release_notes = other_action.github_api(
+            server_url: "https://api.github.com",
             api_token: github_token,
             http_method: "POST",
             path: "/repos/#{@constants[:repo_name]}/releases/generate-notes",
