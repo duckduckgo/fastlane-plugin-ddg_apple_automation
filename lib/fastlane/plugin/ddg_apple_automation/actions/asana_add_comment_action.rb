@@ -111,6 +111,9 @@ module Fastlane
           c.default_headers["Asana-Enable"] = "new_goal_memberships"
         end
         begin
+          UI.important("Adding comment to task #{task_id}")
+          UI.important("text: #{text}")
+          UI.important("html_text: #{html_text}")
           if text
             client.stories.create_story_for_task(task_gid: task_id, text: text)
           else
