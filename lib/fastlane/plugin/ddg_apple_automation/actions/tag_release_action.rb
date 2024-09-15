@@ -31,24 +31,24 @@ module Fastlane
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         setup_constants(platform)
 
-        other_action.ensure_git_branch(branch: "^(:?release|hotfix)/.*$")
-        Helper::GitHelper.setup_git_user
+        # other_action.ensure_git_branch(branch: "^(:?release|hotfix)/.*$")
+        # Helper::GitHelper.setup_git_user
 
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], params[:github_token])
-        Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
+        # Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
-        begin
-          if params[:is_prerelease]
-            Helper::GitHelper.merge_branch(@constants[:repo_name], params[:branch], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
-          else
-            Helper::GitHelper.delete_branch(@constants[:repo_name], params[:branch], params[:github_token])
-          end
-          tag_and_release_output[:merge_or_delete_failed] = false
-        rescue StandardError
-          tag_and_release_output[:merge_or_delete_failed] = true
-        end
+        # begin
+        #   if params[:is_prerelease]
+        #     Helper::GitHelper.merge_branch(@constants[:repo_name], params[:branch], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
+        #   else
+        #     Helper::GitHelper.delete_branch(@constants[:repo_name], params[:branch], params[:github_token])
+        #   end
+        #   tag_and_release_output[:merge_or_delete_failed] = false
+        # rescue StandardError
+        #   tag_and_release_output[:merge_or_delete_failed] = true
+        # end
 
-        report_status(params.values.merge(tag_and_release_output))
+        # report_status(params.values.merge(tag_and_release_output))
       end
 
       def self.report_status(params)
@@ -125,8 +125,9 @@ module Fastlane
         tag_created = false
 
         begin
-          other_action.add_git_tag(tag: tag)
-          other_action.push_git_tags(tag: tag)
+          tag = "1.106.0-261" # for testing
+          # other_action.add_git_tag(tag: tag)
+          # other_action.push_git_tags(tag: tag)
           tag_created = true
         rescue StandardError => e
           UI.important("Failed to create and push tag: #{e}")
@@ -154,6 +155,8 @@ module Fastlane
               previous_tag_name: latest_public_release.tag_name
             }
           )
+
+          UI.user_error!("Stopping here")
 
           release_notes = JSON.parse(generate_release_notes[:body])
 
