@@ -33,7 +33,7 @@ module Fastlane
 
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, token)
-          c.default_headers["Asana-Enable"] = "new_goal_memberships"
+          c.default_headers("Asana-Enable" => "new_goal_memberships")
         end
 
         begin
