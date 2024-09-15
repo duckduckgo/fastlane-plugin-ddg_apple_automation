@@ -156,7 +156,7 @@ module Fastlane
             }
           )
 
-          UI.user_error!("Stopping here")
+          UI.user_error!("Stopping here: #{generate_release_notes[:body]}")
 
           release_notes = JSON.parse(generate_release_notes[:body])
 
