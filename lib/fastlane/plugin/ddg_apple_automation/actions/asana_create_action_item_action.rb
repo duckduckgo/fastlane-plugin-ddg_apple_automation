@@ -50,11 +50,11 @@ module Fastlane
             notes: params[:notes],
             html_notes: html_notes
           )
+          Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid)
+          subtask.gid
         rescue StandardError => e
           UI.user_error!("Failed to create subtask for task: #{e}")
         end
-
-        Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid) if subtask&.gid
       end
 
       def self.fetch_assignee_id(task_id:, github_handle:, asana_access_token:, is_scheduled_release:)
