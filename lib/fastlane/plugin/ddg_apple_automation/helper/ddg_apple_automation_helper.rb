@@ -21,6 +21,19 @@ module Fastlane
         erb_template.result_with_hash(args)
       end
 
+      def self.compute_tag(is_prerelease)
+        version = File.read("Configuration/Version.xcconfig").chomp.split(" = ").last
+        build_number = File.read("Configuration/BuildNumber.xcconfig").chomp.split(" = ").last
+        if is_prerelease
+          tag = "#{version}-#{build_number}"
+        else
+          tag = version
+          promoted_tag = "#{version}-#{build_number}"
+        end
+
+        return tag, promoted_tag
+      end
+
       def self.path_for_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
       end
@@ -64,6 +77,16 @@ module FastlaneCore
                                    type: String,
                                    verify_block: proc do |value|
                                      UI.user_error!("GITHUB_TOKEN is not set") if value.to_s.length == 0
+                                   end)
+    end
+
+    def self.platform
+      FastlaneCore::ConfigItem.new(key: :platform,
+                                   description: "Platform (iOS or macOS) - optionally to override lane context value",
+                                   optional: true,
+                                   type: String,
+                                   verify_block: proc do |value|
+                                     UI.user_error!("platform must be equal to 'ios' or 'macos'") unless ['ios', 'macos'].include?(value.to_s)
                                    end)
     end
   end
