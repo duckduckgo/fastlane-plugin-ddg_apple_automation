@@ -151,6 +151,7 @@ module Fastlane
           task_url: params[:asana_task_url],
           template_name: comment_template,
           template_args: template_args,
+          github_handle: params[:github_handle],
           is_scheduled_release: params[:is_scheduled_release]
         )
       end
