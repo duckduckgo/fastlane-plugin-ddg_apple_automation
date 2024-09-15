@@ -30,7 +30,7 @@ module Fastlane
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
         if (template_name = params[:template_name])
-          UI.important("Adding Asana task using #{task_template} template")
+          UI.important("Adding Asana task using #{template_name} template")
           raw_name, raw_html_notes = process_yaml_template(template_name, args)
 
           task_name = Helper::AsanaHelper.sanitize_asana_html_notes(raw_name)
