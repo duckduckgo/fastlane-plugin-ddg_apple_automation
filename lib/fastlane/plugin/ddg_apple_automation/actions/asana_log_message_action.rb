@@ -33,6 +33,7 @@ module Fastlane
 
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, token)
+          c.default_headers["Asana-Enable"] = "new_goal_memberships"
         end
 
         begin
@@ -42,7 +43,11 @@ module Fastlane
           UI.user_error!("Failed to add user #{assignee_id} as collaborator on task #{automation_subtask_id}: #{e}")
         end
 
-        UI.important("Adding comment to release task's 'Automation' subtask using #{template_name} template")
+        if template_name.to_s.empty?
+          UI.important("Adding comment to release task's 'Automation' subtask")
+        else
+          UI.important("Adding comment to release task's 'Automation' subtask using #{template_name} template")
+        end
         AsanaAddCommentAction.run(
           task_id: automation_subtask_id,
           comment: comment,
