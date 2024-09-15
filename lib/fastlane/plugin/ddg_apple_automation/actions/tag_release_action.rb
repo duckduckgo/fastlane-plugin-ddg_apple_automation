@@ -119,7 +119,7 @@ module Fastlane
         end
         if params[:platform] == "macos"
           dmg_version = (params[:is_prerelease] ? params[:tag] : params[:promoted_tag]).gsub('-', '.')
-          template_args['dmg_url'] = "#{@constants[:repo_name]}duckduckgo-#{dmg_version}.dmg"
+          template_args['dmg_url'] = "#{@constants[:dmg_url_prefix]}duckduckgo-#{dmg_version}.dmg"
         end
 
         task_template, comment_template = setup_asana_templates(params)
