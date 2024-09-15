@@ -15,7 +15,7 @@ module Fastlane
       def self.run(params)
         token = params[:asana_access_token]
         task_url = params[:task_url]
-        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') }
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
 
         task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
         automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
