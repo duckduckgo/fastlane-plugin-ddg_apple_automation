@@ -110,11 +110,10 @@ module Fastlane
       end
 
       def self.report_status(params)
-        UI.message("Reporting status to Asana using params: #{params}")
         template_args = {}
         template_args['tag'] = params[:tag]
         template_args['promoted_tag'] = params[:promoted_tag]
-        template_args['release_url'] = "https://github.com/#{@constants[:repo_name]}/releases/tag/#{tag}"
+        template_args['release_url'] = "https://github.com/#{@constants[:repo_name]}/releases/tag/#{params[:tag]}"
         unless tag_created
           template_args['last_release_tag'] = params[:latest_public_release_tag]
         end
