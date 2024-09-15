@@ -148,7 +148,7 @@ module Fastlane
           # So we need to use the GitHub API directly
           generate_release_notes = other_action.github_api(
             server_url: "https://api.github.com",
-            api_token: github_token,
+            api_bearer: github_token,
             http_method: "POST",
             path: "/repos/#{@constants[:repo_name]}/releases/generate-notes",
             body: {
@@ -163,7 +163,7 @@ module Fastlane
 
           other_action.set_github_release(
             repository_name: @constants[:repo_name],
-            api_token: github_token,
+            api_bearer: github_token,
             tag_name: tag,
             name: release_notes&.dig('name'),
             description: release_notes&.dig('body'),
