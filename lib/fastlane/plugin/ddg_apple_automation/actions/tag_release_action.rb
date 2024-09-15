@@ -51,6 +51,64 @@ module Fastlane
         report_status(params.values.merge(tag_and_release_output))
       end
 
+      def self.create_tag_and_github_release(is_prerelease, github_token)
+        tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
+        tag_created = false
+
+        begin
+          other_action.add_git_tag(tag: tag)
+          other_action.push_git_tags(tag: tag)
+          tag_created = true
+        rescue StandardError => e
+          UI.important("Failed to create and push tag: #{e}")
+          return {
+            tag: tag,
+            promoted_tag: promoted_tag,
+            tag_created: tag_created
+          }
+        end
+
+        begin
+          client = Octokit::Client.new(access_token: github_token)
+          latest_public_release = client.latest_release(@constants[:repo_name])
+          UI.message("Latest public release: #{latest_public_release.tag_name}")
+          UI.message("Generating #{@constants[:repo_name]} release notes for GitHub release for tag: #{tag}")
+
+          # Octokit doesn't provide the API to generate release notes for a specific tag
+          # So we need to use the GitHub API directly
+          generate_release_notes = other_action.github_api(
+            server_url: "https://api.github.com",
+            api_bearer: github_token,
+            http_method: "POST",
+            path: "/repos/#{@constants[:repo_name]}/releases/generate-notes",
+            body: {
+              tag_name: tag,
+              previous_tag_name: latest_public_release.tag_name
+            }
+          )
+
+          release_notes = JSON.parse(generate_release_notes[:body])
+
+          other_action.set_github_release(
+            repository_name: @constants[:repo_name],
+            api_bearer: github_token,
+            tag_name: tag,
+            name: release_notes&.dig('name'),
+            description: release_notes&.dig('body'),
+            is_prerelease: is_prerelease
+          )
+        rescue StandardError => e
+          UI.important("Failed to create GitHub release: #{e}")
+        end
+
+        {
+          tag: tag,
+          promoted_tag: promoted_tag,
+          tag_created: tag_created,
+          latest_public_release_tag: latest_public_release.tag_name
+        }
+      end
+
       def self.report_status(params)
         template_args = {}
         template_args['tag'] = params[:tag]
@@ -118,66 +176,6 @@ module Fastlane
         end
 
         return task_template, comment_template
-      end
-
-      def self.create_tag_and_github_release(is_prerelease, github_token)
-        tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
-        tag_created = false
-
-        begin
-          other_action.add_git_tag(tag: tag)
-          other_action.push_git_tags(tag: tag)
-          tag_created = true
-        rescue StandardError => e
-          UI.important("Failed to create and push tag: #{e}")
-          return {
-            tag: tag,
-            promoted_tag: promoted_tag,
-            tag_created: tag_created
-          }
-        end
-
-        begin
-          client = Octokit::Client.new(access_token: github_token)
-          latest_public_release = client.latest_release(@constants[:repo_name])
-          UI.message("Latest public release: #{latest_public_release.tag_name}")
-          UI.message("Generating #{@constants[:repo_name]} release notes for GitHub release for tag: #{tag}")
-
-          # Octokit doesn't provide the API to generate release notes for a specific tag
-          # So we need to use the GitHub API directly
-          generate_release_notes = other_action.github_api(
-            server_url: "https://api.github.com",
-            api_bearer: github_token,
-            http_method: "POST",
-            path: "/repos/#{@constants[:repo_name]}/releases/generate-notes",
-            body: {
-              tag_name: tag,
-              previous_tag_name: latest_public_release.tag_name
-            }
-          )
-
-          UI.user_error!("Stopping here: #{generate_release_notes[:body]}")
-
-          release_notes = JSON.parse(generate_release_notes[:body])
-
-          other_action.set_github_release(
-            repository_name: @constants[:repo_name],
-            api_bearer: github_token,
-            tag_name: tag,
-            name: release_notes&.dig('name'),
-            description: release_notes&.dig('body'),
-            is_prerelease: is_prerelease
-          )
-        rescue StandardError => e
-          UI.important("Failed to create GitHub release: #{e}")
-        end
-
-        {
-          tag: tag,
-          promoted_tag: promoted_tag,
-          tag_created: tag_created,
-          latest_public_release_tag: latest_public_release.tag_name
-        }
       end
 
       def self.description
