@@ -1,0 +1,15 @@
+<body>
+  <h2>[ACTION NEEDED] Public release <%= tag %> tagged</h2>
+  <ul>
+    <li>🏷️ Repository is tagged with <code><%= tag %></code> tag.</li>
+    <li>🚢 GitHub <a href='<%= release_url %>'><%= tag %> release</a> is created.</li>
+    <li><b>❗️ Deleting <code><%= branch %></code> failed.</b>
+      <ul>
+        <li><a data-asana-gid='<%= assignee_id %>' />, please proceed with deleting the branch manually <a
+            data-asana-gid='<%= task_id %>' data-asana-dynamic='false'>according to instructions</a>.</li>
+      </ul>
+    </li>
+  </ul>
+  <br>
+  🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
+</body>

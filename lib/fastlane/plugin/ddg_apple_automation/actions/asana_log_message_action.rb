@@ -1,12 +1,9 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
-require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/asana_helper"
 require_relative "asana_add_comment_action"
-require_relative "asana_get_release_automation_subtask_id_action"
 require_relative "asana_get_user_id_for_github_handle_action"
-require_relative "asana_extract_task_id_action"
-require_relative "asana_extract_task_assignee_action"
 
 module Fastlane
   module Actions
@@ -18,18 +15,19 @@ module Fastlane
         comment = params[:comment]
         is_scheduled_release = params[:is_scheduled_release]
         github_handle = params[:github_handle]
+        args = params[:template_args]
 
-        automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
+        automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
 
         if is_scheduled_release
-          task_id = AsanaExtractTaskIdAction.run(task_url: task_url)
-          assignee_id = AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
+          task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
+          assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(task_id, token)
         else
           if github_handle.to_s.empty?
             UI.user_error!("Github handle cannot be empty for manual release")
             return
           end
-          assignee_id = AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle, asana_access_token: token)
+          assignee_id = Helper::AsanaHelper.get_asana_user_id_for_github_handle(github_handle)
         end
 
         asana_client = Asana::Client.new do |c|
@@ -42,7 +40,13 @@ module Fastlane
           UI.user_error!("Failed to add user #{assignee_id} as collaborator on task #{automation_subtask_id}: #{e}")
         end
 
-        AsanaAddCommentAction.run(task_id: automation_subtask_id, comment: comment, template_name: template_name, asana_access_token: token)
+        AsanaAddCommentAction.run(
+          task_id: automation_subtask_id,
+          comment: comment,
+          template_name: template_name,
+          template_args: args,
+          asana_access_token: token
+        )
       end
 
       def self.description
@@ -77,6 +81,11 @@ module Fastlane
       The file is processed before being sent to Asana",
                                        optional: true,
                                        type: String),
+          FastlaneCore::ConfigItem.new(key: :template_args,
+                                       description: "Template arguments. For backward compatibility, environment variables are added to this hash",
+                                       optional: true,
+                                       type: Hash,
+                                       default_value: {}),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,

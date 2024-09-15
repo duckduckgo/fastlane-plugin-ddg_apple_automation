@@ -1,5 +1,6 @@
 require "fastlane_core/configuration/config_item"
 require "fastlane_core/ui/ui"
+require_relative "github_actions_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -7,15 +8,17 @@ module Fastlane
   module Helper
     class DdgAppleAutomationHelper
       ASANA_APP_URL = "https://app.asana.com/0/0"
-      ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
-      ERROR_GITHUB_TOKEN_NOT_SET = "GITHUB_TOKEN is not set"
+      ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
 
-      def self.asana_task_url(task_id)
-        if task_id.to_s.empty?
-          UI.user_error!("Task ID cannot be empty")
+      def self.process_erb_template(erb_file_path, args)
+        template_content = load_file(erb_file_path)
+        unless template_content
+          UI.user_error!("Template file not found: #{erb_file_path}")
           return
         end
-        "#{ASANA_APP_URL}/#{task_id}/f"
+
+        erb_template = ERB.new(template_content)
+        erb_template.result_with_hash(args)
       end
 
       def self.path_for_asset_file(file)
@@ -28,9 +31,8 @@ module Fastlane
         UI.user_error!("Error: The file '#{file}' does not exist.")
       end
 
-      def self.sanitize_html_and_replace_env_vars(content)
-        content.gsub(/\$\{(\w+)\}/) { ENV.fetch($1, '') }  # replace environment variables
-               .gsub(/\s+/, ' ')                           # replace multiple whitespaces with a single space
+      def self.sanitize_asana_html_notes(content)
+        content.gsub(/\s+/, ' ')                           # replace multiple whitespaces with a single space
                .gsub(/>\s+</, '><')                        # remove spaces between HTML tags
                .strip                                      # remove leading and trailing whitespaces
                .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
@@ -49,7 +51,7 @@ module FastlaneCore
                                    sensitive: true,
                                    type: String,
                                    verify_block: proc do |value|
-                                     UI.user_error!(Fastlane::Helper::DdgAppleAutomationHelper::ERROR_ASANA_ACCESS_TOKEN_NOT_SET) if value.to_s.length == 0
+                                     UI.user_error!("ASANA_ACCESS_TOKEN is not set") if value.to_s.length == 0
                                    end)
     end
 
@@ -61,7 +63,7 @@ module FastlaneCore
                                    sensitive: true,
                                    type: String,
                                    verify_block: proc do |value|
-                                     UI.user_error!(Fastlane::Helper::DdgAppleAutomationHelper::ERROR_GITHUB_TOKEN_NOT_SET) if value.to_s.length == 0
+                                     UI.user_error!("GITHUB_TOKEN is not set") if value.to_s.length == 0
                                    end)
     end
   end

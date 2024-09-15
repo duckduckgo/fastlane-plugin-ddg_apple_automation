@@ -3,6 +3,7 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require "octokit"
 require "time"
+require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 
@@ -39,7 +40,7 @@ module Fastlane
         latest_marketing_version = find_latest_marketing_version(github_token)
         release_task_id = find_release_task(latest_marketing_version, asana_access_token)
 
-        release_task_url = Helper::DdgAppleAutomationHelper.asana_task_url(release_task_id)
+        release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
         release_branch = "release/#{latest_marketing_version}"
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
 
@@ -143,7 +144,7 @@ module Fastlane
         hotfix_task_id = tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
 
         if hotfix_task_id
-          UI.user_error!("Found active hotfix task: #{Helper::DdgAppleAutomationHelper.asana_task_url(hotfix_task_id)}")
+          UI.user_error!("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
           return
         end
       end
