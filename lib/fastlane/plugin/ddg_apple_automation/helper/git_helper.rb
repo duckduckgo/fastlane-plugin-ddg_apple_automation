@@ -32,6 +32,7 @@ module Fastlane
         client = Octokit::Client.new(access_token: github_token)
         begin
           client.merge(repo_name, base_branch, branch)
+          UI.success("Merged #{branch} branch to #{base_branch}")
         rescue StandardError => e
           UI.important("Failed to merge #{branch} branch to #{base_branch}: #{e}")
           raise e
@@ -42,6 +43,7 @@ module Fastlane
         client = Octokit::Client.new(access_token: github_token)
         begin
           client.delete_branch(repo_name, branch)
+          UI.success("Deleted #{branch}")
         rescue StandardError => e
           UI.important("Failed to delete #{branch}: #{e}")
           raise e

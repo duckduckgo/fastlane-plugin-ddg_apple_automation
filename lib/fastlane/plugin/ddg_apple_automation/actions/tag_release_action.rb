@@ -110,6 +110,7 @@ module Fastlane
       end
 
       def self.report_status(params)
+        UI.message("Reporting status to Asana using params: #{params}")
         template_args = {}
         template_args['tag'] = params[:tag]
         template_args['promoted_tag'] = params[:promoted_tag]
