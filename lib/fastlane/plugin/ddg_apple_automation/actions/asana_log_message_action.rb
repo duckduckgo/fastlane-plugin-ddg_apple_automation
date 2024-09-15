@@ -15,10 +15,10 @@ module Fastlane
         comment = params[:comment]
         is_scheduled_release = params[:is_scheduled_release]
         github_handle = params[:github_handle]
-        args = params[:template_args]
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
 
         automation_task_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
-        params[:automation_task_id] = automation_task_id
+        args[:automation_task_id] = automation_task_id
 
         if is_scheduled_release
           task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)

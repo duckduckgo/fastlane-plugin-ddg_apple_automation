@@ -54,7 +54,7 @@ describe Fastlane::Actions::AsanaLogMessageAction do
         task_id: automation_subtask_id,
         comment: comment,
         template_name: nil,
-        template_args: nil,
+        template_args: anything,
         asana_access_token: anything
       )
       test_action(task_url: task_url, comment: comment, is_scheduled_release: false, github_handle: github_handle)
