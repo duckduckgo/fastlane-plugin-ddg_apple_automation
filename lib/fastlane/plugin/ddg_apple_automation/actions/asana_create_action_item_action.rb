@@ -68,13 +68,8 @@ module Fastlane
 
       def self.process_yaml_template(template_name, args)
         template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml.erb")
-        template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
-
-        erb_template = ERB.new(template_content)
-        yaml = erb_template.result(binding)
-
+        yaml = Helper::DdgAppleAutomationHelper.process_erb_template(template_file, args)
         task_data = YAML.safe_load(yaml)
-
         return task_data["name"], task_data["html_notes"]
       end
 

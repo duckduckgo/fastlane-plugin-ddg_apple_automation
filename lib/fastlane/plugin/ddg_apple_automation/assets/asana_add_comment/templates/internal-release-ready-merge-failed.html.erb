@@ -1,16 +1,16 @@
 <body>
-  <h2>[ACTION NEEDED] Internal release build <%= args['tag'] %> ready</h2>
+  <h2>[ACTION NEEDED] Internal release build <%= tag %> ready</h2>
   <ul>
-    <li>📥 DMG is available from <a href='<%= args['dmg_url'] %>'><%= args['dmg_url'] %></a>.</li>
-    <li>🏷️ Repository is tagged with <code><%= args['tag'] %></code> tag.</li>
-    <li>🚢 GitHub <a href='<%= args['release_url'] %>'><%= args['tag'] %> pre-release</a> is created.</li>
-    <li><b>❗️ Merging <code><%= args['branch'] %></code> to <code><%= args['base_branch'] %></code> failed.</b>
+    <li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.</li>
+    <li>🏷️ Repository is tagged with <code><%= tag %></code> tag.</li>
+    <li>🚢 GitHub <a href='<%= release_url %>'><%= tag %> pre-release</a> is created.</li>
+    <li><b>❗️ Merging <code><%= branch %></code> to <code><%= base_branch %></code> failed.</b>
       <ul>
-        <li><a data-asana-gid='<%= args['assignee_id'] %>' />, please proceed with manual merging <a data-asana-gid='<%= args['task_id'] %>'
+        <li><a data-asana-gid='<%= assignee_id %>' />, please proceed with manual merging <a data-asana-gid='<%= task_id %>'
             data-asana-dynamic='false'>according to instructions</a>.</li>
       </ul>
     </li>
   </ul>
   <br>
-  🔗 Workflow URL: <a href='<%= args['workflow_url'] %>'><%= args['workflow_url'] %></a>.
+  🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
 </body>

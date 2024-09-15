@@ -7,8 +7,6 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
   let(:task_name) { "example name" }
 
   describe "#run" do
-    let(:parsed_yaml_content) { { 'name' => 'test task', 'html_notes' => '<p>Some notes</p>' } }
-
     before do
       @asana_client_tasks = double
       asana_client = double("Asana::Client")
@@ -45,9 +43,10 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     end
 
     it "correctly builds payload if template_name input is given" do
-      allow(File).to receive(:read)
+      parsed_yaml_content = { 'name' => 'test task', 'html_notes' => '<p>Some notes</p>' }
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:path_for_asset_file)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:process_erb_template)
       allow(YAML).to receive(:safe_load).and_return(parsed_yaml_content)
-      allow(ERB).to receive(:new).and_return(double('erb', result: "yaml"))
       test_action(task_url: task_url, task_name: task_name, template_name: "template_name", is_scheduled_release: true)
       expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
         task_gid: automation_subtask_id,

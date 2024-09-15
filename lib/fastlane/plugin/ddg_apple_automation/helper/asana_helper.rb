@@ -1,5 +1,6 @@
 require "fastlane_core/ui/ui"
 require "asana"
+require_relative "ddg_apple_automation_helper"
 require_relative "github_actions_helper"
 
 module Fastlane

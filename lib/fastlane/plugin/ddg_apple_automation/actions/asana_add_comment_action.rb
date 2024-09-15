@@ -39,11 +39,7 @@ module Fastlane
 
       def self.process_template(template_name, args)
         template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html.erb")
-        template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
-        return unless template_content
-
-        erb_template = ERB.new(template_content)
-        erb_template.result(binding)
+        Helper::DdgAppleAutomationHelper.process_erb_template(template_file, args)
       end
 
       def self.description

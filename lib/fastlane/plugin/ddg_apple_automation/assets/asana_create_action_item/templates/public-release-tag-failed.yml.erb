@@ -1,7 +1,7 @@
-name: Tag <%= args['branch'] %> branch, delete it, and create GitHub release
+name: Tag <%= branch %> branch, delete it, and create GitHub release
 html_notes: |
   <body>
-    Failed to tag the release with <code><%= args['tag'] %></code> tag.<br>
+    Failed to tag the release with <code><%= tag %></code> tag.<br>
     Please follow instructions below to tag the branch, make GitHub release and delete the release branch manually.
     <ul>
       <li>If the tag has already been created, please proceed with creating GitHub release and deleting the branch.</li>
@@ -10,22 +10,22 @@ html_notes: |
     Issue the following git commands to tag the release and delete the branch:
     <ul>
       <li><code>git fetch origin</code></li>
-      <li><code>git checkout <%= args['branch'] %></code> switch to the release branch</li>
-      <li><code>git pull origin <%= args['branch'] %></code> pull latest changes</li>
-      <li><code>git tag <%= args['tag'] %></code> tag the release</li>
-      <li><code>git push origin <%= args['tag'] %></code> push the tag</li>
-      <li><code>git checkout <%= args['base_branch'] %></code> switch to <%= args['base_branch'] %></li>
-      <li><code>git push origin --delete <%= args['branch'] %></code> delete the release branch</li>
+      <li><code>git checkout <%= branch %></code> switch to the release branch</li>
+      <li><code>git pull origin <%= branch %></code> pull latest changes</li>
+      <li><code>git tag <%= tag %></code> tag the release</li>
+      <li><code>git push origin <%= tag %></code> push the tag</li>
+      <li><code>git checkout <%= base_branch %></code> switch to <%= base_branch %></li>
+      <li><code>git push origin --delete <%= branch %></code> delete the release branch</li>
     </ul><br>
     To create GitHub release:
     <ul>
       <li>Set up GH CLI if you haven't yet: <a data-asana-gid='1203791243007683'/></li>
       <li>Run the following command:
       <ul>
-        <li><code>gh release create <%= args['tag'] %> --generate-notes --latest --notes-start-tag <%= args['last_release_tag'] %></code></li>
+        <li><code>gh release create <%= tag %> --generate-notes --latest --notes-start-tag <%= last_release_tag %></code></li>
       </ul></li>
     </ul><br>
     Complete this task when ready.<br>
     <br>
-    🔗 Workflow URL: <a href='<%= args['workflow_url'] %>'><%= args['workflow_url'] %></a>.
+    🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
   </body>

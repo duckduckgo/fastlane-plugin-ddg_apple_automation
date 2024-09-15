@@ -1,15 +1,15 @@
 <body>
-  <h2>[ACTION NEEDED] Public release <%= args['tag'] %> tagged</h2>
+  <h2>[ACTION NEEDED] Public release <%= tag %> tagged</h2>
   <ul>
-    <li>🏷️ Repository is tagged with <code><%= args['tag'] %></code> tag.</li>
-    <li>🚢 GitHub <a href='<%= args['release_url'] %>'><%= args['tag'] %> release</a> is created.</li>
-    <li><b>❗️ Deleting <code><%= args['branch'] %></code> failed.</b>
+    <li>🏷️ Repository is tagged with <code><%= tag %></code> tag.</li>
+    <li>🚢 GitHub <a href='<%= release_url %>'><%= tag %> release</a> is created.</li>
+    <li><b>❗️ Deleting <code><%= branch %></code> failed.</b>
       <ul>
-        <li><a data-asana-gid='<%= args['assignee_id'] %>' />, please proceed with deleting the branch manually <a
-            data-asana-gid='<%= args['task_id'] %>' data-asana-dynamic='false'>according to instructions</a>.</li>
+        <li><a data-asana-gid='<%= assignee_id %>' />, please proceed with deleting the branch manually <a
+            data-asana-gid='<%= task_id %>' data-asana-dynamic='false'>according to instructions</a>.</li>
       </ul>
     </li>
   </ul>
   <br>
-  🔗 Workflow URL: <a href='<%= args['workflow_url'] %>'><%= args['workflow_url'] %></a>.
+  🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
 </body>

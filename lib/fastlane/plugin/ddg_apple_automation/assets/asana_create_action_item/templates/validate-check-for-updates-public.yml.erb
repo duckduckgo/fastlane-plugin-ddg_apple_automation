@@ -1,37 +1,37 @@
-name: Validate that 'Check For Updates' upgrades to <%= args['tag'] %>
+name: Validate that 'Check For Updates' upgrades to <%= tag %>
 html_notes: |
   <body>
-    <h1>Build <%= args['tag'] %> has been released publicly via Sparkle 🎉</h1>
+    <h1>Build <%= tag %> has been released publicly via Sparkle 🎉</h1>
     Please verify that "Check for Updates" works correctly:
     <ol>
       <li>Launch a debug version of the app with an old version number.</li>
       <li>Make sure you're not identified as an internal user in the app.</li>
       <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
-      <li>Verify that you're being offered to update to <%= args['tag'] %>.</li>
+      <li>Verify that you're being offered to update to <%= tag %>.</li>
       <li>Verify that the update works.</li>
     </ol>
     <h1>🚨In case "Check for Updates" is broken</h1>
     You can restore previous version of the appcast2.xml:
     <ol>
-      <li>Download the <%= args['old_appcast_name'] %> file attached to this task.</li>
+      <li>Download the <%= old_appcast_name %> file attached to this task.</li>
       <li>Log in to AWS session:
         <ul>
           <li><code>aws --profile ddg-macos sso login</code></li>
         </ul></li>
       <li>Overwrite appcast2.xml with the old version:
         <ul>
-          <li><code>aws --profile ddg-macos s3 cp <%= args['old_appcast_name'] %> s3://<%= args['release_bucket_name'] %>/<%= args['release_bucket_prefix'] %>/appcast2.xml --acl public-read</code></li>
+          <li><code>aws --profile ddg-macos s3 cp <%= old_appcast_name %> s3://<%= release_bucket_name %>/<%= release_bucket_prefix %>/appcast2.xml --acl public-read</code></li>
         </ul></li>
     </ol><br>
     <hr>
     <h1>Summary of automated changes</h1>
     <h2>Changes to appcast2.xml</h2>
-    See the attached <em><%= args['appcast_patch_name'] %></em> file.
+    See the attached <em><%= appcast_patch_name %></em> file.
     <h2>Release notes</h2>
-    See the attached <em><%= args['release_notes_file'] %></em> file for release notes extracted automatically from <a data-asana-gid='<%= args['release_task_id'] %>' data-asana-dynamic='false'>the release task</a> description.
+    See the attached <em><%= release_notes_file %></em> file for release notes extracted automatically from <a data-asana-gid='<%= release_task_id %>' data-asana-dynamic='false'>the release task</a> description.
     <h2>List of files uploaded to S3</h2>
     <ol>
-      <%= args['files_uploaded'] %>
+      <%= files_uploaded %>
     </ol><br>
-    🔗 Workflow URL: <a href='<%= args['workflow_url'] %>'><%= args['workflow_url'] %></a>.
+    🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
   </body>

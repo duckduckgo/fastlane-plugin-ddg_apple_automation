@@ -99,6 +99,17 @@ module Fastlane
         end
       end
 
+      def self.process_erb_template(erb_file_path, args)
+        template_content = load_file(erb_file_path)
+        unless template_content
+          UI.user_error!("Template file not found: #{erb_file_path}")
+          return
+        end
+
+        erb_template = ERB.new(template_content)
+        erb_template.result_with_hash(args)
+      end
+
       def self.path_for_asset_file(file)
         File.expand_path("../assets/#{file}", __dir__)
       end

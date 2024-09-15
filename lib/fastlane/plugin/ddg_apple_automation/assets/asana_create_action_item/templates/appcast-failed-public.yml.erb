@@ -1,7 +1,7 @@
-name: Generate appcast2.xml for <%= args['tag'] %> public release and upload assets to S3
+name: Generate appcast2.xml for <%= tag %> public release and upload assets to S3
 html_notes: |
   <body>
-    Publishing <%= args['tag'] %> release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
+    Publishing <%= tag %> release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
     <ol>
       <li>Create a new file called <code>release-notes.txt</code> on your disk.
         <ul>
@@ -9,7 +9,7 @@ html_notes: |
         </ul></li>
       <li>Run <code>appcastManager</code>:
         <ul>
-          <li><code>./scripts/appcast_manager/appcastManager.swift --release-to-public-channel --version <%= args['version'] %> --release-notes release-notes.txt</code></li>
+          <li><code>./scripts/appcast_manager/appcastManager.swift --release-to-public-channel --version <%= version %> --release-notes release-notes.txt</code></li>
         </ul></li>
       <li>Verify that the new build is in the appcast file with the latest release notes, the phased rollout tag (below) and no internal channel tag:
         <ul>
@@ -17,7 +17,7 @@ html_notes: |
         </ul></li>
       <li>Run <code>upload_to_s3.sh</code> script:
         <ul>
-          <li><code>./scripts/upload_to_s3/upload_to_s3.sh --run --overwrite-duckduckgo-dmg <%= args['version'] %></code></li>
+          <li><code>./scripts/upload_to_s3/upload_to_s3.sh --run --overwrite-duckduckgo-dmg <%= version %></code></li>
         </ul></li>
     </ol>
     When done, please verify that "Check for Updates" works correctly:
@@ -25,8 +25,8 @@ html_notes: |
       <li>Launch a debug version of the app with an old version number.</li>
       <li>Make sure you're not identified as an internal user in the app.</li>
       <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
-      <li>Verify that you're being offered to update to <%= args['tag'] %>.</li>
+      <li>Verify that you're being offered to update to <%= tag %>.</li>
       <li>Verify that the update works.</li>
     </ol><br>
-    🔗 Workflow URL: <a href='<%= args['workflow_url'] %>'><%= args['workflow_url'] %></a>.
+    🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
   </body>
