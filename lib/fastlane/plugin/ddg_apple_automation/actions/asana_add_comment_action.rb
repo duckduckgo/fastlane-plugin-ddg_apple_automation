@@ -14,7 +14,7 @@ module Fastlane
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
-        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') }
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
 
         workflow_url = args["workflow_url"]
 
