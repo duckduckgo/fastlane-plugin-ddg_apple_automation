@@ -25,10 +25,12 @@ module Fastlane
           asana_access_token: token,
           is_scheduled_release: params[:is_scheduled_release]
         )
+        args[:assignee_id] = assignee_id
 
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
         if (template_name = params[:template_name])
+          UI.important("Adding Asana task using #{task_template} template")
           raw_name, raw_html_notes = process_yaml_template(template_name, args)
 
           task_name = Helper::AsanaHelper.sanitize_asana_html_notes(raw_name)
@@ -36,6 +38,7 @@ module Fastlane
         else
           task_name = params[:task_name]
           html_notes = params[:html_notes]
+          UI.important("Adding Asana task with title: #{params[:task_name]}")
         end
 
         begin

@@ -36,11 +36,13 @@ module Fastlane
         end
 
         begin
+          UI.important("Adding user #{assignee_id} as collaborator on release task's 'Automation' subtask")
           asana_client.tasks.add_followers_for_task(task_gid: automation_subtask_id, followers: [assignee_id])
         rescue StandardError => e
           UI.user_error!("Failed to add user #{assignee_id} as collaborator on task #{automation_subtask_id}: #{e}")
         end
 
+        UI.important("Adding comment to release task's 'Automation' subtask using #{template_name} template")
         AsanaAddCommentAction.run(
           task_id: automation_subtask_id,
           comment: comment,
