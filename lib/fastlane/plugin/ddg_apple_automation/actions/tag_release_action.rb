@@ -31,16 +31,14 @@ module Fastlane
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         setup_constants(platform)
 
-        is_prerelease = params[:is_prerelease]
-
         other_action.ensure_git_branch(branch: "^(:?release|hotfix)/.*$")
         Helper::GitHelper.setup_git_user
 
-        tag_and_release_output = create_tag_and_github_release(is_prerelease, github_token)
+        tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
         begin
-          if is_prerelease
+          if params[:is_prerelease]
             Helper::GitHelper.merge_branch(params[:branch], params[:base_branch], params[:github_elevated_permissions_token])
           else
             Helper::GitHelper.delete_branch(params[:branch], params[:github_token])
