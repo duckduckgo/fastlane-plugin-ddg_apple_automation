@@ -19,8 +19,8 @@ module Fastlane
 
         task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
 
-        automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
-        args[:automation_subtask_id] = automation_subtask_id
+        automation_task_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
+        args[:automation_task_id] = automation_task_id
 
         assignee_id = fetch_assignee_id(
           task_id: task_id,
@@ -47,7 +47,7 @@ module Fastlane
         begin
           subtask = create_subtask(
             token: token,
-            task_id: automation_subtask_id,
+            task_id: automation_task_id,
             assignee_id: assignee_id,
             task_name: task_name,
             notes: params[:notes],

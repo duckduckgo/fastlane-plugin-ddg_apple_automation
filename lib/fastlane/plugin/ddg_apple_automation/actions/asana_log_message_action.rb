@@ -17,7 +17,8 @@ module Fastlane
         github_handle = params[:github_handle]
         args = params[:template_args]
 
-        automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
+        automation_task_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
+        params[:automation_task_id] = automation_task_id
 
         if is_scheduled_release
           task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
@@ -38,9 +39,9 @@ module Fastlane
 
         begin
           UI.important("Adding user #{assignee_id} as collaborator on release task's 'Automation' subtask")
-          asana_client.tasks.add_followers_for_task(task_gid: automation_subtask_id, followers: [assignee_id])
+          asana_client.tasks.add_followers_for_task(task_gid: automation_task_id, followers: [assignee_id])
         rescue StandardError => e
-          UI.user_error!("Failed to add user #{assignee_id} as collaborator on task #{automation_subtask_id}: #{e}")
+          UI.user_error!("Failed to add user #{assignee_id} as collaborator on task #{automation_task_id}: #{e}")
         end
 
         if template_name.to_s.empty?
@@ -49,7 +50,7 @@ module Fastlane
           UI.important("Adding comment to release task's 'Automation' subtask using #{template_name} template")
         end
         AsanaAddCommentAction.run(
-          task_id: automation_subtask_id,
+          task_id: automation_task_id,
           comment: comment,
           template_name: template_name,
           template_args: args,
