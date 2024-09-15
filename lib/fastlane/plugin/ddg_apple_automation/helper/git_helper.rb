@@ -28,20 +28,20 @@ module Fastlane
         allowed_branches.any? { |allowed_branch| allowed_branch.match?(branch) }
       end
 
-      def self.merge_branch(branch, base_branch, github_token)
+      def self.merge_branch(repo_name, branch, base_branch, github_token)
         client = Octokit::Client.new(access_token: github_token)
         begin
-          client.merge(@constants[:repo_name], base_branch, branch)
+          client.merge(repo_name, base_branch, branch)
         rescue StandardError => e
           UI.important("Failed to merge #{branch} branch to #{base_branch}: #{e}")
           raise e
         end
       end
 
-      def self.delete_branch(branch, github_token)
+      def self.delete_branch(repo_name, branch, github_token)
         client = Octokit::Client.new(access_token: github_token)
         begin
-          client.delete_branch(@constants[:repo_name], branch)
+          client.delete_branch(repo_name, branch)
         rescue StandardError => e
           UI.important("Failed to delete #{branch}: #{e}")
           raise e

@@ -39,9 +39,9 @@ module Fastlane
 
         begin
           if params[:is_prerelease]
-            Helper::GitHelper.merge_branch(params[:branch], params[:base_branch], params[:github_elevated_permissions_token])
+            Helper::GitHelper.merge_branch(@constants[:repo_name], params[:branch], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
           else
-            Helper::GitHelper.delete_branch(params[:branch], params[:github_token])
+            Helper::GitHelper.delete_branch(@constants[:repo_name], params[:branch], params[:github_token])
           end
           tag_and_release_output[:merge_or_delete_failed] = false
         rescue StandardError
@@ -217,12 +217,9 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :github_elevated_permissions_token,
                                        env_name: "GITHUB_ELEVATED_PERMISSIONS_TOKEN",
                                        description: "GitHub token with elevated permissions (allowing to bypass branch protections)",
-                                       optional: false,
+                                       optional: true,
                                        sensitive: true,
-                                       type: String,
-                                       verify_block: proc do |value|
-                                         UI.user_error!("GITHUB_ELEVATED_PERMISSIONS_TOKEN is not set") if value.to_s.length == 0
-                                       end),
+                                       type: String),
           FastlaneCore::ConfigItem.new(key: :is_internal_release_bump,
                                        description: "Is this an internal release bump? (the subsequent internal release of the current week)",
                                        optional: true,
