@@ -125,6 +125,7 @@ module Fastlane
         task_template, comment_template = setup_asana_templates(params)
 
         if task_template
+          UI.important("Adding Asana task for release automation using #{task_template} template")
           AsanaCreateActionItemAction.run(
             asana_access_token: params[:asana_access_token],
             task_url: params[:asana_task_url],
