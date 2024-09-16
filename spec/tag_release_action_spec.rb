@@ -198,6 +198,14 @@ describe Fastlane::Actions::TagReleaseAction do
     include_context "common setup"
     include_context "local setup"
 
+    tag_contexts = ["create tag", "push tag"]
+    github_release_contexts = [
+      { action: "fetch latest GitHub release", includes_latest_public_release_tag: false },
+      { action: "generate GitHub release notes", includes_latest_public_release_tag: true },
+      { action: "parse GitHub response", includes_latest_public_release_tag: true },
+      { action: "create GitHub release", includes_latest_public_release_tag: true }
+    ]
+
     context "on ios" do
       include_context "on ios"
 
@@ -205,68 +213,36 @@ describe Fastlane::Actions::TagReleaseAction do
         include_context "for prerelease"
         it_behaves_like "expected", "duckduckgo/ios"
 
-        context "when failed to create tag" do
-          include_context "when failed to create tag"
-          it_behaves_like "gracefully handling tagging error"
+        tag_contexts.each do |action|
+          context "when failed to #{action}" do
+            include_context "when failed to #{action}"
+            it_behaves_like "gracefully handling tagging error"
+          end
         end
 
-        context "when failed to push tag" do
-          include_context "when failed to push tag"
-          it_behaves_like "gracefully handling tagging error"
-        end
-
-        context "when failed to fetch latest GitHub release" do
-          include_context "when failed to fetch latest GitHub release"
-          it_behaves_like "gracefully handling GitHub release error", false
-        end
-
-        context "when failed to generate GitHub release notes" do
-          include_context "when failed to generate GitHub release notes"
-          it_behaves_like "gracefully handling GitHub release error", true
-        end
-
-        context "when failed to parse GitHub response" do
-          include_context "when failed to parse GitHub response"
-          it_behaves_like "gracefully handling GitHub release error", true
-        end
-
-        context "when failed to create GitHub release" do
-          include_context "when failed to create GitHub release"
-          it_behaves_like "gracefully handling GitHub release error", true
+        github_release_contexts.each do |context_data|
+          context "when failed to #{context_data[:action]}" do
+            include_context "when failed to #{context_data[:action]}"
+            it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
+          end
         end
 
         context "for public release" do
           include_context "for public release"
           it_behaves_like "expected", "duckduckgo/ios"
 
-          context "when failed to create tag" do
-            include_context "when failed to create tag"
-            it_behaves_like "gracefully handling tagging error"
+          tag_contexts.each do |action|
+            context "when failed to #{action}" do
+              include_context "when failed to #{action}"
+              it_behaves_like "gracefully handling tagging error"
+            end
           end
 
-          context "when failed to push tag" do
-            include_context "when failed to push tag"
-            it_behaves_like "gracefully handling tagging error"
-          end
-
-          context "when failed to fetch latest GitHub release" do
-            include_context "when failed to fetch latest GitHub release"
-            it_behaves_like "gracefully handling GitHub release error", nil
-          end
-
-          context "when failed to generate GitHub release notes" do
-            include_context "when failed to generate GitHub release notes"
-            it_behaves_like "gracefully handling GitHub release error", true
-          end
-
-          context "when failed to parse GitHub response" do
-            include_context "when failed to parse GitHub response"
-            it_behaves_like "gracefully handling GitHub release error", true
-          end
-
-          context "when failed to create GitHub release" do
-            include_context "when failed to create GitHub release"
-            it_behaves_like "gracefully handling GitHub release error", true
+          github_release_contexts.each do |context_data|
+            context "when failed to #{context_data[:action]}" do
+              include_context "when failed to #{context_data[:action]}"
+              it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
+            end
           end
         end
       end
@@ -278,34 +254,18 @@ describe Fastlane::Actions::TagReleaseAction do
           include_context "for prerelease"
           it_behaves_like "expected", "duckduckgo/macos-browser"
 
-          context "when failed to create tag" do
-            include_context "when failed to create tag"
-            it_behaves_like "gracefully handling tagging error"
+          tag_contexts.each do |action|
+            context "when failed to #{action}" do
+              include_context "when failed to #{action}"
+              it_behaves_like "gracefully handling tagging error"
+            end
           end
 
-          context "when failed to push tag" do
-            include_context "when failed to push tag"
-            it_behaves_like "gracefully handling tagging error"
-          end
-
-          context "when failed to fetch latest GitHub release" do
-            include_context "when failed to fetch latest GitHub release"
-            it_behaves_like "gracefully handling GitHub release error", nil
-          end
-
-          context "when failed to generate GitHub release notes" do
-            include_context "when failed to generate GitHub release notes"
-            it_behaves_like "gracefully handling GitHub release error", true
-          end
-
-          context "when failed to parse GitHub response" do
-            include_context "when failed to parse GitHub response"
-            it_behaves_like "gracefully handling GitHub release error", true
-          end
-
-          context "when failed to create GitHub release" do
-            include_context "when failed to create GitHub release"
-            it_behaves_like "gracefully handling GitHub release error", true
+          github_release_contexts.each do |context_data|
+            context "when failed to #{context_data[:action]}" do
+              include_context "when failed to #{context_data[:action]}"
+              it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
+            end
           end
         end
 
@@ -313,34 +273,18 @@ describe Fastlane::Actions::TagReleaseAction do
           include_context "for public release"
           it_behaves_like "expected", "duckduckgo/macos-browser"
 
-          context "when failed to create tag" do
-            include_context "when failed to create tag"
-            it_behaves_like "gracefully handling tagging error"
+          tag_contexts.each do |action|
+            context "when failed to #{action}" do
+              include_context "when failed to #{action}"
+              it_behaves_like "gracefully handling tagging error"
+            end
           end
 
-          context "when failed to push tag" do
-            include_context "when failed to push tag"
-            it_behaves_like "gracefully handling tagging error"
-          end
-
-          context "when failed to fetch latest GitHub release" do
-            include_context "when failed to fetch latest GitHub release"
-            it_behaves_like "gracefully handling GitHub release error", nil
-          end
-
-          context "when failed to generate GitHub release notes" do
-            include_context "when failed to generate GitHub release notes"
-            it_behaves_like "gracefully handling GitHub release error", true
-          end
-
-          context "when failed to parse GitHub response" do
-            include_context "when failed to parse GitHub response"
-            it_behaves_like "gracefully handling GitHub release error", true
-          end
-
-          context "when failed to create GitHub release" do
-            include_context "when failed to create GitHub release"
-            it_behaves_like "gracefully handling GitHub release error", true
+          github_release_contexts.each do |context_data|
+            context "when failed to #{context_data[:action]}" do
+              include_context "when failed to #{context_data[:action]}"
+              it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
+            end
           end
         end
       end
