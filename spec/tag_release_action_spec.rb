@@ -82,17 +82,20 @@ describe Fastlane::Actions::TagReleaseAction do
     let (:latest_public_release) { double(tag_name: "1.0.0") }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
+    let (:octokit_client) { double(latest_release: latest_public_release) }
 
-    shared_examples "expected" do |repo_name|
-      let (:repo_name) { repo_name }
-
+    shared_context "local setup" do
       before(:each) do
-        allow(Octokit::Client).to receive(:new).and_return(double(latest_release: latest_public_release))
+        allow(Octokit::Client).to receive(:new).and_return(octokit_client)
         allow(JSON).to receive(:parse).and_return(generated_release_notes[:body])
         allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
         allow(Fastlane::UI).to receive(:message)
         allow(Fastlane::UI).to receive(:important)
       end
+    end
+
+    shared_examples "expected" do |repo_name|
+      let (:repo_name) { repo_name }
 
       it "creates tag and github release" do
         expect(subject).to eq({
@@ -131,7 +134,84 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
 
+    shared_examples "gracefully handling tagging error" do |repo_name|
+      let (:repo_name) { repo_name }
+
+      it "handles error when creating a tag fails" do
+        allow(other_action).to receive(:add_git_tag).and_raise(StandardError)
+        expect(subject).to eq({
+              tag: @tag,
+              promoted_tag: @promoted_tag,
+              tag_created: false
+            })
+
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag: StandardError")
+      end
+
+      it "handles error when pushing a tag fails" do
+        allow(other_action).to receive(:push_git_tags).and_raise(StandardError)
+        expect(subject).to eq({
+              tag: @tag,
+              promoted_tag: @promoted_tag,
+              tag_created: false
+            })
+
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag: StandardError")
+      end
+    end
+
+    shared_examples "gracefully handling GitHub release error" do |repo_name|
+      it "handles error when fetching latest GitHub release" do
+        allow(octokit_client).to receive(:latest_release).and_raise(StandardError)
+        expect(subject).to eq({
+              tag: @tag,
+              promoted_tag: @promoted_tag,
+              tag_created: true,
+              latest_public_release_tag: nil
+            })
+
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
+      end
+
+      it "handles error when generating GitHub release notes" do
+        allow(other_action).to receive(:github_api).and_raise(StandardError)
+        expect(subject).to eq({
+              tag: @tag,
+              promoted_tag: @promoted_tag,
+              tag_created: true,
+              latest_public_release_tag: latest_public_release.tag_name
+            })
+
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
+      end
+
+      it "handles error when parsing GitHub response" do
+        allow(JSON).to receive(:parse).and_raise(StandardError)
+        expect(subject).to eq({
+              tag: @tag,
+              promoted_tag: @promoted_tag,
+              tag_created: true,
+              latest_public_release_tag: latest_public_release.tag_name
+            })
+
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
+      end
+
+      it "handles error when creating GitHub release" do
+        allow(other_action).to receive(:set_github_release).and_raise(StandardError)
+        expect(subject).to eq({
+              tag: @tag,
+              promoted_tag: @promoted_tag,
+              tag_created: true,
+              latest_public_release_tag: latest_public_release.tag_name
+            })
+
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
+      end
+    end
+
     include_context "common setup"
+    include_context "local setup"
 
     context "on ios" do
       include_context "on ios"
@@ -139,11 +219,15 @@ describe Fastlane::Actions::TagReleaseAction do
       context "for prerelease" do
         include_context "for prerelease"
         it_behaves_like "expected", "duckduckgo/ios"
+        it_behaves_like "gracefully handling tagging error", "duckduckgo/ios"
+        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/ios"
       end
 
       context "for public release" do
         include_context "for public release"
         it_behaves_like "expected", "duckduckgo/ios"
+        it_behaves_like "gracefully handling tagging error", "duckduckgo/ios"
+        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/ios"
       end
     end
 
@@ -153,11 +237,15 @@ describe Fastlane::Actions::TagReleaseAction do
       context "for prerelease" do
         include_context "for prerelease"
         it_behaves_like "expected", "duckduckgo/macos-browser"
+        it_behaves_like "gracefully handling tagging error", "duckduckgo/macos-browser"
+        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/macos-browser"
       end
 
       context "for public release" do
         include_context "for public release"
         it_behaves_like "expected", "duckduckgo/macos-browser"
+        it_behaves_like "gracefully handling tagging error", "duckduckgo/macos-browser"
+        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/macos-browser"
       end
     end
   end

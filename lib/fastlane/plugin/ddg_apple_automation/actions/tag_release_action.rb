@@ -98,7 +98,7 @@ module Fastlane
           tag: tag,
           promoted_tag: promoted_tag,
           tag_created: true,
-          latest_public_release_tag: latest_public_release.tag_name
+          latest_public_release_tag: latest_public_release&.tag_name
         }
       end
 
