@@ -134,78 +134,63 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
 
-    shared_examples "gracefully handling tagging error" do |repo_name|
-      let (:repo_name) { repo_name }
-
-      it "handles error when creating a tag fails" do
+    shared_context "when failed to create tag" do
+      before do
         allow(other_action).to receive(:add_git_tag).and_raise(StandardError)
-        expect(subject).to eq({
-              tag: @tag,
-              promoted_tag: @promoted_tag,
-              tag_created: false
-            })
-
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag: StandardError")
       end
+    end
 
-      it "handles error when pushing a tag fails" do
+    shared_context "when failed to push tag" do
+      before do
         allow(other_action).to receive(:push_git_tags).and_raise(StandardError)
+      end
+    end
+
+    shared_context "when failed to fetch latest GitHub release" do
+      before do
+        allow(octokit_client).to receive(:latest_release).and_raise(StandardError)
+      end
+    end
+
+    shared_context "when failed to generate GitHub release notes" do
+      before do
+        allow(other_action).to receive(:github_api).and_raise(StandardError)
+      end
+    end
+
+    shared_context "when failed to parse GitHub response" do
+      before do
+        allow(JSON).to receive(:parse).and_raise(StandardError)
+      end
+    end
+
+    shared_context "when failed to create GitHub release" do
+      before do
+        allow(other_action).to receive(:set_github_release).and_raise(StandardError)
+      end
+    end
+
+    shared_examples "gracefully handling tagging error" do
+      it "handles tagging error" do
         expect(subject).to eq({
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: false
             })
-
         expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag: StandardError")
       end
     end
 
-    shared_examples "gracefully handling GitHub release error" do |repo_name|
-      it "handles error when fetching latest GitHub release" do
-        allow(octokit_client).to receive(:latest_release).and_raise(StandardError)
+    shared_examples "gracefully handling GitHub release error" do |reports_latest_public_release_tag|
+      let (:reports_latest_public_release_tag) { reports_latest_public_release_tag }
+
+      it "handles GitHub release error" do
         expect(subject).to eq({
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: true,
-              latest_public_release_tag: nil
+              latest_public_release_tag: reports_latest_public_release_tag ? latest_public_release.tag_name : nil
             })
-
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
-      end
-
-      it "handles error when generating GitHub release notes" do
-        allow(other_action).to receive(:github_api).and_raise(StandardError)
-        expect(subject).to eq({
-              tag: @tag,
-              promoted_tag: @promoted_tag,
-              tag_created: true,
-              latest_public_release_tag: latest_public_release.tag_name
-            })
-
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
-      end
-
-      it "handles error when parsing GitHub response" do
-        allow(JSON).to receive(:parse).and_raise(StandardError)
-        expect(subject).to eq({
-              tag: @tag,
-              promoted_tag: @promoted_tag,
-              tag_created: true,
-              latest_public_release_tag: latest_public_release.tag_name
-            })
-
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
-      end
-
-      it "handles error when creating GitHub release" do
-        allow(other_action).to receive(:set_github_release).and_raise(StandardError)
-        expect(subject).to eq({
-              tag: @tag,
-              promoted_tag: @promoted_tag,
-              tag_created: true,
-              latest_public_release_tag: latest_public_release.tag_name
-            })
-
         expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
       end
     end
@@ -219,33 +204,145 @@ describe Fastlane::Actions::TagReleaseAction do
       context "for prerelease" do
         include_context "for prerelease"
         it_behaves_like "expected", "duckduckgo/ios"
-        it_behaves_like "gracefully handling tagging error", "duckduckgo/ios"
-        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/ios"
+
+        context "when failed to create tag" do
+          include_context "when failed to create tag"
+          it_behaves_like "gracefully handling tagging error"
+        end
+
+        context "when failed to push tag" do
+          include_context "when failed to push tag"
+          it_behaves_like "gracefully handling tagging error"
+        end
+
+        context "when failed to fetch latest GitHub release" do
+          include_context "when failed to fetch latest GitHub release"
+          it_behaves_like "gracefully handling GitHub release error", false
+        end
+
+        context "when failed to generate GitHub release notes" do
+          include_context "when failed to generate GitHub release notes"
+          it_behaves_like "gracefully handling GitHub release error", true
+        end
+
+        context "when failed to parse GitHub response" do
+          include_context "when failed to parse GitHub response"
+          it_behaves_like "gracefully handling GitHub release error", true
+        end
+
+        context "when failed to create GitHub release" do
+          include_context "when failed to create GitHub release"
+          it_behaves_like "gracefully handling GitHub release error", true
+        end
+
+        context "for public release" do
+          include_context "for public release"
+          it_behaves_like "expected", "duckduckgo/ios"
+
+          context "when failed to create tag" do
+            include_context "when failed to create tag"
+            it_behaves_like "gracefully handling tagging error"
+          end
+
+          context "when failed to push tag" do
+            include_context "when failed to push tag"
+            it_behaves_like "gracefully handling tagging error"
+          end
+
+          context "when failed to fetch latest GitHub release" do
+            include_context "when failed to fetch latest GitHub release"
+            it_behaves_like "gracefully handling GitHub release error", nil
+          end
+
+          context "when failed to generate GitHub release notes" do
+            include_context "when failed to generate GitHub release notes"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+
+          context "when failed to parse GitHub response" do
+            include_context "when failed to parse GitHub response"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+
+          context "when failed to create GitHub release" do
+            include_context "when failed to create GitHub release"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+        end
       end
 
-      context "for public release" do
-        include_context "for public release"
-        it_behaves_like "expected", "duckduckgo/ios"
-        it_behaves_like "gracefully handling tagging error", "duckduckgo/ios"
-        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/ios"
-      end
-    end
+      context "on macos" do
+        include_context "on macos"
 
-    context "on macos" do
-      include_context "on macos"
+        context "for prerelease" do
+          include_context "for prerelease"
+          it_behaves_like "expected", "duckduckgo/macos-browser"
 
-      context "for prerelease" do
-        include_context "for prerelease"
-        it_behaves_like "expected", "duckduckgo/macos-browser"
-        it_behaves_like "gracefully handling tagging error", "duckduckgo/macos-browser"
-        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/macos-browser"
-      end
+          context "when failed to create tag" do
+            include_context "when failed to create tag"
+            it_behaves_like "gracefully handling tagging error"
+          end
 
-      context "for public release" do
-        include_context "for public release"
-        it_behaves_like "expected", "duckduckgo/macos-browser"
-        it_behaves_like "gracefully handling tagging error", "duckduckgo/macos-browser"
-        it_behaves_like "gracefully handling GitHub release error", "duckduckgo/macos-browser"
+          context "when failed to push tag" do
+            include_context "when failed to push tag"
+            it_behaves_like "gracefully handling tagging error"
+          end
+
+          context "when failed to fetch latest GitHub release" do
+            include_context "when failed to fetch latest GitHub release"
+            it_behaves_like "gracefully handling GitHub release error", nil
+          end
+
+          context "when failed to generate GitHub release notes" do
+            include_context "when failed to generate GitHub release notes"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+
+          context "when failed to parse GitHub response" do
+            include_context "when failed to parse GitHub response"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+
+          context "when failed to create GitHub release" do
+            include_context "when failed to create GitHub release"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+        end
+
+        context "for public release" do
+          include_context "for public release"
+          it_behaves_like "expected", "duckduckgo/macos-browser"
+
+          context "when failed to create tag" do
+            include_context "when failed to create tag"
+            it_behaves_like "gracefully handling tagging error"
+          end
+
+          context "when failed to push tag" do
+            include_context "when failed to push tag"
+            it_behaves_like "gracefully handling tagging error"
+          end
+
+          context "when failed to fetch latest GitHub release" do
+            include_context "when failed to fetch latest GitHub release"
+            it_behaves_like "gracefully handling GitHub release error", nil
+          end
+
+          context "when failed to generate GitHub release notes" do
+            include_context "when failed to generate GitHub release notes"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+
+          context "when failed to parse GitHub response" do
+            include_context "when failed to parse GitHub response"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+
+          context "when failed to create GitHub release" do
+            include_context "when failed to create GitHub release"
+            it_behaves_like "gracefully handling GitHub release error", true
+          end
+        end
       end
     end
   end
