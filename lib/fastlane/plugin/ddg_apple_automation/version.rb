@@ -1,5 +1,5 @@
 module Fastlane
   module DdgAppleAutomation
-    VERSION = "0.10.0"
+    VERSION = "0.10.1"
   end
 end
