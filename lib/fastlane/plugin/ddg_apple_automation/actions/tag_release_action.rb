@@ -28,24 +28,20 @@ module Fastlane
       end
 
       def self.run(params)
-        platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        setup_constants(platform)
-
         other_action.ensure_git_branch(branch: "^(:?release|hotfix)/.*$")
         Helper::GitHelper.setup_git_user
+
+        params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
+        setup_constants(params[:platform])
 
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
         begin
-          if params[:is_prerelease]
-            Helper::GitHelper.merge_branch(@constants[:repo_name], params[:branch], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
-          else
-            Helper::GitHelper.delete_branch(@constants[:repo_name], params[:branch], params[:github_token])
-          end
-          tag_and_release_output[:merge_or_delete_failed] = false
+          merge_or_delete_branch(params)
+          tag_and_release_output[:merge_or_delete_successful] = true
         rescue StandardError
-          tag_and_release_output[:merge_or_delete_failed] = true
+          tag_and_release_output[:merge_or_delete_successful] = false
         end
 
         report_status(params.values.merge(tag_and_release_output))
@@ -53,18 +49,16 @@ module Fastlane
 
       def self.create_tag_and_github_release(is_prerelease, github_token)
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
-        tag_created = false
 
         begin
           other_action.add_git_tag(tag: tag)
           other_action.push_git_tags(tag: tag)
-          tag_created = true
         rescue StandardError => e
           UI.important("Failed to create and push tag: #{e}")
           return {
             tag: tag,
             promoted_tag: promoted_tag,
-            tag_created: tag_created
+            tag_created: false
           }
         end
 
@@ -77,7 +71,6 @@ module Fastlane
           # Octokit doesn't provide the API to generate release notes for a specific tag
           # So we need to use the GitHub API directly
           generate_release_notes = other_action.github_api(
-            server_url: "https://api.github.com",
             api_bearer: github_token,
             http_method: "POST",
             path: "/repos/#{@constants[:repo_name]}/releases/generate-notes",
@@ -104,9 +97,18 @@ module Fastlane
         {
           tag: tag,
           promoted_tag: promoted_tag,
-          tag_created: tag_created,
+          tag_created: true,
           latest_public_release_tag: latest_public_release.tag_name
         }
+      end
+
+      def self.merge_or_delete_branch(params)
+        branch = other_action.git_branch
+        if params[:is_prerelease]
+          Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
+        else
+          Helper::GitHelper.delete_branch(@constants[:repo_name], branch, params[:github_token])
+        end
       end
 
       def self.report_status(params)
@@ -158,7 +160,9 @@ module Fastlane
       end
 
       def self.setup_asana_templates(params)
-        if params[:merge_or_delete_failed]
+        if params[:merge_or_delete_successful]
+          comment_template = params[:is_prerelease] ? "internal-release-ready" : "public-release-tagged"
+        else
           case [params[:tag_created], params[:is_prerelease]]
           when [true, true]
             task_template = "merge-failed"
@@ -173,8 +177,6 @@ module Fastlane
             task_template = "public-release-tag-failed"
             comment_template = "public-release-tag-failed"
           end
-        else
-          comment_template = params[:is_prerelease] ? "internal-release-ready" : "public-release-tagged"
         end
 
         return task_template, comment_template
@@ -211,10 +213,6 @@ module Fastlane
                                        optional: true,
                                        type: String,
                                        default_value: "main"),
-          FastlaneCore::ConfigItem.new(key: :branch,
-                                       description: "Release branch name",
-                                       optional: false,
-                                       type: String),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,
