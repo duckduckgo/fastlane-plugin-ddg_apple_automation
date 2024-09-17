@@ -64,15 +64,17 @@ describe Fastlane::Actions::TagReleaseAction do
       subject
 
       expect(@tag_and_release_output[:merge_or_delete_successful]).to be_truthy
-      # expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_status).with("macos")
     end
 
-    it "reports status when merge or delete failed" do
-      allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch).and_raise(StandardError)
-      subject
+    context "when merge or delete failed" do
+      before do
+        allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch).and_raise(StandardError)
+      end
 
-      expect(@tag_and_release_output[:merge_or_delete_successful]).to be_falsy
-      # expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_status).with("macos")
+      it "reports status" do
+        subject
+        expect(@tag_and_release_output[:merge_or_delete_successful]).to be_falsy
+      end
     end
   end
 
@@ -94,7 +96,7 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
 
-    shared_examples "expected" do |repo_name|
+    shared_examples "successful execution" do |repo_name|
       let (:repo_name) { repo_name }
 
       it "creates tag and github release" do
@@ -195,52 +197,52 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
 
+    tag_contexts = ["when failed to create tag", "when failed to push tag"]
+    github_release_contexts = [
+      { name: "when failed to fetch latest GitHub release", includes_latest_public_release_tag: false },
+      { name: "when failed to generate GitHub release notes", includes_latest_public_release_tag: true },
+      { name: "when failed to parse GitHub response", includes_latest_public_release_tag: true },
+      { name: "when failed to create GitHub release", includes_latest_public_release_tag: true }
+    ]
+
     include_context "common setup"
     include_context "local setup"
-
-    tag_contexts = ["create tag", "push tag"]
-    github_release_contexts = [
-      { action: "fetch latest GitHub release", includes_latest_public_release_tag: false },
-      { action: "generate GitHub release notes", includes_latest_public_release_tag: true },
-      { action: "parse GitHub response", includes_latest_public_release_tag: true },
-      { action: "create GitHub release", includes_latest_public_release_tag: true }
-    ]
 
     context "on ios" do
       include_context "on ios"
 
       context "for prerelease" do
         include_context "for prerelease"
-        it_behaves_like "expected", "duckduckgo/ios"
+        it_behaves_like "successful execution", "duckduckgo/ios"
 
-        tag_contexts.each do |action|
-          context "when failed to #{action}" do
-            include_context "when failed to #{action}"
+        tag_contexts.each do |context_name|
+          context context_name do
+            include_context context_name
             it_behaves_like "gracefully handling tagging error"
           end
         end
 
         github_release_contexts.each do |context_data|
-          context "when failed to #{context_data[:action]}" do
-            include_context "when failed to #{context_data[:action]}"
+          context context_data[:name] do
+            include_context context_data[:name]
             it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
           end
         end
 
         context "for public release" do
           include_context "for public release"
-          it_behaves_like "expected", "duckduckgo/ios"
+          it_behaves_like "successful execution", "duckduckgo/ios"
 
-          tag_contexts.each do |action|
-            context "when failed to #{action}" do
-              include_context "when failed to #{action}"
+          tag_contexts.each do |context_name|
+            context context_name do
+              include_context context_name
               it_behaves_like "gracefully handling tagging error"
             end
           end
 
           github_release_contexts.each do |context_data|
-            context "when failed to #{context_data[:action]}" do
-              include_context "when failed to #{context_data[:action]}"
+            context context_data[:name] do
+              include_context context_data[:name]
               it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
             end
           end
@@ -252,18 +254,18 @@ describe Fastlane::Actions::TagReleaseAction do
 
         context "for prerelease" do
           include_context "for prerelease"
-          it_behaves_like "expected", "duckduckgo/macos-browser"
+          it_behaves_like "successful execution", "duckduckgo/macos-browser"
 
-          tag_contexts.each do |action|
-            context "when failed to #{action}" do
-              include_context "when failed to #{action}"
+          tag_contexts.each do |context_name|
+            context context_name do
+              include_context context_name
               it_behaves_like "gracefully handling tagging error"
             end
           end
 
           github_release_contexts.each do |context_data|
-            context "when failed to #{context_data[:action]}" do
-              include_context "when failed to #{context_data[:action]}"
+            context context_data[:name] do
+              include_context context_data[:name]
               it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
             end
           end
@@ -271,18 +273,18 @@ describe Fastlane::Actions::TagReleaseAction do
 
         context "for public release" do
           include_context "for public release"
-          it_behaves_like "expected", "duckduckgo/macos-browser"
+          it_behaves_like "successful execution", "duckduckgo/macos-browser"
 
-          tag_contexts.each do |action|
-            context "when failed to #{action}" do
-              include_context "when failed to #{action}"
+          tag_contexts.each do |context_name|
+            context context_name do
+              include_context context_name
               it_behaves_like "gracefully handling tagging error"
             end
           end
 
           github_release_contexts.each do |context_data|
-            context "when failed to #{context_data[:action]}" do
-              include_context "when failed to #{context_data[:action]}"
+            context context_data[:name] do
+              include_context context_data[:name]
               it_behaves_like "gracefully handling GitHub release error", context_data[:includes_latest_public_release_tag]
             end
           end
