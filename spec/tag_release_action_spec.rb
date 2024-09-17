@@ -306,36 +306,124 @@ describe Fastlane::Actions::TagReleaseAction do
     end
   end
 
-  # describe "#report_status" do
-  #   subject { Fastlane::Actions::TagReleaseAction.report_status(@params) }
+  describe "#report_status" do
+    subject { Fastlane::Actions::TagReleaseAction.report_status(@params) }
 
-  #   platform_contexts = [
-  #     { name: "on ios", repo_name: "duckduckgo/ios" },
-  #     { name: "on macos", repo_name: "duckduckgo/macos-browser" }
-  #   ]
+    let (:task_template) { "task-template" }
+    let (:comment_template) { "comment-template" }
+    let (:created_task_id) { "12345" }
 
-  #   include_context "common setup"
+    include_context "common setup"
 
-  #   before do
-  #     @params[:tag] = "1.1.0"
-  #     @params[:promoted_tag] = "1.1.0-123"
-  #     @params[:tag_created] = true
-  #     @params[:latest_public_release_tag] = "1.0.0"
-  #     @params[:merge_or_delete_successful] = true
+    before do
+      @params[:is_scheduled_release] = false
+      @params[:is_internal_release_bump] = false
 
-  #     allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
-  #     allow(Fastlane::Helper::GitHelper).to receive(:merge_branch)
-  #     allow(Fastlane::Helper::GitHelper).to receive(:delete_branch)
-  #   end
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:template_arguments).and_return({})
+      # allow(Fastlane::Actions::TagReleaseAction).to receive(:setup_asana_templates).and_return([task_template, comment_template])
+      allow(Fastlane::UI).to receive(:important)
+      allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:run).and_return(created_task_id)
+      allow(Fastlane::Actions::AsanaLogMessageAction).to receive(:run)
+    end
 
-  #   platform_contexts.each do |platform_context|
-  #     context platform_context[:name] do
-  #       include_context platform_context[:name]
+    shared_examples "logging a message without creating Asana task" do
+      it "logs a message creating Asana task" do
+        subject
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:template_arguments).with(@params)
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:setup_asana_templates).with(@params)
+        expect(Fastlane::Actions::AsanaCreateActionItemAction).not_to have_received(:run)
+        expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
+      end
+    end
 
-  #       context "for prerelease" do
-  #         include_context "for prerelease"
-  #       end
-  #     end
-  #   end
-  # end
+    shared_examples "logging a message without creating Asana task" do
+      it "logs a message creating Asana task" do
+        subject
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:template_arguments).with(@params)
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:setup_asana_templates).with(@params)
+        expect(Fastlane::Actions::AsanaCreateActionItemAction).not_to have_received(:run)
+        expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
+      end
+    end
+
+    shared_examples "creating Asana task and logging a message" do
+      it "creates Asana task and logs a message" do
+        subject
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:template_arguments).with(@params)
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:setup_asana_templates).with(@params)
+        expect(Fastlane::Actions::AsanaCreateActionItemAction).to have_received(:run)
+        expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
+      end
+    end
+
+    context "when task template is defined" do
+      before do
+        allow(Fastlane::Actions::TagReleaseAction).to receive(:setup_asana_templates).and_return([task_template, comment_template])
+      end
+
+      context "when internal release bump" do
+        before { @params[:is_internal_release_bump] = true }
+
+        context "on ios" do
+          include_context "on ios"
+          it_behaves_like "creating Asana task and logging a message"
+        end
+
+        context "on macos" do
+          include_context "on macos"
+
+          it "creates 2 Asana tasks where last one uses run-publish-dmg-release template and logs a message" do
+            subject
+            expect(Fastlane::Actions::TagReleaseAction).to have_received(:template_arguments).with(@params)
+            expect(Fastlane::Actions::TagReleaseAction).to have_received(:setup_asana_templates).with(@params)
+
+            calls = []
+            expect(Fastlane::Actions::AsanaCreateActionItemAction).to have_received(:run).twice do |*args|
+              calls << args.first
+            end
+
+            expect(calls.last).to include(template_name: "run-publish-dmg-release")
+            expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
+          end
+        end
+      end
+
+      context "when not internal release bump" do
+        before { @params[:is_internal_release_bump] = false }
+
+        ["on ios", "on macos"].each do |platform_context|
+          context platform_context do
+            include_context platform_context
+            it_behaves_like "creating Asana task and logging a message"
+          end
+        end
+      end
+    end
+
+    context "when task template is not defined" do
+      before do
+        allow(Fastlane::Actions::TagReleaseAction).to receive(:setup_asana_templates).and_return([nil, comment_template])
+      end
+
+      context "when internal release bump" do
+        before { @params[:is_internal_release_bump] = true }
+
+        ["on ios", "on macos"].each do |platform_context|
+          include_context platform_context
+          it_behaves_like "logging a message without creating Asana task"
+        end
+      end
+
+      context "when not internal release bump" do
+        before { @params[:is_internal_release_bump] = false }
+
+        ["on ios", "on macos"].each do |platform_context|
+          context platform_context do
+            include_context platform_context
+            it_behaves_like "logging a message without creating Asana task"
+          end
+        end
+      end
+    end
+  end
 end

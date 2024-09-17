@@ -126,7 +126,7 @@ module Fastlane
             is_scheduled_release: params[:is_scheduled_release]
           )
 
-          if params[:is_internal_release_bump]
+          if params[:is_internal_release_bump] && params[:platform] == "macos"
             AsanaCreateActionItemAction.run(
               asana_access_token: params[:asana_access_token],
               task_url: params[:asana_task_url],
