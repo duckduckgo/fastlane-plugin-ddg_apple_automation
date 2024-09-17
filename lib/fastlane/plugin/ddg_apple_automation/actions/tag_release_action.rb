@@ -107,23 +107,12 @@ module Fastlane
         if params[:is_prerelease]
           Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
         else
-          Helper::GitHelper.delete_branch(@constants[:repo_name], branch, params[:github_token])
+          Helper::GitHelper.delete_branch(@constants[:repo_name], branch, params[:github_elevated_permissions_token] || params[:github_token])
         end
       end
 
       def self.report_status(params)
-        template_args = {}
-        template_args['tag'] = params[:tag]
-        template_args['promoted_tag'] = params[:promoted_tag]
-        template_args['release_url'] = "https://github.com/#{@constants[:repo_name]}/releases/tag/#{params[:tag]}"
-        unless params[:tag_created]
-          template_args['last_release_tag'] = params[:latest_public_release_tag]
-        end
-        if params[:platform] == "macos"
-          dmg_version = (params[:is_prerelease] ? params[:tag] : params[:promoted_tag]).gsub('-', '.')
-          template_args['dmg_url'] = "#{@constants[:dmg_url_prefix]}duckduckgo-#{dmg_version}.dmg"
-        end
-
+        template_args = self.template_arguments(params)
         task_template, comment_template = setup_asana_templates(params)
 
         if task_template
@@ -157,6 +146,20 @@ module Fastlane
           github_handle: params[:github_handle],
           is_scheduled_release: params[:is_scheduled_release]
         )
+      end
+
+      def self.template_arguments(params)
+        template_args = {}
+        template_args['tag'] = params[:tag]
+        template_args['promoted_tag'] = params[:promoted_tag]
+        template_args['release_url'] = "https://github.com/#{@constants[:repo_name]}/releases/tag/#{params[:tag]}"
+        unless params[:tag_created]
+          template_args['last_release_tag'] = params[:latest_public_release_tag]
+        end
+        if params[:platform] == "macos"
+          dmg_version = (params[:is_prerelease] ? params[:tag] : params[:promoted_tag]).gsub('-', '.')
+          template_args['dmg_url'] = "#{@constants[:dmg_url_prefix]}duckduckgo-#{dmg_version}.dmg"
+        end
       end
 
       def self.setup_asana_templates(params)

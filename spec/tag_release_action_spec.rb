@@ -6,9 +6,7 @@ shared_context "common setup" do
       is_prerelease: true,
       github_token: "github-token"
     }
-    @other_action = double(ensure_git_branch: nil)
     @tag_and_release_output = {}
-    allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
     allow(Fastlane::Helper).to receive(:setup_git_user)
   end
 end
@@ -55,6 +53,8 @@ describe Fastlane::Actions::TagReleaseAction do
     include_context "common setup"
 
     before do
+      @other_action = double(ensure_git_branch: nil)
+      allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:create_tag_and_github_release).and_return(@tag_and_release_output)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:report_status)
@@ -240,4 +240,102 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
   end
+
+  describe "#merge_or_delete_branch" do
+    subject { Fastlane::Actions::TagReleaseAction.merge_or_delete_branch(@params) }
+
+    let (:branch) { "release/1.1.0" }
+    let (:other_action) { double(git_branch: branch) }
+
+    platform_contexts = [
+      { name: "on ios", repo_name: "duckduckgo/ios" },
+      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+    ]
+
+    include_context "common setup"
+
+    before do
+      @params[:base_branch] = "base_branch"
+      allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
+      allow(Fastlane::Helper::GitHelper).to receive(:merge_branch)
+      allow(Fastlane::Helper::GitHelper).to receive(:delete_branch)
+    end
+
+    platform_contexts.each do |platform_context|
+      context platform_context[:name] do
+        include_context platform_context[:name]
+
+        context "for prerelease" do
+          include_context "for prerelease"
+
+          it "merges branch" do
+            subject
+            expect(other_action).to have_received(:git_branch)
+            expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
+              .with(platform_context[:repo_name], branch, @params[:base_branch], @params[:github_token])
+          end
+
+          it "uses elevated permissions GitHub token if provided" do
+            @params[:github_elevated_permissions_token] = "elevated-permissions-token"
+            subject
+            expect(other_action).to have_received(:git_branch)
+            expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
+              .with(platform_context[:repo_name], branch, @params[:base_branch], @params[:github_elevated_permissions_token])
+          end
+        end
+
+        context "for public release" do
+          include_context "for public release"
+
+          it "deletes branch" do
+            subject
+            expect(other_action).to have_received(:git_branch)
+            expect(Fastlane::Helper::GitHelper).to have_received(:delete_branch)
+              .with(platform_context[:repo_name], branch, @params[:github_token])
+          end
+
+          it "uses elevated permissions GitHub token if provided" do
+            @params[:github_elevated_permissions_token] = "elevated-permissions-token"
+            subject
+            expect(other_action).to have_received(:git_branch)
+            expect(Fastlane::Helper::GitHelper).to have_received(:delete_branch)
+              .with(platform_context[:repo_name], branch, @params[:github_elevated_permissions_token])
+          end
+        end
+      end
+    end
+  end
+
+  # describe "#report_status" do
+  #   subject { Fastlane::Actions::TagReleaseAction.report_status(@params) }
+
+  #   platform_contexts = [
+  #     { name: "on ios", repo_name: "duckduckgo/ios" },
+  #     { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+  #   ]
+
+  #   include_context "common setup"
+
+  #   before do
+  #     @params[:tag] = "1.1.0"
+  #     @params[:promoted_tag] = "1.1.0-123"
+  #     @params[:tag_created] = true
+  #     @params[:latest_public_release_tag] = "1.0.0"
+  #     @params[:merge_or_delete_successful] = true
+
+  #     allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
+  #     allow(Fastlane::Helper::GitHelper).to receive(:merge_branch)
+  #     allow(Fastlane::Helper::GitHelper).to receive(:delete_branch)
+  #   end
+
+  #   platform_contexts.each do |platform_context|
+  #     context platform_context[:name] do
+  #       include_context platform_context[:name]
+
+  #       context "for prerelease" do
+  #         include_context "for prerelease"
+  #       end
+  #     end
+  #   end
+  # end
 end
