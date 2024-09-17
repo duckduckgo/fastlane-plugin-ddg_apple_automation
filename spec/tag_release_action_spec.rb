@@ -482,4 +482,94 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
   end
+
+  describe "#setup_asana_templates" do
+    subject { Fastlane::Actions::TagReleaseAction.setup_asana_templates(@params) }
+
+    include_context "common setup"
+
+    shared_context "when merge_or_delete_successful: true" do
+      before { @params[:merge_or_delete_successful] = true }
+    end
+
+    shared_context "when merge_or_delete_successful: false" do
+      before { @params[:merge_or_delete_successful] = false }
+    end
+
+    shared_context "when is_prerelease: true" do
+      before { @params[:is_prerelease] = true }
+    end
+
+    shared_context "when is_prerelease: false" do
+      before { @params[:is_prerelease] = false }
+    end
+
+    shared_context "when tag_created: true" do
+      before { @params[:tag_created] = true }
+    end
+
+    shared_context "when tag_created: false" do
+      before { @params[:tag_created] = false }
+    end
+
+    context "when merge_or_delete_successful: true" do
+      include_context "when merge_or_delete_successful: true"
+
+      context "when is_prerelase: true" do
+        include_context "when is_prerelease: true"
+
+        it "comment_template = internal-release-ready" do
+          expect(subject).to eq([nil, "internal-release-ready"])
+        end
+      end
+
+      context "when is_prerelase: false" do
+        include_context "when is_prerelease: false"
+
+        it "comment_template = public-release-tagged" do
+          expect(subject).to eq([nil, "public-release-tagged"])
+        end
+      end
+    end
+
+    context "when merge_or_delete_successful: false" do
+      include_context "when merge_or_delete_successful: false"
+
+      context "when tag_created: true, is_prerelase = true" do
+        include_context "when tag_created: true"
+        include_context "when is_prerelease: true"
+
+        it "task_template = merge-failed, comment_template = internal-release-ready-merge-failed" do
+          expect(subject).to eq(["merge-failed", "internal-release-ready-merge-failed"])
+        end
+      end
+
+      context "when tag_created: true, is_prerelase = false" do
+        include_context "when tag_created: true"
+        include_context "when is_prerelease: false"
+
+        it "task_template = delete-branch-failed, comment_template = public-release-tagged-delete-branch-failed" do
+          expect(subject).to eq(["delete-branch-failed", "public-release-tagged-delete-branch-failed"])
+        end
+      end
+
+      context "when tag_created: false, is_prerelase = true" do
+        include_context "when tag_created: false"
+        include_context "when is_prerelease: true"
+
+        it "task_template = internal-release-tag-failed, comment_template = internal-release-ready-tag-failed" do
+          expect(subject).to eq(["internal-release-tag-failed", "internal-release-ready-tag-failed"])
+        end
+      end
+
+      context "when tag_created: false, is_prerelase = false" do
+        include_context "when tag_created: false"
+        include_context "when is_prerelease: false"
+
+        it "task_template = public-release-tag-failed, comment_template = public-release-tag-failed" do
+          expect(subject).to eq(["public-release-tag-failed", "public-release-tag-failed"])
+        end
+      end
+    end
+  end
 end
