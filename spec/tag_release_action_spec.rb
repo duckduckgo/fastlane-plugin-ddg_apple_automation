@@ -417,4 +417,69 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
   end
+
+  describe "#template_arguments" do
+    subject { Fastlane::Actions::TagReleaseAction.template_arguments(@params) }
+
+    include_context "common setup"
+
+    before do
+      @params[:tag] = "1.1.0"
+      @params[:promoted_tag] = "1.1.0-123"
+      @params[:latest_public_release_tag] = "1.0.0"
+      @params[:is_prerelease] = true
+    end
+
+    platform_contexts = [
+      { name: "on ios", repo_name: "duckduckgo/ios" },
+      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+    ]
+
+    shared_examples "populating tag, promoted_tag and release_url" do |repo_name|
+      it "populates tag, promoted_tag and release_url when tag_created is true" do
+        @params[:tag_created] = true
+        expect(subject).to include({
+          'tag' => @params[:tag],
+          'promoted_tag' => @params[:promoted_tag],
+          'release_url' => "https://github.com/#{repo_name}/releases/tag/#{@params[:tag]}"
+        })
+        expect(subject).not_to include("last_release_tag")
+      end
+
+      it "populates last_release_tag when tag_created is false" do
+        @params[:tag_created] = false
+        expect(subject).to include({
+          'last_release_tag' => @params[:latest_public_release_tag]
+        })
+      end
+    end
+
+    platform_contexts.each do |platform_context|
+      context platform_context[:name] do
+        include_context platform_context[:name]
+        it_behaves_like "populating tag, promoted_tag and release_url", platform_context[:repo_name]
+
+        case platform_context[:name]
+        when "on ios"
+          it "does not populate dmg_url" do
+            expect(subject).not_to include("dmg_url")
+          end
+        when "on macos"
+          it "populates dmg_url using tag for prerelease" do
+            @params[:is_prerelease] = true
+            expect(subject).to include({
+              'dmg_url' => "https://staticcdn.duckduckgo.com/macos-desktop-browser/duckduckgo-1.1.0.dmg"
+            })
+          end
+
+          it "populates dmg_url using promoted tag for public release" do
+            @params[:is_prerelease] = false
+            expect(subject).to include({
+              'dmg_url' => "https://staticcdn.duckduckgo.com/macos-desktop-browser/duckduckgo-1.1.0.123.dmg"
+            })
+          end
+        end
+      end
+    end
+  end
 end
