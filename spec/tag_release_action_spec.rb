@@ -312,28 +312,17 @@ describe Fastlane::Actions::TagReleaseAction do
     let (:task_template) { "task-template" }
     let (:comment_template) { "comment-template" }
     let (:created_task_id) { "12345" }
+    let (:template_args) { {} }
 
     include_context "common setup"
 
     before do
-      @params[:is_scheduled_release] = false
       @params[:is_internal_release_bump] = false
 
-      allow(Fastlane::Actions::TagReleaseAction).to receive(:template_arguments).and_return({})
-      # allow(Fastlane::Actions::TagReleaseAction).to receive(:setup_asana_templates).and_return([task_template, comment_template])
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:template_arguments).and_return(template_args)
       allow(Fastlane::UI).to receive(:important)
       allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:run).and_return(created_task_id)
       allow(Fastlane::Actions::AsanaLogMessageAction).to receive(:run)
-    end
-
-    shared_examples "logging a message without creating Asana task" do
-      it "logs a message creating Asana task" do
-        subject
-        expect(Fastlane::Actions::TagReleaseAction).to have_received(:template_arguments).with(@params)
-        expect(Fastlane::Actions::TagReleaseAction).to have_received(:setup_asana_templates).with(@params)
-        expect(Fastlane::Actions::AsanaCreateActionItemAction).not_to have_received(:run)
-        expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
-      end
     end
 
     shared_examples "logging a message without creating Asana task" do
@@ -353,6 +342,7 @@ describe Fastlane::Actions::TagReleaseAction do
         expect(Fastlane::Actions::TagReleaseAction).to have_received(:setup_asana_templates).with(@params)
         expect(Fastlane::Actions::AsanaCreateActionItemAction).to have_received(:run)
         expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
+        expect(template_args['task_id']).to eq(created_task_id)
       end
     end
 
@@ -384,6 +374,7 @@ describe Fastlane::Actions::TagReleaseAction do
 
             expect(calls.last).to include(template_name: "run-publish-dmg-release")
             expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
+            expect(template_args['task_id']).to eq(created_task_id)
           end
         end
       end
