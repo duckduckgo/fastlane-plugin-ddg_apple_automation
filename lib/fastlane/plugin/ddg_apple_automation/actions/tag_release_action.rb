@@ -150,6 +150,8 @@ module Fastlane
 
       def self.template_arguments(params)
         template_args = {}
+        template_args['base_branch'] = params[:base_branch]
+        template_args['branch'] = other_action.git_branch
         template_args['tag'] = params[:tag]
         template_args['promoted_tag'] = params[:promoted_tag]
         template_args['release_url'] = "https://github.com/#{@constants[:repo_name]}/releases/tag/#{params[:tag]}"

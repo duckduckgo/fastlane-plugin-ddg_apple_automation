@@ -43,6 +43,30 @@ shared_context "for public release" do
   end
 end
 
+shared_context "when merge_or_delete_successful: true" do
+  before { @params[:merge_or_delete_successful] = true }
+end
+
+shared_context "when merge_or_delete_successful: false" do
+  before { @params[:merge_or_delete_successful] = false }
+end
+
+shared_context "when is_prerelease: true" do
+  before { @params[:is_prerelease] = true }
+end
+
+shared_context "when is_prerelease: false" do
+  before { @params[:is_prerelease] = false }
+end
+
+shared_context "when tag_created: true" do
+  before { @params[:tag_created] = true }
+end
+
+shared_context "when tag_created: false" do
+  before { @params[:tag_created] = false }
+end
+
 describe Fastlane::Actions::TagReleaseAction do
   describe "#run" do
     subject do
@@ -424,10 +448,12 @@ describe Fastlane::Actions::TagReleaseAction do
     include_context "common setup"
 
     before do
+      @params[:base_branch] = "base_branch"
       @params[:tag] = "1.1.0"
       @params[:promoted_tag] = "1.1.0-123"
       @params[:latest_public_release_tag] = "1.0.0"
       @params[:is_prerelease] = true
+      allow(Fastlane::Action).to receive(:other_action).and_return(double(git_branch: "release/1.1.0"))
     end
 
     platform_contexts = [
@@ -439,6 +465,8 @@ describe Fastlane::Actions::TagReleaseAction do
       it "populates tag, promoted_tag and release_url when tag_created is true" do
         @params[:tag_created] = true
         expect(subject).to include({
+          'base_branch' => @params[:base_branch],
+          'branch' => "release/1.1.0",
           'tag' => @params[:tag],
           'promoted_tag' => @params[:promoted_tag],
           'release_url' => "https://github.com/#{repo_name}/releases/tag/#{@params[:tag]}"
@@ -487,30 +515,6 @@ describe Fastlane::Actions::TagReleaseAction do
     subject { Fastlane::Actions::TagReleaseAction.setup_asana_templates(@params) }
 
     include_context "common setup"
-
-    shared_context "when merge_or_delete_successful: true" do
-      before { @params[:merge_or_delete_successful] = true }
-    end
-
-    shared_context "when merge_or_delete_successful: false" do
-      before { @params[:merge_or_delete_successful] = false }
-    end
-
-    shared_context "when is_prerelease: true" do
-      before { @params[:is_prerelease] = true }
-    end
-
-    shared_context "when is_prerelease: false" do
-      before { @params[:is_prerelease] = false }
-    end
-
-    shared_context "when tag_created: true" do
-      before { @params[:tag_created] = true }
-    end
-
-    shared_context "when tag_created: false" do
-      before { @params[:tag_created] = false }
-    end
 
     context "when merge_or_delete_successful: true" do
       include_context "when merge_or_delete_successful: true"
