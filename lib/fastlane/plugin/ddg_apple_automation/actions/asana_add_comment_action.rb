@@ -108,7 +108,7 @@ module Fastlane
       def self.create_story(asana_access_token, task_id, text: nil, html_text: nil)
         client = Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships")
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
         begin
           UI.important("Adding comment to task #{task_id}")

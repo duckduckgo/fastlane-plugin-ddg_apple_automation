@@ -85,7 +85,7 @@ module Fastlane
       def self.find_release_task(version, asana_access_token)
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships")
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
 
         release_task_id = nil

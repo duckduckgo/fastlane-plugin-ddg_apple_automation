@@ -33,7 +33,7 @@ module Fastlane
       def self.extract_asana_task_assignee(task_id, asana_access_token)
         client = Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships")
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
 
         begin
@@ -58,7 +58,7 @@ module Fastlane
 
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships")
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
 
         begin
@@ -93,7 +93,7 @@ module Fastlane
       def self.upload_file_to_asana_task(task_id, file_path, asana_access_token)
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships")
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
 
         begin
