@@ -13,40 +13,50 @@ module Fastlane
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
-        is_scheduled_release = params[:is_scheduled_release]
-        github_handle = params[:github_handle]
-        args = params[:template_args]
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
 
-        automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
-
-        if is_scheduled_release
-          task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
-          assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(task_id, token)
-        else
-          if github_handle.to_s.empty?
-            UI.user_error!("Github handle cannot be empty for manual release")
-            return
-          end
-          assignee_id = Helper::AsanaHelper.get_asana_user_id_for_github_handle(github_handle)
-        end
+        automation_task_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
+        args[:automation_task_id] = automation_task_id
+        asana_user_id = find_asana_user_id(params)
+        args[:assignee_id] = asana_user_id
 
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
 
         begin
-          asana_client.tasks.add_followers_for_task(task_gid: automation_subtask_id, followers: [assignee_id])
+          UI.important("Adding user #{asana_user_id} as collaborator on release task's 'Automation' subtask")
+          asana_client.tasks.add_followers_for_task(task_gid: automation_task_id, followers: [asana_user_id])
         rescue StandardError => e
-          UI.user_error!("Failed to add user #{assignee_id} as collaborator on task #{automation_subtask_id}: #{e}")
+          UI.user_error!("Failed to add user #{asana_user_id} as collaborator on task #{automation_task_id}: #{e}")
         end
 
+        if template_name.to_s.empty?
+          UI.important("Adding comment to release task's 'Automation' subtask")
+        else
+          UI.important("Adding comment to release task's 'Automation' subtask using #{template_name} template")
+        end
         AsanaAddCommentAction.run(
-          task_id: automation_subtask_id,
+          task_id: automation_task_id,
           comment: comment,
           template_name: template_name,
           template_args: args,
           asana_access_token: token
         )
+      end
+
+      def self.find_asana_user_id(params)
+        if params[:is_scheduled_release]
+          task_id = Helper::AsanaHelper.extract_asana_task_id(params[:task_url])
+          Helper::AsanaHelper.extract_asana_task_assignee(task_id, params[:asana_access_token])
+        else
+          if params[:github_handle].to_s.empty?
+            UI.user_error!("Github handle cannot be empty for manual release")
+            return
+          end
+          Helper::AsanaHelper.get_asana_user_id_for_github_handle(params[:github_handle])
+        end
       end
 
       def self.description

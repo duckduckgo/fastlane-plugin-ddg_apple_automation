@@ -18,17 +18,22 @@ module Fastlane
         args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
 
         task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
-        automation_subtask_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
+
+        automation_task_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
+        args[:automation_task_id] = automation_task_id
+
         assignee_id = fetch_assignee_id(
           task_id: task_id,
           github_handle: params[:github_handle],
           asana_access_token: token,
           is_scheduled_release: params[:is_scheduled_release]
         )
+        args[:assignee_id] = assignee_id
 
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
         if (template_name = params[:template_name])
+          UI.important("Adding Asana task using #{template_name} template")
           raw_name, raw_html_notes = process_yaml_template(template_name, args)
 
           task_name = Helper::AsanaHelper.sanitize_asana_html_notes(raw_name)
@@ -36,22 +41,23 @@ module Fastlane
         else
           task_name = params[:task_name]
           html_notes = params[:html_notes]
+          UI.important("Adding Asana task with title: #{params[:task_name]}")
         end
 
         begin
           subtask = create_subtask(
             token: token,
-            task_id: automation_subtask_id,
+            task_id: automation_task_id,
             assignee_id: assignee_id,
             task_name: task_name,
             notes: params[:notes],
             html_notes: html_notes
           )
+          Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid)
+          subtask.gid
         rescue StandardError => e
           UI.user_error!("Failed to create subtask for task: #{e}")
         end
-
-        Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid) if subtask&.gid
       end
 
       def self.fetch_assignee_id(task_id:, github_handle:, asana_access_token:, is_scheduled_release:)
@@ -145,6 +151,7 @@ module Fastlane
 
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
         asana_client.tasks.create_subtask_for_task(**subtask_options)
       end

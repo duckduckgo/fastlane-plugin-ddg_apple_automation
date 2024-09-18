@@ -17,7 +17,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_assignee).and_return(assignee_id)
       allow(Fastlane::Helper::AsanaHelper).to receive(:get_release_automation_subtask_id).with(task_url, anything).and_return(automation_subtask_id)
       allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:fetch_assignee_id).and_return(assignee_id)
-      allow(@asana_client_tasks).to receive(:create_subtask_for_task)
+      allow(@asana_client_tasks).to receive(:create_subtask_for_task).and_return(double('subtask', gid: "42"))
 
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
     end
