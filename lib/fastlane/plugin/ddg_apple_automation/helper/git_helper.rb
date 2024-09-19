@@ -45,7 +45,7 @@ module Fastlane
           client.delete_branch(repo_name, branch)
           UI.success("Deleted #{branch}")
         rescue StandardError => e
-          UI.important("Failed to delete #{branch}: #{e}")
+          UI.important("Failed to delete #{branch} branch: #{e}")
           raise e
         end
       end

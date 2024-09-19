@@ -1,0 +1,79 @@
+describe Fastlane::Helper::GitHelper do
+  let(:repo_name) { "repo_name" }
+  let(:branch) { "branch" }
+  let(:base_branch) { "base_branch" }
+  let(:github_token) { "github_token" }
+  let(:client) { double("client") }
+
+  shared_context "common setup" do
+    before do
+      allow(Octokit::Client).to receive(:new).and_return(client)
+      allow(Fastlane::UI).to receive(:success)
+      allow(Fastlane::UI).to receive(:important)
+    end
+  end
+
+  describe "#merge_branch" do
+    subject { Fastlane::Helper::GitHelper.merge_branch(repo_name, branch, base_branch, github_token) }
+
+    include_context "common setup"
+
+    context "when merge is successful" do
+      before do
+        allow(client).to receive(:merge)
+      end
+
+      it "reports success" do
+        expect { subject }.not_to raise_error
+
+        expect(client).to have_received(:merge).with(repo_name, base_branch, branch)
+        expect(Fastlane::UI).to have_received(:success).with("Merged #{branch} branch to #{base_branch}")
+      end
+    end
+
+    context "when merge fails" do
+      before do
+        allow(client).to receive(:merge).and_raise(StandardError)
+      end
+
+      it "shows error" do
+        expect { subject }.to raise_error(StandardError)
+
+        expect(client).to have_received(:merge).with(repo_name, base_branch, branch)
+        expect(Fastlane::UI).to have_received(:important).with("Failed to merge #{branch} branch to #{base_branch}: StandardError")
+      end
+    end
+  end
+
+  describe "#delete_branch" do
+    subject { Fastlane::Helper::GitHelper.delete_branch(repo_name, branch, github_token) }
+
+    include_context "common setup"
+
+    context "when delete is successful" do
+      before do
+        allow(client).to receive(:delete_branch)
+      end
+
+      it "reports success" do
+        expect { subject }.not_to raise_error
+
+        expect(client).to have_received(:delete_branch).with(repo_name, branch)
+        expect(Fastlane::UI).to have_received(:success).with("Deleted #{branch}")
+      end
+    end
+
+    context "when delete fails" do
+      before do
+        allow(client).to receive(:delete_branch).and_raise(StandardError)
+      end
+
+      it "shows error" do
+        expect { subject }.to raise_error(StandardError)
+
+        expect(client).to have_received(:delete_branch).with(repo_name, branch)
+        expect(Fastlane::UI).to have_received(:important).with("Failed to delete #{branch} branch: StandardError")
+      end
+    end
+  end
+end
