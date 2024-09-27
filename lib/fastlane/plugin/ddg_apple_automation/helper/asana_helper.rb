@@ -184,6 +184,16 @@ module Fastlane
                .strip                                      # remove leading and trailing whitespaces
                .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
       end
+
+      def self.get_task_ids_from_git_log(from_ref, to_ref = "HEAD")
+        git_log = `git log #{from_ref}..#{to_ref}`
+
+        git_log
+          .gsub("\n", " ")
+          .scan(%r{\bTask/Issue URL:.*?https://app\.asana\.com[/0-9f]+\b})
+          .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
+          .map { |task_url| extract_asana_task_id(task_url) }
+      end
     end
   end
 end
