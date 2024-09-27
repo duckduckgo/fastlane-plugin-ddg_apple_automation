@@ -157,7 +157,7 @@ module Fastlane
         response = HTTParty.post(
           url,
           headers: { 'Authorization' => "Bearer #{asana_access_token}" },
-          body: { data: { name: task_name } }
+          body: { data: { name: "[TEST] #{task_name}" } }
         )
 
         if response.success?
