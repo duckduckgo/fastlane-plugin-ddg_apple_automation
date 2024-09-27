@@ -38,12 +38,12 @@ module Fastlane
       }.freeze
 
       def self.code_freeze_prechecks
-        other_action.ensure_git_status_clean
-        other_action.ensure_git_branch(branch: DEFAULT_BRANCH)
-        other_action.git_pull
+        Actions.ensure_git_status_clean
+        Actions.ensure_git_branch(branch: DEFAULT_BRANCH)
+        Actions.git_pull
 
-        other_action.git_submodule_update(recursive: true, init: true)
-        other_action.ensure_git_status_clean
+        Actions.git_submodule_update(recursive: true, init: true)
+        Actions.ensure_git_status_clean
       end
 
       def self.validate_new_version(version)
@@ -156,7 +156,7 @@ module Fastlane
         unless modified_files.empty?
           modified_files.each { |modified_file| sh('git', 'add', modified_file.to_s) }
           Actions.sh('git', 'commit', '-m', 'Update embedded files')
-          other_action.ensure_git_status_clean
+          Actions.ensure_git_status_clean
         end
       end
 
