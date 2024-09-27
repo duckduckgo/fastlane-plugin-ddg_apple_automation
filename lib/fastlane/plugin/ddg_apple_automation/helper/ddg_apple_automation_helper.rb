@@ -15,7 +15,7 @@ module Fastlane
       RELEASE_BRANCH = 'release'
       HOTFIX_BRANCH = 'hotfix'
 
-      PROJECT_ROOT_FOLDER = File.dirname(File.expand_path(__dir__))
+      PROJECT_ROOT_FOLDER = Actions.git_path
       INFO_PLIST = File.join(PROJECT_ROOT_FOLDER, 'DuckDuckGo/Info.plist')
       VERSION_CONFIG_PATH = File.join(PROJECT_ROOT_FOLDER, 'Configuration/Version.xcconfig')
       BUILD_NUMBER_CONFIG_PATH = File.join(PROJECT_ROOT_FOLDER, 'Configuration/BuildNumber.xcconfig')
