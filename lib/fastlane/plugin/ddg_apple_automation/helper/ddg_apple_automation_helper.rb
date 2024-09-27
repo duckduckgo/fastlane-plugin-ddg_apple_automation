@@ -77,7 +77,7 @@ module Fastlane
       # @param [String] current version
       # @return [String] updated version
       #
-      def bump_minor_version(version)
+      def self.bump_minor_version(version)
         Semantic::Version.new(version).increment!(:minor).to_s
       end
 
@@ -86,7 +86,7 @@ module Fastlane
       # @param [String] current version
       # @return [String] updated version
       #
-      def bump_patch_version(version)
+      def self.bump_patch_version(version)
         Semantic::Version.new(version).increment!(:patch).to_s
       end
 
