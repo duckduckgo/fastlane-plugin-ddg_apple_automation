@@ -22,18 +22,18 @@ module Fastlane
       BUILD_NUMBER_CONFIG_DEFINITION = 'CURRENT_PROJECT_VERSION'
 
       UPGRADABLE_EMBEDDED_FILES = {
-        ios: Set.new([
-                       'Core/AppPrivacyConfigurationDataProvider.swift',
-                       'Core/AppTrackerDataSetProvider.swift',
-                       'Core/ios-config.json',
-                       'Core/trackerData.json'
-                     ]),
-        macos: Set.new([
-                         'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
-                         'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
-                         'DuckDuckGo/ContentBlocker/trackerData.json',
-                         'DuckDuckGo/ContentBlocker/macos-config.json'
-                       ])
+        "ios" => Set.new([
+                           'Core/AppPrivacyConfigurationDataProvider.swift',
+                           'Core/AppTrackerDataSetProvider.swift',
+                           'Core/ios-config.json',
+                           'Core/trackerData.json'
+                         ]),
+        "macos" => Set.new([
+                             'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
+                             'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
+                             'DuckDuckGo/ContentBlocker/trackerData.json',
+                             'DuckDuckGo/ContentBlocker/macos-config.json'
+                           ])
       }.freeze
 
       def self.code_freeze_prechecks(other_action)
