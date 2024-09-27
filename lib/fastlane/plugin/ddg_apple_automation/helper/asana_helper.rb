@@ -1,5 +1,6 @@
 require "fastlane_core/ui/ui"
 require "asana"
+require "httparty"
 require_relative "ddg_apple_automation_helper"
 require_relative "github_actions_helper"
 
@@ -8,9 +9,18 @@ module Fastlane
 
   module Helper
     class AsanaHelper
+      ASANA_API_URL = "https://app.asana.com/api/1.0"
       ASANA_APP_URL = "https://app.asana.com/0/0"
       ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
       ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
+
+      IOS_HOTFIX_TASK_TEMPLATE_ID = "1205352950253153"
+      IOS_RELEASE_TASK_TEMPLATE_ID = "1205355281110338"
+      MACOS_HOTFIX_TASK_TEMPLATE_ID = "1206724592377782"
+      MACOS_RELEASE_TASK_TEMPLATE_ID = "1206127427850447"
+
+      IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
+      MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
 
       def self.asana_task_url(task_id)
         if task_id.to_s.empty?
@@ -102,6 +112,70 @@ module Fastlane
           UI.user_error!("Failed to upload file to Asana task: #{e}")
           return
         end
+      end
+
+      def self.release_template_task_id(platform, is_hotfix: false)
+        case platform
+        when "ios"
+          is_hotfix ? IOS_HOTFIX_TASK_TEMPLATE_ID : IOS_RELEASE_TASK_TEMPLATE_ID
+        when "macos"
+          is_hotfix ? MACOS_HOTFIX_TASK_TEMPLATE_ID : MACOS_RELEASE_TASK_TEMPLATE_ID
+        else
+          UI.user_error!("Unsupported platform: #{platform}")
+        end
+      end
+
+      def self.release_task_name(version, platform, is_hotfix: false)
+        case platform
+        when "ios"
+          is_hotfix ? "iOS App Release #{version}" : "iOS App Hotfix Release #{version}"
+        when "macos"
+          is_hotfix ? "macOS App Release #{version}" : "macOS App Hotfix Release #{version}"
+        else
+          UI.user_error!("Unsupported platform: #{platform}")
+        end
+      end
+
+      def self.release_section_id(platform)
+        case platform
+        when "ios"
+          IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID
+        when "macos"
+          MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID
+        else
+          UI.user_error!("Unsupported platform: #{platform}")
+        end
+      end
+
+      def self.create_release_task(platform, version, assignee_id, asana_access_token)
+        template_task_id = release_template_task_id(platform)
+        task_name = release_task_name(version, platform)
+        section_id = release_section_id(platform)
+
+        # task_templates is unavailable in the Asana client so we need to use the API directly
+        url = ASANA_API_URL + "/task_templates/#{template_task_id}/instantiateTask"
+        response = HTTParty.post(
+          url,
+          headers: { 'Authorization' => "Bearer #{asana_access_token}" },
+          body: { data: { name: task_name } }
+        )
+
+        if response.success?
+          task_id = response.parsed_response.dig('data', 'new_task', 'gid')
+          task_url = asana_task_url(task_id)
+          Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
+          Helper::GitHubActionsHelper.set_output("asana_task_url", task_url)
+        else
+          UI.user_error!("Failed to instantiate task from template #{template_task_id}: (#{response.code} #{response.message})")
+        end
+
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
+        end
+
+        asana_client.sections.add_task_for_section(section_gid: section_id, task_gid: task_id)
+        asana_client.tasks.update_task(task_gid: task_id, data: { assignee: assignee_id })
       end
 
       def self.sanitize_asana_html_notes(content)

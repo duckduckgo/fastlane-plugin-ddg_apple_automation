@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency('climate_control')
   spec.add_dependency('httpparty')
   spec.add_dependency('octokit')
+  spec.add_dependency('semantic')
 end
