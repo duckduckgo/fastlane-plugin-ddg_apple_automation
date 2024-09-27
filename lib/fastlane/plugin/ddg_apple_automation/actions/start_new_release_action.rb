@@ -11,15 +11,17 @@ module Fastlane
       def self.run(params)
         Helper::GitHelper.setup_git_user
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        params[:asana_user_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(params[:github_handle])
 
-        release_branch_name, new_version = create_release_branch(params)
-        params[:version] = new_version
-        params[:release_branch_name] = release_branch_name
+        options = params.values
+        options[:asana_user_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(options[:github_handle])
 
-        Helper::AsanaHelper.create_release_task(params[:platform], params[:version], params[:asana_user_id], params[:asana_access_token])
+        release_branch_name, new_version = create_release_branch(options)
+        options[:version] = new_version
+        options[:release_branch_name] = release_branch_name
 
-        update_asana_tasks_for_release(params)
+        Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token])
+
+        update_asana_tasks_for_release(options)
       end
 
       def self.update_asana_tasks_for_release(params)
