@@ -37,13 +37,13 @@ module Fastlane
                        ])
       }.freeze
 
-      def self.code_freeze_prechecks
-        Actions.ensure_git_status_clean
-        Actions.ensure_git_branch(branch: DEFAULT_BRANCH)
-        Actions.git_pull
+      def self.code_freeze_prechecks(other_action)
+        other_action.ensure_git_status_clean
+        other_action.ensure_git_branch(branch: DEFAULT_BRANCH)
+        other_action.git_pull
 
-        Actions.git_submodule_update(recursive: true, init: true)
-        Actions.ensure_git_status_clean
+        other_action.git_submodule_update(recursive: true, init: true)
+        other_action.ensure_git_status_clean
       end
 
       def self.validate_new_version(version)
@@ -135,7 +135,7 @@ module Fastlane
         Actions.sh('git', 'push', '-u', 'origin', release_branch)
       end
 
-      def self.update_embedded_files(params)
+      def self.update_embedded_files(params, other_action)
         Actions.sh("cd #{PROJECT_ROOT_FOLDER} && ./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
@@ -156,7 +156,7 @@ module Fastlane
         unless modified_files.empty?
           modified_files.each { |modified_file| sh('git', 'add', modified_file.to_s) }
           Actions.sh('git', 'commit', '-m', 'Update embedded files')
-          Actions.ensure_git_status_clean
+          other_action.ensure_git_status_clean
         end
       end
 

@@ -38,10 +38,10 @@ module Fastlane
       end
 
       def self.create_release_branch(params)
-        Helper::DdgAppleAutomationHelper.code_freeze_prechecks if Helper.is_ci?
+        Helper::DdgAppleAutomationHelper.code_freeze_prechecks(other_action) if Helper.is_ci?
         new_version = Helper::DdgAppleAutomationHelper.validate_new_version(params[:version])
         create_release_branch(new_version)
-        update_embedded_files(params)
+        update_embedded_files(params, other_action)
         update_version_config(new_version)
         other_action.push_to_git_remote
         Helper::GitHubActionsHelper.set_output("release_branch_name", "#{Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{new_version}")
