@@ -15,10 +15,9 @@ module Fastlane
       RELEASE_BRANCH = 'release'
       HOTFIX_BRANCH = 'hotfix'
 
-      PROJECT_ROOT_FOLDER = Actions.git_path
-      INFO_PLIST = File.join(PROJECT_ROOT_FOLDER, 'DuckDuckGo/Info.plist')
-      VERSION_CONFIG_PATH = File.join(PROJECT_ROOT_FOLDER, 'Configuration/Version.xcconfig')
-      BUILD_NUMBER_CONFIG_PATH = File.join(PROJECT_ROOT_FOLDER, 'Configuration/BuildNumber.xcconfig')
+      INFO_PLIST = 'DuckDuckGo/Info.plist'
+      VERSION_CONFIG_PATH = 'Configuration/Version.xcconfig'
+      BUILD_NUMBER_CONFIG_PATH = 'Configuration/BuildNumber.xcconfig'
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
       BUILD_NUMBER_CONFIG_DEFINITION = 'CURRENT_PROJECT_VERSION'
 
@@ -136,7 +135,7 @@ module Fastlane
       end
 
       def self.update_embedded_files(params, other_action)
-        Actions.sh("cd #{PROJECT_ROOT_FOLDER} && ./scripts/update_embedded.sh")
+        Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
         git_status = Actions.sh('git', 'status')
