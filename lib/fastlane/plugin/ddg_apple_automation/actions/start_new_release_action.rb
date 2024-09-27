@@ -44,7 +44,8 @@ module Fastlane
         Helper::DdgAppleAutomationHelper.update_embedded_files(params, other_action)
         Helper::DdgAppleAutomationHelper.update_version_config(new_version, other_action)
         other_action.push_to_git_remote
-        Helper::GitHubActionsHelper.set_output("release_branch_name", "#{Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{new_version}")
+        release_branch_name = "#{Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{new_version}"
+        Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
       end
