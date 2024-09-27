@@ -153,7 +153,7 @@ module Fastlane
 
         # Everything looks good: commit and push
         unless modified_files.empty?
-          modified_files.each { |modified_file| sh('git', 'add', modified_file.to_s) }
+          modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
           Actions.sh('git', 'commit', '-m', 'Update embedded files')
           other_action.ensure_git_status_clean
         end
