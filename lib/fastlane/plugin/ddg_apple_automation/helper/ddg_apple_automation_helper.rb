@@ -159,9 +159,9 @@ module Fastlane
         end
       end
 
-      def self.update_version_config(version)
+      def self.update_version_config(version, other_action)
         File.write(VERSION_CONFIG_PATH, "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
-        git_commit(
+        other_action.git_commit(
           path: VERSION_CONFIG_PATH,
           message: "Set marketing version to #{version}"
         )
