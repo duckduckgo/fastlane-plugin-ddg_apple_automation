@@ -156,7 +156,7 @@ module Fastlane
         url = ASANA_API_URL + "/task_templates/#{template_task_id}/instantiateTask"
         response = HTTParty.post(
           url,
-          headers: { 'Authorization' => "Bearer #{asana_access_token}" },
+          headers: { 'Authorization' => "Bearer #{asana_access_token}", 'Content-Type' => 'application/json' },
           body: { data: { name: "[TEST] #{task_name}" } }
         )
 
