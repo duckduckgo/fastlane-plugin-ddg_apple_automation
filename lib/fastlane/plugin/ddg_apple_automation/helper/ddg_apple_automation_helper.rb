@@ -120,6 +120,19 @@ module Fastlane
         current_version
       end
 
+      def self.prepare_release_branch(platform, version, other_action)
+        code_freeze_prechecks(other_action) unless Helper.is_ci?
+        new_version = validate_new_version(version)
+        create_release_branch(new_version)
+        update_embedded_files(platform, other_action)
+        update_version_config(new_version, other_action)
+        other_action.push_to_git_remote
+        release_branch_name = "#{RELEASE_BRANCH}/#{new_version}"
+        Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
+
+        return release_branch_name, new_version
+      end
+
       def self.create_release_branch(version)
         UI.message("Creating new release branch for #{version}")
         release_branch = "#{RELEASE_BRANCH}/#{version}"
@@ -134,7 +147,7 @@ module Fastlane
         Actions.sh('git', 'push', '-u', 'origin', release_branch)
       end
 
-      def self.update_embedded_files(params, other_action)
+      def self.update_embedded_files(platform, other_action)
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
@@ -143,7 +156,7 @@ module Fastlane
         modified_files = modified_files.map { |str| str.split(':')[1].strip.delete_prefix('../') }
 
         modified_files.each do |modified_file|
-          UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[params[:platform]].any? do |s|
+          UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |s|
             s.include?(modified_file)
           end
         end
@@ -179,8 +192,8 @@ module Fastlane
       end
 
       def self.compute_tag(is_prerelease)
-        version = File.read("Configuration/Version.xcconfig").chomp.split(" = ").last
-        build_number = File.read("Configuration/BuildNumber.xcconfig").chomp.split(" = ").last
+        version = File.read(VERSION_CONFIG_DEFINITION).chomp.split(" = ").last
+        build_number = File.read(BUILD_NUMBER_CONFIG_PATH).chomp.split(" = ").last
         if is_prerelease
           tag = "#{version}-#{build_number}"
         else

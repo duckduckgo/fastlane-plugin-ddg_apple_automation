@@ -15,7 +15,9 @@ module Fastlane
         options = params.values
         options[:asana_user_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(options[:github_handle])
 
-        release_branch_name, new_version = create_release_branch(options)
+        release_branch_name, new_version = Helper::DdgAppleAutomationHelper.prepare_release_branch(
+          params[:platform], params[:version], other_action
+        )
         options[:version] = new_version
         options[:release_branch_name] = release_branch_name
 
@@ -35,19 +37,6 @@ module Fastlane
         #       ${{ steps.create_release_task.outputs.asana_task_id }} \
         #       ${{ vars.MACOS_APP_BOARD_VALIDATION_SECTION_ID }} \
         #       ${{ steps.create_release_task.outputs.marketing_version }}
-      end
-
-      def self.create_release_branch(params)
-        Helper::DdgAppleAutomationHelper.code_freeze_prechecks(other_action) unless Helper.is_ci?
-        new_version = Helper::DdgAppleAutomationHelper.validate_new_version(params[:version])
-        Helper::DdgAppleAutomationHelper.create_release_branch(new_version)
-        Helper::DdgAppleAutomationHelper.update_embedded_files(params, other_action)
-        Helper::DdgAppleAutomationHelper.update_version_config(new_version, other_action)
-        other_action.push_to_git_remote
-        release_branch_name = "#{Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{new_version}"
-        Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
-
-        return release_branch_name, new_version
       end
 
       def self.description
