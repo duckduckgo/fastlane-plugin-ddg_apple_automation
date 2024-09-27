@@ -38,7 +38,7 @@ module Fastlane
       end
 
       def self.create_release_branch(params)
-        Helper::DdgAppleAutomationHelper.code_freeze_prechecks(other_action) if Helper.is_ci?
+        Helper::DdgAppleAutomationHelper.code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = Helper::DdgAppleAutomationHelper.validate_new_version(params[:version])
         create_release_branch(new_version)
         update_embedded_files(params, other_action)
