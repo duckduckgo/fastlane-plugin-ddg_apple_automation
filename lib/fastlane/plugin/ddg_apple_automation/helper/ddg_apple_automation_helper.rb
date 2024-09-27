@@ -192,7 +192,7 @@ module Fastlane
       end
 
       def self.compute_tag(is_prerelease)
-        version = File.read(VERSION_CONFIG_DEFINITION).chomp.split(" = ").last
+        version = File.read(VERSION_CONFIG_PATH).chomp.split(" = ").last
         build_number = File.read(BUILD_NUMBER_CONFIG_PATH).chomp.split(" = ").last
         if is_prerelease
           tag = "#{version}-#{build_number}"
