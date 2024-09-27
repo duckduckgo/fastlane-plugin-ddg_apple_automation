@@ -128,9 +128,9 @@ module Fastlane
       def self.release_task_name(version, platform, is_hotfix: false)
         case platform
         when "ios"
-          is_hotfix ? "iOS App Release #{version}" : "iOS App Hotfix Release #{version}"
+          is_hotfix ? "iOS App Hotfix Release #{version}" : "iOS App Release #{version}"
         when "macos"
-          is_hotfix ? "macOS App Release #{version}" : "macOS App Hotfix Release #{version}"
+          is_hotfix ? "macOS App Hotfix Release #{version}" : "macOS App Release #{version}"
         else
           UI.user_error!("Unsupported platform: #{platform}")
         end
@@ -174,8 +174,8 @@ module Fastlane
           c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
 
-        asana_client.sections.add_task_for_section(section_gid: section_id, task_gid: task_id)
-        asana_client.tasks.update_task(task_gid: task_id, data: { assignee: assignee_id })
+        asana_client.sections.add_task_for_section(section_gid: section_id, task: task_id)
+        asana_client.tasks.update_task(task_gid: task_id, assignee: assignee_id)
       end
 
       def self.sanitize_asana_html_notes(content)
