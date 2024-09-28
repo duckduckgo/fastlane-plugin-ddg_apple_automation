@@ -204,7 +204,8 @@ module Fastlane
 
         release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
 
-        ReleaseTaskHelper.extract_release_notes(release_task_body, "asana")
+        helper = ReleaseTaskHelper.new("asana")
+        helper.extract_release_notes(release_task_body)
       end
     end
   end

@@ -12,91 +12,88 @@ module Fastlane
       END_MARKER = "this release includes:"
       PLACEHOLDER = "add release notes here"
 
-      def self.html_escape(input)
+      def initialize(mode = "html")
+        @mode = mode
+        @notes = ""
+        @pp_notes = ""
+        @is_capturing = false
+        @is_capturing_pp = false
+        @has_content = false
+      end
+
+      def html_escape(input)
         input.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;")
       end
 
-      def self.make_links(input)
+      def make_links(input)
         input.gsub(%r{(https://[^\s]*)}) { "<a href=\"#{$1}\">#{$1}</a>" }
       end
 
-      def self.add_to_notes(notes, line, mode)
-        notes += line
-        notes += "\n" unless mode == "asana"
-        notes
+      def add_to_notes(line)
+        @notes += line
+        @notes += "\n" unless @mode == "asana"
       end
 
-      def self.add_release_note(notes, pp_notes, release_note, is_capturing_pp, mode)
+      def add_to_pp_notes(line)
+        @pp_notes += line
+        @pp_notes += "\n" unless @mode == "asana"
+      end
+
+      def add_release_note(release_note)
         processed_release_note =
-          if mode == "raw"
+          if @mode == "raw"
             release_note
           else
             "<li>#{make_links(html_escape(release_note))}</li>"
           end
 
-        if is_capturing_pp
-          add_to_notes(pp_notes, processed_release_note, mode)
+        if @is_capturing_pp
+          add_to_pp_notes(processed_release_note)
         else
-          add_to_notes(notes, processed_release_note, mode)
+          add_to_notes(processed_release_note)
         end
       end
 
-      def self.extract_release_notes(task_body, mode = "html")
-        is_capturing = false
-        is_capturing_pp = false
-        has_content = false
-        notes = ""
-        pp_notes = ""
-
-        output = mode
-        case mode
-        when "asana"
-          output = "asana"
-        when "raw"
-          output = "raw"
-        end
-
+      def extract_release_notes(task_body)
         task_body.each_line do |line|
           lowercase_line = line.downcase.strip
 
           if lowercase_line == START_MARKER
-            is_capturing = true
-            case output
+            @is_capturing = true
+            case @mode
             when "asana"
-              notes = add_to_notes(notes, "<ul>", output)
+              add_to_notes("<ul>")
             when "html"
-              notes = add_to_notes(notes, "<h3 style=\"font-size:14px\">What's new</h3>", output)
-              notes = add_to_notes(notes, "<ul>", output)
+              add_to_notes("<h3 style=\"font-size:14px\">What's new</h3>")
+              add_to_notes("<ul>")
             end
           elsif PP_MARKER && lowercase_line =~ PP_MARKER
-            is_capturing_pp = true
-            case output
+            @is_capturing_pp = true
+            case @mode
             when "asana"
-              pp_notes = add_to_notes(pp_notes, "</ul><h2>For Privacy Pro subscribers</h2><ul>", output)
+              add_to_pp_notes("</ul><h2>For Privacy Pro subscribers</h2><ul>")
             when "html"
-              pp_notes = add_to_notes(pp_notes, "</ul>", output)
-              pp_notes = add_to_notes(pp_notes, "<h3 style=\"font-size:14px\">For Privacy Pro subscribers</h3>", output)
-              pp_notes = add_to_notes(pp_notes, "<ul>", output)
+              add_to_pp_notes("</ul>")
+              add_to_pp_notes("<h3 style=\"font-size:14px\">For Privacy Pro subscribers</h3>")
+              add_to_pp_notes("<ul>")
             else
-              pp_notes = add_to_notes(pp_notes, line, output)
+              add_to_pp_notes(line)
             end
           elsif END_MARKER && lowercase_line == END_MARKER
-            if !pp_notes.empty? && !pp_notes.downcase.include?(PLACEHOLDER)
-              notes += pp_notes
+            if !@pp_notes.empty? && !@pp_notes.downcase.include?(PLACEHOLDER)
+              @notes += @pp_notes
             end
-            notes = add_to_notes(notes, "</ul>", mode) unless output == "raw"
-            return notes
-          elsif is_capturing && !line.strip.empty?
-            has_content = true
-            if is_capturing_pp
-              pp_notes = add_release_note(notes, pp_notes, line.strip, is_capturing_pp, output)
-            else
-              notes = add_release_note(notes, pp_notes, line.strip, is_capturing_pp, output)
-            end
+            add_to_notes("</ul>") unless @mode == "raw"
+            return @notes
+          elsif @is_capturing && !line.strip.empty?
+            @has_content = true
+            add_release_note(line.strip)
           end
         end
 
-        notes
+        UI.user_error!("No release notes found") unless has_content
+
+        @notes
       end
     end
   end

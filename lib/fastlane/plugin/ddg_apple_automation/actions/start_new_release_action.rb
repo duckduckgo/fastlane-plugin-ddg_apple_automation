@@ -77,8 +77,7 @@ module Fastlane
         UI.message("Latest public release: #{latest_public_release.tag_name}")
 
         task_ids = Helper::AsanaHelper.get_task_ids_from_git_log(latest_public_release.tag_name)
-
-        task_ids.each { |task| UI.message("Task: #{task}") }
+        # task_ids.each { |task| UI.message("Task: #{task}") }
 
         release_notes = Helper::AsanaHelper.fetch_release_notes("1208377683776446", params[:asana_access_token])
 
