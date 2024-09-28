@@ -38,7 +38,8 @@ module Fastlane
         # options[:version] = new_version
         # options[:release_branch_name] = release_branch_name
 
-        # Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token])
+        # release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token])
+        # options[:release_task_id] = release_task_id
 
         update_asana_tasks_for_release(options)
       end
@@ -72,23 +73,29 @@ module Fastlane
         # local release_notes
         # release_notes="$(fetch_current_release_notes "${release_task_id}")"
 
-        client = Octokit::Client.new(access_token: params[:github_token])
-        latest_public_release = client.latest_release(@constants[:repo_name])
-        UI.message("Latest public release: #{latest_public_release.tag_name}")
-
-        task_ids = Helper::AsanaHelper.get_task_ids_from_git_log(latest_public_release.tag_name)
-        # task_ids.each { |task| UI.message("Task: #{task}") }
-
-        release_notes = Helper::AsanaHelper.fetch_release_notes("1208377683776446", params[:asana_access_token])
-
-        UI.message("Release notes: #{release_notes}")
-
         # # 3. Construct new release task description
         # local html_notes
         # html_notes="$(construct_release_task_description)"
 
         # # 4. Update release task description
         # update_task_description "$html_notes"
+
+        client = Octokit::Client.new(access_token: params[:github_token])
+        latest_public_release = client.latest_release(@constants[:repo_name])
+        UI.message("Latest public release: #{latest_public_release.tag_name}")
+
+        task_ids = Helper::AsanaHelper.get_task_ids_from_git_log(latest_public_release.tag_name)
+        release_notes = Helper::AsanaHelper.fetch_release_notes("1208377683776446", params[:asana_access_token])
+        html_notes = Helper::ReleaseTaskHelper.construct_release_task_description(release_notes, task_ids)
+
+        UI.message("Release task: #{html_notes}")
+
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
+        end
+
+        asana_client.tasks.update_task(task_gid: params[:release_task_id], html_notes: html_notes)
 
         # # 5. Move all tasks (including release task itself) to the validation section
         # task_ids+=("${release_task_id}")

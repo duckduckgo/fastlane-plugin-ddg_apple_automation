@@ -177,6 +177,29 @@ module Fastlane
 
         asana_client.sections.add_task_for_section(section_gid: section_id, task: task_id)
         asana_client.tasks.update_task(task_gid: task_id, assignee: assignee_id)
+
+        task_id
+      end
+
+      def self.move_tasks_to_section(task_ids, section_id, asana_access_token)
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
+        end
+
+        task_ids.each_slice(10) do |batch|
+          actions = batch.map do |task_id|
+            {
+              method: "post",
+              relative_path: "/sections/#{section_id}/addTask",
+              data: {
+                task: task_id
+              }
+            }
+          end
+          UI.message("Moving tasks #{batch.join(', ')} to section: #{section_id}")
+          asana_client.create_batch_request({ actions: actions })
+        end
       end
 
       def self.sanitize_asana_html_notes(content)
@@ -204,7 +227,7 @@ module Fastlane
 
         release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
 
-        helper = ReleaseTaskHelper.new("asana")
+        helper = ReleaseTaskHelper::AsanaReleaseNotesExtractor.new(output_type: "asana")
         helper.extract_release_notes(release_task_body)
       end
     end

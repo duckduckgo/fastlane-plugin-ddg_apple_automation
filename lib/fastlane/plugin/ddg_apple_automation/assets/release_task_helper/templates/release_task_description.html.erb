@@ -1,0 +1,15 @@
+<body>
+  <strong>Note: This task's description is managed automatically.</strong><br>
+  Only the <em>Release notes</em> section below should be modified manually.<br>
+  Please do not adjust formatting.<br>
+  <br>
+  <h1>Release notes</h1>
+  <%= release_notes %><br>
+  <br>
+  <h2>This release includes:</h2>
+  <ul>
+  <% task_ids.each do |task_id| %>
+    <li><a data-asana-gid="<%= task_id %>"/></li>
+  <% end %>
+  </ul>
+</body>
