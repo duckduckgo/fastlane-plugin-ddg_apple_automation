@@ -55,13 +55,6 @@ module Fastlane
         #       ${{ vars.MACOS_APP_BOARD_VALIDATION_SECTION_ID }} \
         #       ${{ steps.create_release_task.outputs.marketing_version }}
 
-        client = Octokit::Client.new(access_token: params[:github_token])
-        latest_public_release = client.latest_release(@constants[:repo_name])
-        UI.message("Latest public release: #{latest_public_release.tag_name}")
-
-        task_ids = Helper::AsanaHelper.get_task_ids_from_git_log(latest_public_release.tag_name)
-
-        task_ids.each { |task| UI.message("Task: #{task}") }
         # # 1. Fetch task URLs from git commit messages
         # local last_release_tag
         # last_release_tag="$(gh api /repos/duckduckgo/macos-browser/releases/latest --jq .tag_name)"
@@ -78,6 +71,18 @@ module Fastlane
         # # 2. Fetch current release notes from Asana release task.
         # local release_notes
         # release_notes="$(fetch_current_release_notes "${release_task_id}")"
+
+        client = Octokit::Client.new(access_token: params[:github_token])
+        latest_public_release = client.latest_release(@constants[:repo_name])
+        UI.message("Latest public release: #{latest_public_release.tag_name}")
+
+        task_ids = Helper::AsanaHelper.get_task_ids_from_git_log(latest_public_release.tag_name)
+
+        task_ids.each { |task| UI.message("Task: #{task}") }
+
+        release_notes = Helper::AsanaHelper.fetch_release_notes("1208377683776446", params[:asana_access_token])
+
+        UI.message("Release notes: #{release_notes}")
 
         # # 3. Construct new release task description
         # local html_notes

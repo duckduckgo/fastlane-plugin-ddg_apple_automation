@@ -3,6 +3,7 @@ require "asana"
 require "httparty"
 require_relative "ddg_apple_automation_helper"
 require_relative "github_actions_helper"
+require_relative "release_task_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -193,6 +194,17 @@ module Fastlane
           .scan(%r{\bTask/Issue URL:.*?https://app\.asana\.com[/0-9f]+\b})
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
           .map { |task_url| extract_asana_task_id(task_url) }
+      end
+
+      def self.fetch_release_notes(release_task_id, asana_access_token)
+        asana_client = Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
+        end
+
+        release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
+
+        ReleaseTaskHelper.extract_release_notes(release_task_body, "asana")
       end
     end
   end
