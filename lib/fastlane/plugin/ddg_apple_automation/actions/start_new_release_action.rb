@@ -80,26 +80,32 @@ module Fastlane
         # # 4. Update release task description
         # update_task_description "$html_notes"
 
+        # # 5. Move all tasks (including release task itself) to the validation section
+        # task_ids+=("${release_task_id}")
+        # move_tasks_to_section "$target_section_id" "${task_ids[@]}"
+
+        params[:release_task_id] = "1208377683776446"
+
         client = Octokit::Client.new(access_token: params[:github_token])
         latest_public_release = client.latest_release(@constants[:repo_name])
         UI.message("Latest public release: #{latest_public_release.tag_name}")
 
         task_ids = Helper::AsanaHelper.get_task_ids_from_git_log(latest_public_release.tag_name)
-        release_notes = Helper::AsanaHelper.fetch_release_notes("1208377683776446", params[:asana_access_token])
+        release_notes = Helper::AsanaHelper.fetch_release_notes(params[:release_task_id], params[:asana_access_token])
         html_notes = Helper::ReleaseTaskHelper.construct_release_task_description(release_notes, task_ids)
 
         UI.message("Release task: #{html_notes}")
 
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        # asana_client = Asana::Client.new do |c|
+        #   c.authentication(:access_token, params[:asana_access_token])
+        #   c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
+        # end
 
-        asana_client.tasks.update_task(task_gid: params[:release_task_id], html_notes: html_notes)
+        # asana_client.tasks.update_task(task_gid: params[:release_task_id], html_notes: html_notes)
 
-        # # 5. Move all tasks (including release task itself) to the validation section
-        # task_ids+=("${release_task_id}")
-        # move_tasks_to_section "$target_section_id" "${task_ids[@]}"
+        # Helper::AsanaHelper.move_tasks_to_section(params[:macos_app_board_validation_section_id], task_ids)
+
+        ####### DONE UNTIL HERE #######
 
         # # 6. Get the existing Asana tag for the release, or create a new one.
         # local tag_id
