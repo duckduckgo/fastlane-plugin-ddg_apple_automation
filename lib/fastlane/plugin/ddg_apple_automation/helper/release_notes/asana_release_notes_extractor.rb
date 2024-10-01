@@ -28,7 +28,7 @@ module Fastlane
           if lowercase_line == START_MARKER
             handle_start_marker
           elsif lowercase_line =~ PP_MARKER
-            handle_pp_marker
+            handle_pp_marker(line)
           elsif lowercase_line == END_MARKER
             handle_end_marker
             return @notes
@@ -89,7 +89,7 @@ module Fastlane
         end
       end
 
-      def handle_pp_marker
+      def handle_pp_marker(line)
         @is_capturing_pp = true
         case @output_type
         when "asana"
@@ -99,7 +99,7 @@ module Fastlane
           add_to_pp_notes("<h3 style=\"font-size:14px\">For Privacy Pro subscribers</h3>")
           add_to_pp_notes("<ul>")
         else
-          add_to_pp_notes(line)
+          add_to_pp_notes(line.chomp)
         end
       end
 

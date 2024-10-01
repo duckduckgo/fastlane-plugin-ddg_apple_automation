@@ -129,12 +129,12 @@ module Fastlane
 
       def self.details
         <<-DETAILS
-        This action performs the following tasks:
-        * creates a new release branch,
-        * updates version and build number,
-        * updates embedded files,
-        * pushes the changes to the remote repository,
-        * creates a new Asana release task based off the provided task template.
+This action performs the following tasks:
+* creates a new release branch,
+* updates version and build number,
+* updates embedded files,
+* pushes the changes to the remote repository,
+* creates a new Asana release task based off the provided task template.
         DETAILS
       end
 
