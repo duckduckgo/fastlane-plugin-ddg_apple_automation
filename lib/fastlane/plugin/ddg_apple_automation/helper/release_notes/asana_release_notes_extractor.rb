@@ -99,7 +99,7 @@ module Fastlane
           add_to_pp_notes("<h3 style=\"font-size:14px\">For Privacy Pro subscribers</h3>")
           add_to_pp_notes("<ul>")
         else
-          add_to_pp_notes(line.chomp)
+          add_to_pp_notes(line.strip)
         end
       end
 
