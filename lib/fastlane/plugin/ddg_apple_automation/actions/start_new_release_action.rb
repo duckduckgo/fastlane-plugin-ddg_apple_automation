@@ -69,7 +69,7 @@ module Fastlane
         UI.success("Release task content updated: #{Helper::AsanaHelper.asana_task_url(params[:release_task_id])}")
 
         UI.message("Moving tasks to Validation section")
-        Helper::AsanaHelper.move_tasks_to_section(params[:validation_section_id], task_ids)
+        Helper::AsanaHelper.move_tasks_to_section(task_ids, params[:validation_section_id], params[:asana_access_token])
         UI.success("All tasks moved to Validation section")
 
         tag_name = "#{@constants[:release_tag_prefix]}#{params[:version]}"
