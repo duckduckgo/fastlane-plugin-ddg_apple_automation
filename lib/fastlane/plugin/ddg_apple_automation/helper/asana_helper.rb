@@ -47,10 +47,12 @@ module Fastlane
         ASANA_TAG_URL_TEMPLATE % tag_id
       end
 
-      def self.extract_asana_task_id(task_url)
+      def self.extract_asana_task_id(task_url, set_gha_output: true)
         if (match = task_url.match(ASANA_TASK_URL_REGEX))
           task_id = match[1]
-          Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
+          if set_gha_output
+            Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
+          end
           task_id
         else
           UI.user_error!("URL has incorrect format (attempted to match #{ASANA_TASK_URL_REGEX})")
@@ -247,7 +249,7 @@ module Fastlane
           .gsub("\n", " ")
           .scan(%r{\bTask/Issue URL:.*?https://app\.asana\.com[/0-9f]+\b})
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
-          .map { |task_url| extract_asana_task_id(task_url) }
+          .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
       end
 
       def self.fetch_release_notes(release_task_id, asana_access_token)
