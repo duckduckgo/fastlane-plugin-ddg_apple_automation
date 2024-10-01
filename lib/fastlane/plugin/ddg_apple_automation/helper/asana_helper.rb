@@ -201,7 +201,7 @@ module Fastlane
             }
           end
           UI.message("Moving tasks #{batch.join(', ')} to section: #{section_id}")
-          asana_client.batch_apis.create_batch_request({ actions: actions })
+          asana_client.batch_apis.create_batch_request(actions: actions)
         end
       end
 
@@ -231,7 +231,7 @@ module Fastlane
             }
           end
           UI.message("Tagging tasks #{batch.join(', ')}")
-          asana_client.batch_apis.create_batch_request({ actions: actions })
+          asana_client.batch_apis.create_batch_request(actions: actions)
         end
       end
 
