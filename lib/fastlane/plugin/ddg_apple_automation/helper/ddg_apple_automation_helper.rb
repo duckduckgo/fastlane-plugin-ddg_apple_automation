@@ -59,7 +59,7 @@ module Fastlane
       def self.format_version(version)
         user_version = nil
 
-        unless version.nil?
+        unless version.to_s.empty?
           version_numbers = version.split('.')
           version_numbers[3] = 0
           version_numbers.map! { |element| element.nil? ? 0 : element }
