@@ -69,7 +69,7 @@ module Fastlane
         UI.success("Release task content updated: #{Helper::AsanaHelper.asana_task_url(params[:release_task_id])}")
 
         UI.message("Moving tasks to Validation section")
-        Helper::AsanaHelper.move_tasks_to_section(params[:macos_app_board_validation_section_id], task_ids)
+        Helper::AsanaHelper.move_tasks_to_section(params[:validation_section_id], task_ids)
         UI.success("All tasks moved to Validation section")
 
         tag_name = "#{@constants[:release_tag_prefix]}#{params[:version]}"
@@ -120,6 +120,10 @@ This action performs the following tasks:
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
+                                       optional: false,
+                                       type: String),
+          FastlaneCore::ConfigItem.new(key: :validation_section_id,
+                                       description: "Validation section ID",
                                        optional: false,
                                        type: String)
         ]
