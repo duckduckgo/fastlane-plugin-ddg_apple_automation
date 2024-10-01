@@ -8,9 +8,6 @@ module Fastlane
 
   module Helper
     class DdgAppleAutomationHelper
-      ASANA_APP_URL = "https://app.asana.com/0/0"
-      ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
-
       DEFAULT_BRANCH = 'main'
       RELEASE_BRANCH = 'release'
       HOTFIX_BRANCH = 'hotfix'

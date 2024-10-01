@@ -11,9 +11,10 @@ module Fastlane
   module Helper
     class AsanaHelper
       ASANA_API_URL = "https://app.asana.com/api/1.0"
-      ASANA_APP_URL = "https://app.asana.com/0/0"
+      ASANA_TASK_URL_TEMPLATE = "https://app.asana.com/0/0/%s/f"
+      ASANA_TAG_URL_TEMPLATE = "https://app.asana.com/0/%s/list"
       ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
-      ERROR_ASANA_ACCESS_TOKEN_NOT_SET = "ASANA_ACCESS_TOKEN is not set"
+      ASANA_WORKSPACE_ID = "137249556945"
 
       IOS_HOTFIX_TASK_TEMPLATE_ID = "1205352950253153"
       IOS_RELEASE_TASK_TEMPLATE_ID = "1205355281110338"
@@ -23,12 +24,27 @@ module Fastlane
       IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
       MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
 
+      def self.make_asana_client(asana_access_token)
+        Asana::Client.new do |c|
+          c.authentication(:access_token, asana_access_token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
+        end
+      end
+
       def self.asana_task_url(task_id)
         if task_id.to_s.empty?
           UI.user_error!("Task ID cannot be empty")
           return
         end
-        "#{ASANA_APP_URL}/#{task_id}/f"
+        ASANA_TASK_URL_TEMPLATE % task_id
+      end
+
+      def self.asana_tag_url(tag_id)
+        if tag_id.to_s.empty?
+          UI.user_error!("Tag ID cannot be empty")
+          return
+        end
+        ASANA_TAG_URL_TEMPLATE % tag_id
       end
 
       def self.extract_asana_task_id(task_url)
@@ -42,10 +58,7 @@ module Fastlane
       end
 
       def self.extract_asana_task_assignee(task_id, asana_access_token)
-        client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        client = make_asana_client(asana_access_token)
 
         begin
           task = client.tasks.get_task(task_gid: task_id, options: { fields: ["assignee"] })
@@ -67,10 +80,7 @@ module Fastlane
         # TODO: To be reworked for local execution.
         extract_asana_task_assignee(task_id, asana_access_token)
 
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = make_asana_client(asana_access_token)
 
         begin
           subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["name", "created_at"] })
@@ -102,10 +112,7 @@ module Fastlane
       end
 
       def self.upload_file_to_asana_task(task_id, file_path, asana_access_token)
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = make_asana_client(asana_access_token)
 
         begin
           asana_client.tasks.find_by_id(task_id).attach(filename: file_path, mime: "application/octet-stream")
@@ -170,10 +177,7 @@ module Fastlane
           UI.user_error!("Failed to instantiate task from template #{template_task_id}: (#{response.code} #{response.message})")
         end
 
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = make_asana_client(asana_access_token)
 
         asana_client.sections.add_task_for_section(section_gid: section_id, task: task_id)
         asana_client.tasks.update_task(task_gid: task_id, assignee: assignee_id)
@@ -182,10 +186,7 @@ module Fastlane
       end
 
       def self.move_tasks_to_section(task_ids, section_id, asana_access_token)
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = make_asana_client(asana_access_token)
 
         task_ids.each_slice(10) do |batch|
           actions = batch.map do |task_id|
@@ -198,6 +199,36 @@ module Fastlane
             }
           end
           UI.message("Moving tasks #{batch.join(', ')} to section: #{section_id}")
+          asana_client.create_batch_request({ actions: actions })
+        end
+      end
+
+      def self.find_or_create_asana_release_tag(tag_name, release_task_id, asana_access_token)
+        asana_client = make_asana_client(asana_access_token)
+
+        release_task_tags = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["tags"] }).tags
+
+        if (tag_id = release_task_tags.find { |t| t.name == tag_name }&.gid) && !tag_id.to_s.empty?
+          return tag_id
+        end
+
+        asana_client.tags.create_tag_for_workspace(workspace_gid: ASANA_WORKSPACE_ID, name: tag_name).gid
+      end
+
+      def self.tag_tasks(tag_id, task_ids, asana_access_token)
+        asana_client = make_asana_client(asana_access_token)
+
+        task_ids.each_slice(10) do |batch|
+          actions = batch.map do |task_id|
+            {
+              method: "post",
+              relative_path: "/tasks/#{task_id}/addTag",
+              data: {
+                tag: tag_id
+              }
+            }
+          end
+          UI.message("Tagging tasks #{batch.join(', ')}")
           asana_client.create_batch_request({ actions: actions })
         end
       end
@@ -220,10 +251,7 @@ module Fastlane
       end
 
       def self.fetch_release_notes(release_task_id, asana_access_token)
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = make_asana_client(asana_access_token)
 
         release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
 
