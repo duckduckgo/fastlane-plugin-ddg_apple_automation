@@ -68,6 +68,8 @@ module Fastlane
         asana_client.tasks.update_task(task_gid: params[:release_task_id], html_notes: html_notes)
         UI.success("Release task content updated: #{Helper::AsanaHelper.asana_task_url(params[:release_task_id])}")
 
+        task_ids.append(params[:release_task_id])
+
         UI.message("Moving tasks to Validation section")
         Helper::AsanaHelper.move_tasks_to_section(task_ids, params[:validation_section_id], params[:asana_access_token])
         UI.success("All tasks moved to Validation section")
@@ -77,9 +79,9 @@ module Fastlane
         tag_id = Helper::AsanaHelper.find_or_create_asana_release_tag(tag_name, params[:release_task_id], params[:asana_access_token])
         UI.success("#{tag_name} tag URL: #{Helper::AsanaHelper.asana_tag_url(tag_id)}")
 
-        UI.message("Tagging tasks with \"#{tag_name}\" tag")
+        UI.message("Tagging tasks with #{tag_name} tag")
         Helper::AsanaHelper.tag_tasks(tag_id, task_ids, params[:asana_access_token])
-        UI.success("All tasks tagged with \"#{tag_name}\" tag")
+        UI.success("All tasks tagged with #{tag_name} tag")
       end
 
       def self.description

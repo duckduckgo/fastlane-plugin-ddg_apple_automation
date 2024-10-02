@@ -162,6 +162,7 @@ module Fastlane
         task_name = release_task_name(version, platform)
         section_id = release_section_id(platform)
 
+        UI.message("Creating release task for #{version}")
         # task_templates is unavailable in the Asana client so we need to use the API directly
         url = ASANA_API_URL + "/task_templates/#{template_task_id}/instantiateTask"
         response = HTTParty.post(
@@ -173,6 +174,7 @@ module Fastlane
         if response.success?
           task_id = response.parsed_response.dig('data', 'new_task', 'gid')
           task_url = asana_task_url(task_id)
+          UI.success("Release task for #{version} created at #{task_url}")
           Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
           Helper::GitHubActionsHelper.set_output("asana_task_url", task_url)
         else
@@ -181,8 +183,11 @@ module Fastlane
 
         asana_client = make_asana_client(asana_access_token)
 
+        UI.message("Moving release task to section #{section_id}")
         asana_client.sections.add_task_for_section(section_gid: section_id, task: task_id)
+        UI.message("Assigning release task to user #{assignee_id}")
         asana_client.tasks.update_task(task_gid: task_id, assignee: assignee_id)
+        UI.success("Release task ready: #{task_url} ✅")
 
         task_id
       end
@@ -200,7 +205,7 @@ module Fastlane
               }
             }
           end
-          UI.message("Moving tasks #{batch.join(', ')} to section: #{section_id}")
+          UI.message("Moving tasks #{batch.join(', ')} to section #{section_id}")
           asana_client.batch_apis.create_batch_request(actions: actions)
         end
       end
