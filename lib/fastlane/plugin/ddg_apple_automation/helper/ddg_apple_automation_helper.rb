@@ -171,10 +171,10 @@ module Fastlane
         end
       end
 
-      def self.bump_version_and_build_number(platform, options, other_action)
+      def self.increment_build_number(platform, options, other_action)
         current_version = Helper::DdgAppleAutomationHelper.current_version
         current_build_number = Helper::DdgAppleAutomationHelper.current_build_number
-        build_number = Helper::DdgAppleAutomationHelper.increment_build_number(platform, options, other_action)
+        build_number = Helper::DdgAppleAutomationHelper.calculate_next_build_number(platform, options, other_action)
 
         UI.important("Current version in project settings is #{current_version} (#{current_build_number}).")
         UI.important("Will be updated to #{current_version} (#{build_number}).")
@@ -187,7 +187,7 @@ module Fastlane
         other_action.push_to_git_remote
       end
 
-      def self.increment_build_number(platform, options, other_action)
+      def self.calculate_next_build_number(platform, options, other_action)
         testflight_build_number = fetch_testflight_build_number(platform, options, other_action)
         xcodeproj_build_number = current_build_number
         if platform == "macos"

@@ -47,7 +47,8 @@ This action performs the following tasks:
 * updates version and build number,
 * updates embedded files,
 * pushes the changes to the remote repository,
-* creates a new Asana release task based off the provided task template.
+* creates a new Asana release task based off the provided task template,
+* updates the Asana release task with tasks included in the release.
         DETAILS
       end
 
