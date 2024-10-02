@@ -74,7 +74,7 @@ module Fastlane
 
         tag_name = "#{@constants[:release_tag_prefix]}#{params[:version]}"
         UI.message("Fetching or creating #{tag_name} Asana tag")
-        tag_id = Helper::AsanaHelper.find_or_create_asana_tag(tag_name, params[:release_task_id], params[:asana_access_token])
+        tag_id = Helper::AsanaHelper.find_or_create_asana_release_tag(tag_name, params[:release_task_id], params[:asana_access_token])
         UI.success("#{tag_name} tag URL: #{Helper::AsanaHelper.asana_tag_url(tag_id)}")
 
         UI.message("Tagging tasks with \"#{tag_name}\" tag")
