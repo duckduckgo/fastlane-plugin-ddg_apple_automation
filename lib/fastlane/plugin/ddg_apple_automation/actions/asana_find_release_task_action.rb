@@ -5,6 +5,7 @@ require "octokit"
 require "time"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/git_helper"
 require_relative "../helper/github_actions_helper"
 
 module Fastlane
@@ -37,7 +38,7 @@ module Fastlane
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         setup_constants(platform)
 
-        latest_marketing_version = find_latest_marketing_version(github_token)
+        latest_marketing_version = find_latest_marketing_version(github_token, params[:platform])
         release_task_id = find_release_task(latest_marketing_version, asana_access_token)
 
         release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
@@ -55,11 +56,11 @@ module Fastlane
         }
       end
 
-      def self.find_latest_marketing_version(github_token)
+      def self.find_latest_marketing_version(github_token, platform)
         client = Octokit::Client.new(access_token: github_token)
 
         # NOTE: `client.latest_release` returns release marked as "latest", i.e. a public release
-        latest_internal_release = client.releases(@constants[:repo_name], { per_page: 1 }).first
+        latest_internal_release = client.releases(Helper::GitHelper.repo_name(platform), { per_page: 1 }).first
 
         version = extract_version_from_tag_name(latest_internal_release&.tag_name)
         if version.to_s.empty?
