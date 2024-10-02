@@ -17,14 +17,12 @@ module Fastlane
         case platform
         when "ios"
           @constants = {
-            repo_name: "duckduckgo/ios",
             release_task_prefix: "iOS App Release",
             hotfix_task_prefix: "iOS App Hotfix Release",
             release_section_id: "1138897754570756"
           }
         when "macos"
           @constants = {
-            repo_name: "duckduckgo/macos-browser",
             release_task_prefix: "macOS App Release",
             hotfix_task_prefix: "macOS App Hotfix Release",
             release_section_id: "1202202395298964"

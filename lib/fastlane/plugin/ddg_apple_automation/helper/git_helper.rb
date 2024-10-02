@@ -60,6 +60,23 @@ module Fastlane
           raise e
         end
       end
+
+      def self.assert_branch_has_changes(release_branch)
+        latest_tag = `git describe --tags --abbrev=0`.chomp
+        latest_tag_sha = `git rev-parse "#{latest_tag}"^{}`.chomp
+        release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
+
+        if latest_tag_sha == release_branch_sha
+          UI.important("Release branch's HEAD is already tagged. Skipping automatic release.")
+          return false
+        end
+
+        changed_files = `git diff --name-only "#{latest_tag}".."origin/#{release_branch}"`
+                        .split("\n")
+                        .filter { |file| !file.match?(/^(:?\.github|scripts|fastlane)/) }
+
+        changed_files.any?
+      end
     end
   end
 end

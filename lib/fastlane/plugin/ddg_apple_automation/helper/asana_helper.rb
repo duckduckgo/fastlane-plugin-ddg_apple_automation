@@ -317,12 +317,12 @@ module Fastlane
           .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
       end
 
-      def self.fetch_release_notes(release_task_id, asana_access_token)
+      def self.fetch_release_notes(release_task_id, asana_access_token, output_type: "asana")
         asana_client = make_asana_client(asana_access_token)
 
         release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
 
-        ReleaseTaskHelper.extract_release_notes(release_task_body, output_type: "asana")
+        ReleaseTaskHelper.extract_release_notes(release_task_body, output_type: output_type)
       end
     end
   end

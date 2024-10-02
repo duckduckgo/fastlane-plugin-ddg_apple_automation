@@ -1,5 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
+require_relative "asana_find_release_task_action"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/git_helper"
@@ -10,9 +11,46 @@ module Fastlane
       def self.run(params)
         Helper::GitHelper.setup_git_user
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        Helper::DdgAppleAutomationHelper.bump_version_and_build_number(params[:platform], params, other_action)
 
-        Helper::AsanaHelper.update_asana_tasks_for_release(options)
+        options = params.values
+        find_release_task_if_needed(options)
+        Helper::GitHubActionsHelper.set_output("skip_appstore", options[:skip_appstore])
+
+        unless Helper::GitHelper.assert_branch_has_changes(options[:release_branch])
+          UI.important("No changes to the release branch (or only changes to scripts and workflows). Skipping automatic release.")
+          Helper::GitHubActionsHelper.set_output("skip_release", true)
+          return
+        end
+
+        UI.important("New code changes found in the release branch since the last release. Will bump internal release now.")
+
+        UI.message("Validating release notes")
+        release_notes = Helper::AsanaHelper.fetch_release_notes(options[:release_task_id], options[:asana_access_token], output_type: "raw")
+        if release_notes.empty? || release_notes.include?("<-- Add release notes here -->")
+          UI.user_error!("Release notes are empty or contain a placeholder. Please add release notes to the Asana task and restart the workflow.")
+        else
+          UI.message("Release notes are valid: #{release_notes}")
+        end
+      end
+
+      def self.find_release_task_if_needed(params)
+        if params[:release_task_url]
+          params[:release_task_id] = Helper::AsanaHelper.extract_asana_task_id(params[:asana_task_url], set_gha_output: false)
+          other_action.ensure_git_branch(branch: "^release/.+$")
+          params[:release_branch] = other_action.git_branch
+
+          Helper::GitHubActionsHelper.set_output("release_branch", params[:release_branch])
+          Helper::GitHubActionsHelper.set_output("release_task_id", params[:release_task_id])
+          Helper::GitHubActionsHelper.set_output("release_task_url", params[:release_task_url])
+        else
+          params.merge!(
+            Fastlane::Actions::AsanaFindReleaseTaskAction.run(
+              asana_access_token: params[:asana_access_token],
+              github_token: params[:github_token],
+              platform: params[:platform]
+            )
+          )
+        end
       end
 
       def self.description
@@ -42,15 +80,26 @@ This action performs the following tasks:
         [
           FastlaneCore::ConfigItem.asana_access_token,
           FastlaneCore::ConfigItem.github_token,
+          FastlaneCore::ConfigItem.is_scheduled_release,
           FastlaneCore::ConfigItem.platform,
+          FastlaneCore::ConfigItem.new(key: :release_task_url,
+                                       description: "Asana release task URL",
+                                       optional: true,
+                                       type: String),
+          FastlaneCore::ConfigItem.new(key: :base_branch,
+                                       description: "Base branch name (defaults to main, only override for testing)",
+                                       optional: true,
+                                       type: String,
+                                       default_value: "main"),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: false,
                                        type: String),
-          FastlaneCore::ConfigItem.new(key: :validation_section_id,
-                                       description: "Validation section ID",
-                                       optional: false,
-                                       type: String)
+          FastlaneCore::ConfigItem.new(key: :skip_appstore,
+                                       description: "On macOS, skip App Store release and only make a DMG build",
+                                       optional: true,
+                                       default: false,
+                                       type: Boolean)
         ]
       end
 
