@@ -1,5 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
+require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/git_helper"
 
@@ -10,10 +11,12 @@ module Fastlane
         Helper::GitHelper.setup_git_user
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         Helper::DdgAppleAutomationHelper.bump_version_and_build_number(params[:platform], params, other_action)
+
+        Helper::AsanaHelper.update_asana_tasks_for_release(options)
       end
 
       def self.description
-        "Bumps the project build number (and optionally sets a new version) and pushes the changes to the remote repository"
+        "Starts a new internal release"
       end
 
       def self.authors
@@ -25,8 +28,14 @@ module Fastlane
       end
 
       def self.details
-        # Optional:
-        ""
+        <<-DETAILS
+This action performs the following tasks:
+* finds the git branch and Asana task for the current internal release,
+* checks for are changes to the release branch,
+* ensures that release notes aren't empty or placeholder,
+* increments the project build number,
+* pushes the changes to the remote repository.
+        DETAILS
       end
 
       def self.available_options
