@@ -7,7 +7,7 @@ require_relative "../helper/git_helper"
 
 module Fastlane
   module Actions
-    class BumpInternalReleaseAction < Action
+    class ValidateInternalReleaseBumpAction < Action
       def self.run(params)
         Helper::GitHelper.setup_git_user
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
@@ -70,7 +70,8 @@ module Fastlane
 This action performs the following tasks:
 * finds the git branch and Asana task for the current internal release,
 * checks for are changes to the release branch,
-* ensures that release notes aren't empty or placeholder,
+* ensures that release notes aren't empty or placeholder.
+
 * increments the project build number,
 * pushes the changes to the remote repository.
         DETAILS
