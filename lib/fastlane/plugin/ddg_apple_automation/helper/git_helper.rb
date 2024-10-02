@@ -7,6 +7,17 @@ module Fastlane
 
   module Helper
     class GitHelper
+      def self.repo_name(platform)
+        case platform
+        when "ios"
+          "duckduckgo/ios"
+        when "macos"
+          "duckduckgo/macos-browser"
+        else
+          UI.user_error!("Unsupported platform: #{platform}")
+        end
+      end
+
       def self.setup_git_user(name: "Dax the Duck", email: "dax@duckduckgo.com")
         Actions.sh("echo \"git config --global user.name '#{name}'\"")
         Actions.sh("echo \"git config --global user.email '#{email}'\"")

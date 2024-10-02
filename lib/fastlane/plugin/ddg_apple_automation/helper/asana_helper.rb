@@ -3,6 +3,7 @@ require "asana"
 require "httparty"
 require "octokit"
 require_relative "ddg_apple_automation_helper"
+require_relative "git_helper"
 require_relative "github_actions_helper"
 require_relative "release_task_helper"
 
@@ -147,6 +148,17 @@ module Fastlane
         end
       end
 
+      def self.release_tag_name(version, platform)
+        case platform
+        when "ios"
+          "ios-app-release-#{version}"
+        when "macos"
+          "macos-app-release-#{version}"
+        else
+          UI.user_error!("Unsupported platform: #{platform}")
+        end
+      end
+
       def self.release_section_id(platform)
         case platform
         when "ios"
@@ -205,7 +217,7 @@ module Fastlane
       def self.update_asana_tasks_for_release(params)
         UI.message("Checking latest public release in GitHub")
         client = Octokit::Client.new(access_token: params[:github_token])
-        latest_public_release = client.latest_release(@constants[:repo_name])
+        latest_public_release = client.latest_release(Helper::GitHelper.repo_name(params[:platform]))
         UI.success("Latest public release: #{latest_public_release.tag_name}")
 
         UI.message("Extracting task IDs from git log since #{latest_public_release.tag_name} release")
@@ -230,7 +242,7 @@ module Fastlane
         move_tasks_to_section(task_ids, params[:validation_section_id], params[:asana_access_token])
         UI.success("All tasks moved to Validation section")
 
-        tag_name = "#{@constants[:release_tag_prefix]}#{params[:version]}"
+        tag_name = release_tag_name(params[:version], params[:platform])
         UI.message("Fetching or creating #{tag_name} Asana tag")
         tag_id = find_or_create_asana_release_tag(tag_name, params[:release_task_id], params[:asana_access_token])
         UI.success("#{tag_name} tag URL: #{asana_tag_url(tag_id)}")

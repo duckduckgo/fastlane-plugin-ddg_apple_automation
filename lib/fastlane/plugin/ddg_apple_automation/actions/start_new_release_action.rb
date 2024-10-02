@@ -9,27 +9,9 @@ require_relative "../helper/github_actions_helper"
 module Fastlane
   module Actions
     class StartNewReleaseAction < Action
-      @constants = {}
-
-      def self.setup_constants(platform)
-        case platform
-        when "ios"
-          @constants = {
-            repo_name: "duckduckgo/ios",
-            release_tag_prefix: "ios-app-release-"
-          }
-        when "macos"
-          @constants = {
-            repo_name: "duckduckgo/macos-browser",
-            release_tag_prefix: "macos-app-release-"
-          }
-        end
-      end
-
       def self.run(params)
         Helper::GitHelper.setup_git_user
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        setup_constants(params[:platform])
 
         options = params.values
         options[:asana_user_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(options[:github_handle])
