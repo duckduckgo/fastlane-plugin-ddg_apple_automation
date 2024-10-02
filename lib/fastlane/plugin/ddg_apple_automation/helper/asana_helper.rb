@@ -168,18 +168,19 @@ module Fastlane
         response = HTTParty.post(
           url,
           headers: { 'Authorization' => "Bearer #{asana_access_token}", 'Content-Type' => 'application/json' },
-          body: { data: { name: "[TEST] #{task_name}" } }.to_json
+          body: { data: { name: task_name } }.to_json
         )
 
-        if response.success?
-          task_id = response.parsed_response.dig('data', 'new_task', 'gid')
-          task_url = asana_task_url(task_id)
-          UI.success("Release task for #{version} created at #{task_url}")
-          Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
-          Helper::GitHubActionsHelper.set_output("asana_task_url", task_url)
-        else
+        unless response.success?
           UI.user_error!("Failed to instantiate task from template #{template_task_id}: (#{response.code} #{response.message})")
+          return
         end
+
+        task_id = response.parsed_response.dig('data', 'new_task', 'gid')
+        task_url = asana_task_url(task_id)
+        Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
+        Helper::GitHubActionsHelper.set_output("asana_task_url", task_url)
+        UI.success("Release task for #{version} created at #{task_url}")
 
         asana_client = make_asana_client(asana_access_token)
 
