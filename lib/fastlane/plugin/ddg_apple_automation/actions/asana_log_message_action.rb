@@ -2,6 +2,7 @@ require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
 require_relative "../helper/asana_helper"
+require_relative "../helper/ddg_apple_automation_helper"
 require_relative "asana_add_comment_action"
 require_relative "asana_get_user_id_for_github_handle_action"
 
@@ -78,6 +79,7 @@ module Fastlane
       def self.available_options
         [
           FastlaneCore::ConfigItem.asana_access_token,
+          FastlaneCore::ConfigItem.is_scheduled_release,
           FastlaneCore::ConfigItem.new(key: :task_url,
                                        description: "Asana release task URL",
                                        optional: false,
@@ -99,12 +101,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,
-                                       type: String),
-          FastlaneCore::ConfigItem.new(key: :is_scheduled_release,
-                                       description: "Indicates whether the release was scheduled or started manually",
-                                       optional: true,
-                                       type: Boolean,
-                                       default_value: false)
+                                       type: String)
         ]
       end
 

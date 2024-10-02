@@ -98,6 +98,7 @@ module Fastlane
       def self.available_options
         [
           FastlaneCore::ConfigItem.asana_access_token,
+          FastlaneCore::ConfigItem.is_scheduled_release,
           FastlaneCore::ConfigItem.new(key: :task_url,
                                        description: "Asana release task URL",
                                        optional: false,
@@ -127,12 +128,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,
-                                       type: String),
-          FastlaneCore::ConfigItem.new(key: :is_scheduled_release,
-                                       description: "Indicates whether the release was scheduled or started manually",
-                                       optional: true,
-                                       type: Boolean,
-                                       default_value: false)
+                                       type: String)
         ]
       end
 

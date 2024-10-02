@@ -209,6 +209,7 @@ module Fastlane
         [
           FastlaneCore::ConfigItem.asana_access_token,
           FastlaneCore::ConfigItem.github_token,
+          FastlaneCore::ConfigItem.is_scheduled_release,
           FastlaneCore::ConfigItem.platform,
           FastlaneCore::ConfigItem.new(key: :asana_task_url,
                                        description: "Asana release task URL",
@@ -237,12 +238,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :is_prerelease,
                                        description: "Is this a pre-release? (a.k.a. internal release)",
                                        optional: false,
-                                       type: Boolean),
-          FastlaneCore::ConfigItem.new(key: :is_scheduled_release,
-                                       description: "Indicates whether the release was scheduled or started manually",
-                                       optional: true,
-                                       type: Boolean,
-                                       default_value: false)
+                                       type: Boolean)
         ]
       end
 

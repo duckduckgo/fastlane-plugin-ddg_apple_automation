@@ -372,5 +372,13 @@ module FastlaneCore
                                      UI.user_error!("platform must be equal to 'ios' or 'macos'") unless ['ios', 'macos'].include?(value.to_s)
                                    end)
     end
+
+    def self.is_scheduled_release
+      FastlaneCore::ConfigItem.new(key: :is_scheduled_release,
+                                   description: "Indicates whether the release was scheduled or started manually",
+                                   optional: true,
+                                   type: Boolean,
+                                   default_value: false)
+    end
   end
 end
