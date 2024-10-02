@@ -145,10 +145,7 @@ module Fastlane
         subtask_options[:notes] = notes unless notes.nil?
         subtask_options[:html_notes] = html_notes unless html_notes.nil?
 
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = Helper::AsanaHelper.make_asana_client(token)
         asana_client.tasks.create_subtask_for_task(**subtask_options)
       end
     end

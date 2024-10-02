@@ -194,6 +194,14 @@ module Fastlane
         task_id
       end
 
+      # Updates asana tasks for a release
+      #
+      # @param github_token [String] GitHub token
+      # @param asana_access_token [String] Asana access token
+      # @param release_task_id [String] Asana access token
+      # @param validation_section_id [String] ID of the 'Validation' section in the Asana project
+      # @param version [String] version number
+      #
       def self.update_asana_tasks_for_release(params)
         UI.message("Checking latest public release in GitHub")
         client = Octokit::Client.new(access_token: params[:github_token])

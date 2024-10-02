@@ -21,10 +21,7 @@ module Fastlane
         asana_user_id = find_asana_user_id(params)
         args[:assignee_id] = asana_user_id
 
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = Helper::AsanaHelper.make_asana_client(token)
 
         begin
           UI.important("Adding user #{asana_user_id} as collaborator on release task's 'Automation' subtask")
