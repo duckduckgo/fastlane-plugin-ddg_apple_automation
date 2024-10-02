@@ -1,5 +1,7 @@
 require "fastlane_core/configuration/config_item"
 require "fastlane_core/ui/ui"
+require "httparty"
+require "rexml/document"
 require "semantic"
 require_relative "github_actions_helper"
 
@@ -169,11 +171,125 @@ module Fastlane
         end
       end
 
+      def self.bump_version_and_build_number(platform, options, other_action)
+        current_version = Helper::DdgAppleAutomationHelper.current_version
+        current_build_number = Helper::DdgAppleAutomationHelper.current_build_number
+        build_number = Helper::DdgAppleAutomationHelper.increment_build_number(platform, options, other_action)
+
+        UI.important("Current version in project settings is #{current_version} (#{current_build_number}).")
+        UI.important("Will be updated to #{current_version} (#{build_number}).")
+
+        if UI.interactive? && !UI.confirm("Do you want to continue?")
+          UI.abort_with_message!('Aborted by user.')
+        end
+
+        update_version_and_build_number_config(current_version, build_number, other_action)
+        other_action.push_to_git_remote
+      end
+
+      def self.increment_build_number(platform, options, other_action)
+        testflight_build_number = fetch_testflight_build_number(platform, options, other_action)
+        xcodeproj_build_number = current_build_number
+        if platform == "macos"
+          appcast_build_number = fetch_appcast_build_number(platform)
+          current_release_build_number = [testflight_build_number, appcast_build_number].max
+        else
+          current_release_build_number = testflight_build_number
+        end
+
+        UI.message("TestFlight build number: #{testflight_build_number}")
+        if platform == "macos"
+          UI.message("Appcast.xml build number: #{appcast_build_number}")
+          UI.message("Latest release build number (max of TestFlight and appcast): #{current_release_build_number}")
+        end
+        UI.message("Xcode project settings build number: #{xcodeproj_build_number}")
+
+        if xcodeproj_build_number <= current_release_build_number
+          new_build_number = current_release_build_number
+        else
+          UI.important("Warning: Build number from Xcode project (#{xcodeproj_build_number}) is higher than the current release (#{current_release_build_number}).")
+          UI.message(%{This may be an error in the Xcode project settings, or it may mean that there is a hotfix
+    release in progress and you're making a follow-up internal release that includes the hotfix.})
+          if UI.interactive?
+            build_numbers = {
+              "Current release (#{current_release_build_number})" => current_release_build_number,
+              "Xcode project (#{xcodeproj_build_number})" => xcodeproj_build_number
+            }
+            choice = UI.select("Please choose which build number to bump:", build_numbers.keys)
+            new_build_number = build_numbers[choice]
+          else
+            UI.important("Shell is non-interactive, so we'll bump the Xcode project build number.")
+            new_build_number = xcodeproj_build_number
+          end
+        end
+
+        new_build_number + 1
+      end
+
+      def self.fetch_appcast_build_number(platform)
+        UI.user_error!("This function is not supported on iOS") if platform == "ios"
+        url = `plutil -extract SUFeedURL raw #{INFO_PLIST}`.chomp
+        xml = HTTParty.get(url).body
+        xml_data = REXML::Document.new(xml)
+        versions = xml_data.get_elements('//rss/channel/item/sparkle:version').map { |e| e.text.split('.')[0].to_i }
+        versions.max
+      end
+
+      def self.fetch_testflight_build_number(platform, options, other_action)
+        other_action.latest_testflight_build_number(
+          api_key: get_api_key,
+          username: get_username(options),
+          platform: platform
+        )
+      end
+
+      def self.get_api_key(other_action)
+        has_api_key = [
+          "APPLE_API_KEY_ID",
+          "APPLE_API_KEY_ISSUER",
+          "APPLE_API_KEY_BASE64"
+        ].map { |x| ENV.key?(x) }.reduce(&:&)
+
+        if has_api_key
+          other_action.app_store_connect_api_key(
+            key_id: ENV.fetch("APPLE_API_KEY_ID", nil),
+            issuer_id: ENV.fetch("APPLE_API_KEY_ISSUER", nil),
+            key_content: ENV.fetch("APPLE_API_KEY_BASE64", nil),
+            is_key_content_base64: true
+          )
+        end
+      end
+
+      def self.get_username(options)
+        if is_ci
+          nil # not supported in CI
+        elsif options[:username]
+          options[:username]
+        else
+          git_user_email = `git", "config", "user.email"`.chomp
+          if git_user_email.end_with?("@duckduckgo.com")
+            git_user_email
+          end
+        end
+      end
+
       def self.update_version_config(version, other_action)
         File.write(VERSION_CONFIG_PATH, "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
         other_action.git_commit(
           path: VERSION_CONFIG_PATH,
           message: "Set marketing version to #{version}"
+        )
+      end
+
+      def self.update_version_and_build_number_config(version, build_number, other_action)
+        File.write(VERSION_CONFIG_PATH, "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
+        File.write(BUILD_NUMBER_CONFIG_PATH, "#{BUILD_NUMBER_CONFIG_DEFINITION} = #{build_number}\n")
+        other_action.git_commit(
+          path: [
+            VERSION_CONFIG_PATH,
+            BUILD_NUMBER_CONFIG_PATH
+          ],
+          message: "Bump version to #{version} (#{build_number})"
         )
       end
 
