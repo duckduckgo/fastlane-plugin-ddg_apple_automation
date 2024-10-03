@@ -33,7 +33,7 @@ module Fastlane
 
       def self.find_release_task_if_needed(params)
         if params[:release_task_url]
-          params[:release_task_id] = Helper::AsanaHelper.extract_asana_task_id(params[:asana_task_url], set_gha_output: false)
+          params[:release_task_id] = Helper::AsanaHelper.extract_asana_task_id(params[:release_task_url], set_gha_output: false)
           other_action.ensure_git_branch(branch: "^release/.+$")
           params[:release_branch] = other_action.git_branch
 
