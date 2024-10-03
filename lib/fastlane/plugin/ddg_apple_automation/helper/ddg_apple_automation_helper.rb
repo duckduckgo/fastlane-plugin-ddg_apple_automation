@@ -239,7 +239,7 @@ module Fastlane
         other_action.latest_testflight_build_number(
           api_key: get_api_key(other_action),
           username: get_username(options),
-          platform: platform
+          platform: platform == "macos" ? "osx" : "ios"
         )
       end
 
