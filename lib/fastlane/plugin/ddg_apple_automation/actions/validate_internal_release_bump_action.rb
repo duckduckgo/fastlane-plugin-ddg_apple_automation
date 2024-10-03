@@ -32,15 +32,7 @@ module Fastlane
       end
 
       def self.find_release_task_if_needed(params)
-        if params[:release_task_url]
-          params[:release_task_id] = Helper::AsanaHelper.extract_asana_task_id(params[:release_task_url], set_gha_output: false)
-          other_action.ensure_git_branch(branch: "^release/.+$")
-          params[:release_branch] = other_action.git_branch
-
-          Helper::GitHubActionsHelper.set_output("release_branch", params[:release_branch])
-          Helper::GitHubActionsHelper.set_output("release_task_id", params[:release_task_id])
-          Helper::GitHubActionsHelper.set_output("release_task_url", params[:release_task_url])
-        else
+        if params[:release_task_url].to_s.empty?
           params.merge!(
             Fastlane::Actions::AsanaFindReleaseTaskAction.run(
               asana_access_token: params[:asana_access_token],
@@ -48,6 +40,14 @@ module Fastlane
               platform: params[:platform]
             )
           )
+        else
+          params[:release_task_id] = Helper::AsanaHelper.extract_asana_task_id(params[:release_task_url], set_gha_output: false)
+          other_action.ensure_git_branch(branch: "^release/.+$")
+          params[:release_branch] = other_action.git_branch
+
+          Helper::GitHubActionsHelper.set_output("release_branch", params[:release_branch])
+          Helper::GitHubActionsHelper.set_output("release_task_id", params[:release_task_id])
+          Helper::GitHubActionsHelper.set_output("release_task_url", params[:release_task_url])
         end
       end
 
