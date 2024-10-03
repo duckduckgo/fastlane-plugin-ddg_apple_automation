@@ -161,7 +161,7 @@ module Fastlane
         end
 
         # Run tests (CI will run them separately)
-        # run_tests(scheme: 'DuckDuckGo Privacy Browser') unless is_ci
+        # run_tests(scheme: 'DuckDuckGo Privacy Browser') unless Helper.is_ci?
 
         # Everything looks good: commit and push
         unless modified_files.empty?
@@ -261,7 +261,7 @@ module Fastlane
       end
 
       def self.get_username(options)
-        if is_ci
+        if Helper.is_ci?
           nil # not supported in CI
         elsif options[:username]
           options[:username]
