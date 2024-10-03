@@ -36,8 +36,12 @@ module Fastlane
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         setup_constants(platform)
 
+        UI.message("Checking latest marketing version")
         latest_marketing_version = find_latest_marketing_version(github_token, params[:platform])
+        UI.success("Latest marketing version: #{latest_marketing_version}")
+        UI.message("Searching for release task for version #{latest_marketing_version}")
         release_task_id = find_release_task(latest_marketing_version, asana_access_token)
+        UI.user_error!("No release task found for version #{latest_marketing_version}") unless release_task_id
 
         release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
         release_branch = "release/#{latest_marketing_version}"
