@@ -237,7 +237,7 @@ module Fastlane
 
       def self.fetch_testflight_build_number(platform, options, other_action)
         other_action.latest_testflight_build_number(
-          api_key: get_api_key,
+          api_key: get_api_key(other_action),
           username: get_username(options),
           platform: platform
         )
@@ -266,7 +266,7 @@ module Fastlane
         elsif options[:username]
           options[:username]
         else
-          git_user_email = `git", "config", "user.email"`.chomp
+          git_user_email = `git config user.email`.chomp
           if git_user_email.end_with?("@duckduckgo.com")
             git_user_email
           end
