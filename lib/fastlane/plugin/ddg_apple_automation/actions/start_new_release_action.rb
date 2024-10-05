@@ -25,7 +25,7 @@ module Fastlane
         release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token])
         options[:release_task_id] = release_task_id
 
-        Helper::AsanaHelper.update_asana_tasks_for_release(options)
+        Helper::AsanaHelper.update_asana_tasks_for_internal_release(options)
       end
 
       def self.description
@@ -65,8 +65,8 @@ This action performs the following tasks:
                                        description: "Github user handle",
                                        optional: false,
                                        type: String),
-          FastlaneCore::ConfigItem.new(key: :validation_section_id,
-                                       description: "Validation section ID",
+          FastlaneCore::ConfigItem.new(key: :target_section_id,
+                                       description: "Section ID in Asana where tasks included in the release should be moved",
                                        optional: false,
                                        type: String)
         ]

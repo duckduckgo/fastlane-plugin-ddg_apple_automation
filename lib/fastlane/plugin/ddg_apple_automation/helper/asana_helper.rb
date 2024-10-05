@@ -26,6 +26,9 @@ module Fastlane
       IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
       MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
 
+      INCIDENTS_PARENT_TASK_ID = "1135688560894081"
+      CURRENT_OBJECTIVES_PROJECT_ID = "72649045549333"
+
       def self.make_asana_client(asana_access_token)
         Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
@@ -206,15 +209,15 @@ module Fastlane
         task_id
       end
 
-      # Updates asana tasks for a release
+      # Updates asana tasks for an internal release
       #
       # @param github_token [String] GitHub token
       # @param asana_access_token [String] Asana access token
       # @param release_task_id [String] Asana access token
-      # @param validation_section_id [String] ID of the 'Validation' section in the Asana project
+      # @param target_section_id [String] ID of the 'Validation' section in the Asana project
       # @param version [String] version number
       #
-      def self.update_asana_tasks_for_release(params)
+      def self.update_asana_tasks_for_internal_release(params)
         UI.message("Checking latest public release in GitHub")
         client = Octokit::Client.new(access_token: params[:github_token])
         latest_public_release = client.latest_release(Helper::GitHelper.repo_name(params[:platform]))
@@ -239,7 +242,7 @@ module Fastlane
         task_ids.append(params[:release_task_id])
 
         UI.message("Moving tasks to Validation section")
-        move_tasks_to_section(task_ids, params[:validation_section_id], params[:asana_access_token])
+        move_tasks_to_section(task_ids, params[:target_section_id], params[:asana_access_token])
         UI.success("All tasks moved to Validation section")
 
         tag_name = release_tag_name(params[:version], params[:platform])
@@ -250,6 +253,81 @@ module Fastlane
         UI.message("Tagging tasks with #{tag_name} tag")
         tag_tasks(tag_id, task_ids, params[:asana_access_token])
         UI.success("All tasks tagged with #{tag_name} tag")
+      end
+
+      # Updates asana tasks for a public release
+      #
+      # @param github_token [String] GitHub token
+      # @param asana_access_token [String] Asana access token
+      # @param release_task_id [String] Asana access token
+      # @param target_section_id [String] ID of the 'Done' section in the Asana project
+      # @param version [String] version number
+      #
+      def self.update_asana_tasks_for_public_release(params)
+        # Get the existing Asana tag for the release.
+        tag_name = release_tag_name(params[:version], params[:platform])
+        UI.message("Fetching #{tag_name} Asana tag")
+        tag_id = find_asana_release_tag(tag_name, params[:release_task_id], params[:asana_access_token])
+        UI.success("#{tag_name} tag URL: #{asana_tag_url(tag_id)}")
+
+        # Fetch task IDs for the release tag.
+        UI.message("Fetching tasks tagged with #{tag_name}")
+        task_ids = fetch_tasks_for_tag(tag_id, params[:asana_access_token])
+        UI.success("#{task_ids.count} task(s) found.")
+
+        # Move all tasks to Done section.
+        UI.message("Moving tasks to Done section")
+        move_tasks_to_section(task_ids, params[:target_section_id], params[:asana_access_token])
+        UI.success("All tasks moved to Done section")
+
+        # Complete tasks that don't require a post-mortem.
+        UI.message("Completing tasks")
+        complete_tasks(task_ids, params[:asana_access_token])
+        UI.message("Done completing tasks")
+
+        # Fetch current release notes from Asana release task.
+        UI.message("Fetching release notes from Asana release task (#{asana_task_url(params[:release_task_id])})")
+        release_notes = fetch_release_notes(params[:release_task_id], params[:asana_access_token])
+        UI.success("Release notes: #{release_notes}")
+
+        # Construct release announcement task description
+        UI.message("Preparing release announcement task")
+        task_ids.delete(params[:release_task_id])
+        Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids)
+      end
+
+      def self.fetch_tasks_for_tag(tag_id, asana_access_token)
+        asana_client = make_asana_client(asana_access_token)
+
+        task_ids = []
+        begin
+          response = asana_client.tasks.get_tasks_for_tag(tag_gid: tag_id, options: { fields: ["gid"] })
+          loop do
+            task_ids += response.map(&:gid)
+            response = response.next_page
+            break if response.nil?
+          end
+        rescue StandardError => e
+          UI.user_error!("Failed to fetch tasks for tag: #{e}")
+        end
+        task_ids
+      end
+
+      def self.fetch_subtasks(task_id, asana_access_token)
+        asana_client = make_asana_client(asana_access_token)
+
+        task_ids = []
+        begin
+          response = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["gid"] })
+          loop do
+            task_ids += response.map(&:gid)
+            response = response.next_page
+            break if response.nil?
+          end
+        rescue StandardError => e
+          UI.user_error!("Failed to fetch subtasks of task #{task_id}: #{e}")
+        end
+        task_ids
       end
 
       def self.move_tasks_to_section(task_ids, section_id, asana_access_token)
@@ -270,16 +348,45 @@ module Fastlane
         end
       end
 
-      def self.find_or_create_asana_release_tag(tag_name, release_task_id, asana_access_token)
+      def self.complete_tasks(task_ids, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
 
+        incident_task_ids = fetch_subtasks(INCIDENTS_PARENT_TASK_ID, asana_access_token)
+
+        task_ids.each do |task_id|
+          if incident_task_ids.include?(task_id)
+            UI.important("Not completing task #{task_id} because it's an incident task")
+            break
+          end
+
+          projects_ids = asana_client.projects.get_projects_for_task(task_gid: task_id, options: { fields: ["gid"] }).map(&:gid)
+          if projects_ids.include?(CURRENT_OBJECTIVES_PROJECT_ID)
+            UI.important("Not completing task #{task_id} because it's a Current Objective")
+            break
+          end
+
+          UI.message("Completing task #{task_id}")
+          asana_client.tasks.update_task(task_gid: task_id, completed: true)
+          UI.success("Task #{task_id} completed")
+        end
+      end
+
+      def self.find_asana_release_tag(tag_name, release_task_id, asana_access_token)
+        asana_client = make_asana_client(asana_access_token)
         release_task_tags = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["tags"] }).tags
 
         if (tag_id = release_task_tags.find { |t| t.name == tag_name }&.gid) && !tag_id.to_s.empty?
           return tag_id
         end
+      end
 
-        asana_client.tags.create_tag_for_workspace(workspace_gid: ASANA_WORKSPACE_ID, name: tag_name).gid
+      def self.find_or_create_asana_release_tag(tag_name, release_task_id, asana_access_token)
+        tag_id = find_asana_release_tag(tag_name, release_task_id, asana_access_token)
+        unless tag_id
+          asana_client = make_asana_client(asana_access_token)
+          tag_id = asana_client.tags.create_tag_for_workspace(workspace_gid: ASANA_WORKSPACE_ID, name: tag_name).gid
+        end
+        tag_id
       end
 
       def self.tag_tasks(tag_id, task_ids, asana_access_token)

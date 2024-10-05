@@ -1,0 +1,21 @@
+<body>
+  As the last step of the process, post a message to <a href='https://app.asana.com/0/11984721910118/1204991209236659'>REVIEW / RELEASE</a> Asana project:
+  <ul>
+    <li>Set the title to <strong>macOS App Release <%= marketing_version %></strong></li>
+    <li>Copy the content below (between separators) and paste as the message body.</li>
+  </ul>
+  <hr>
+  <h1>Release notes</h1>
+  <%= release_notes %>
+  <h2>This release includes:</h2>
+  <ul>
+  <% task_ids.each do |task_id| %>
+    <li><a data-asana-gid="<%= task_id %>"/></li>
+  <% end %>
+  </ul>
+  <strong>Rollout</strong><br>
+  This is now rolling out to users. New users will receive this release immediately, 
+  existing users will receive this gradually over the next few days. You can force an update now 
+  by going to the DuckDuckGo menu in the menu bar and selecting "Check For Updates".
+  <hr>
+</body>

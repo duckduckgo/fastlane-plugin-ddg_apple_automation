@@ -18,6 +18,16 @@ module Fastlane
         Helper::AsanaHelper.sanitize_asana_html_notes(html_notes)
       end
 
+      def self.construct_release_announcement_task_description(version, release_notes, task_ids)
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("release_task_helper/templates/release_announcement_task_description.html.erb")
+        html_notes = Helper::DdgAppleAutomationHelper.process_erb_template(template_file, {
+          marketing_version: version,
+          release_notes: release_notes,
+          task_ids: task_ids
+        })
+        Helper::AsanaHelper.sanitize_asana_html_notes(html_notes)
+      end
+
       def self.extract_release_notes(task_body, output_type: "html")
         helper = AsanaReleaseNotesExtractor.new(output_type: "asana")
         helper.extract_release_notes(task_body)

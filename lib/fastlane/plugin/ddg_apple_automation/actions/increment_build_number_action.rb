@@ -29,12 +29,7 @@ module Fastlane
       end
 
       def self.details
-        <<-DETAILS
-This action performs the following tasks:
-* increments the project build number,
-* pushes the changes to the remote repository,
-* if Asana release task is provided, updates the description with tasks included in the release.
-        DETAILS
+        "This action increments the project build number and pushes the changes to the remote repository."
       end
 
       def self.available_options
