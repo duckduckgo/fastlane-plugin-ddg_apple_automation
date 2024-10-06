@@ -22,6 +22,7 @@ module Fastlane
           Fastlane::Actions::AsanaCreateActionItemAction.run(
             asana_access_token: options[:asana_access_token],
             task_url: Helper::AsanaHelper.asana_task_url(options[:release_task_id]),
+            task_name: "Announce the release to the company",
             html_notes: announcement_task_html_notes,
             github_handle: options[:github_handle],
             is_scheduled_release: options[:is_scheduled_release]
