@@ -8,7 +8,7 @@ require_relative "../helper/github_actions_helper"
 
 module Fastlane
   module Actions
-    class IncrementBuildNumberAction < Action
+    class BumpBuildNumberAction < Action
       def self.run(params)
         Helper::GitHelper.setup_git_user
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
