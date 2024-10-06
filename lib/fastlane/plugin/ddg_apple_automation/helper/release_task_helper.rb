@@ -29,7 +29,7 @@ module Fastlane
       end
 
       def self.extract_release_notes(task_body, output_type: "html")
-        helper = AsanaReleaseNotesExtractor.new(output_type: "asana")
+        helper = AsanaReleaseNotesExtractor.new(output_type: output_type)
         helper.extract_release_notes(task_body)
       end
     end
