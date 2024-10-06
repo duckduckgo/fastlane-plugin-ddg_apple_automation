@@ -268,6 +268,12 @@ Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently 
     end
   end
 
+  shared_context "empty task body" do
+    before do
+      @input = ""
+    end
+  end
+
   shared_examples "extracting release notes" do |mode|
     it "extracts release notes in #{mode} format" do
       expect(subject.extract_release_notes(@input)).to eq(@output[mode.to_sym])
@@ -301,6 +307,20 @@ Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently 
       context "non-empty release notes and Privacy Pro release header as a bullet point inside regular release notes" do
         include_context "non-empty release notes and Privacy Pro release header as a bullet point inside regular release notes"
         it_behaves_like "extracting release notes", mode
+      end
+
+      context "empty task body" do
+        include_context "empty task body"
+
+        before do
+          allow(Fastlane::UI).to receive(:user_error!)
+        end
+
+        it "shows error" do
+          subject.extract_release_notes(@input)
+
+          expect(Fastlane::UI).to have_received(:user_error!).with("No release notes found")
+        end
       end
     end
   end

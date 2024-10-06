@@ -38,7 +38,7 @@ module Fastlane
           end
         end
 
-        UI.user_error!("No release notes found") unless has_content
+        UI.user_error!("No release notes found") unless @has_content
 
         @notes
       end
