@@ -385,21 +385,7 @@ describe Fastlane::Actions::TagReleaseAction do
 
         context "on macos" do
           include_context "on macos"
-
-          it "creates 2 Asana tasks where last one uses run-publish-dmg-release template and logs a message" do
-            subject
-            expect(Fastlane::Actions::TagReleaseAction).to have_received(:template_arguments).with(@params)
-            expect(Fastlane::Actions::TagReleaseAction).to have_received(:setup_asana_templates).with(@params)
-
-            calls = []
-            expect(Fastlane::Actions::AsanaCreateActionItemAction).to have_received(:run).twice do |*args|
-              calls << args.first
-            end
-
-            expect(calls.last).to include(template_name: "run-publish-dmg-release")
-            expect(Fastlane::Actions::AsanaLogMessageAction).to have_received(:run)
-            expect(template_args['task_id']).to eq(created_task_id)
-          end
+          it_behaves_like "creating Asana task and logging a message"
         end
       end
 
