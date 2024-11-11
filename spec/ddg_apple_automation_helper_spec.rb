@@ -220,8 +220,13 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   end
 
   describe ".get_username" do
+    around do |example|
+      original_ci_value = Fastlane::Helper.is_ci?
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
+      example.run
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(original_ci_value)
+    end
     it "fetches the username from options or git config" do
-      allow(`git config user.email`).to receive(:chomp).and_return("test@duckduckgo.com")
       expect(Fastlane::Helper::DdgAppleAutomationHelper.get_username(username: "username")).to eq("username")
     end
   end
