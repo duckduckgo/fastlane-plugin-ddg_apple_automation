@@ -299,7 +299,6 @@ module Fastlane
       def self.fetch_tasks_for_tag(tag_id, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
         task_ids = []
-
         begin
           response = asana_client.tasks.get_tasks_for_tag(tag_gid: tag_id, options: { fields: ["gid"] })
           loop do
@@ -314,20 +313,16 @@ module Fastlane
         rescue StandardError => e
           UI.user_error!("Failed to fetch tasks for tag: #{e}")
         end
-
         task_ids
       end
 
       def self.fetch_subtasks(task_id, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
         task_ids = []
-
         begin
           response = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["gid"] })
-
           loop do
             task_ids += response.data.map(&:gid)
-
             break unless response.respond_to?(:next_page) && response.next_page
 
             response = asana_client.tasks.get_subtasks_for_task(
