@@ -15,7 +15,6 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
       allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_id).and_return("987654321")
       allow(Fastlane::Actions).to receive(:lane_context).and_return({ Fastlane::Actions::SharedValues::PLATFORM_NAME => "ios" })
 
-
       @other_action = double(ensure_git_branch: nil, git_branch: "release_branch_name")
       allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
       allow(Fastlane::Actions).to receive(:other_action).and_return(@other_action)
@@ -26,7 +25,6 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
         params[:release_branch] = "release_branch_name"
         params[:release_task_id] = "mock_task_id"
       end
-        
     end
   end
 
@@ -45,10 +43,10 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
   describe "#run" do
     subject do
       configuration = FastlaneCore::Configuration.create(Fastlane::Actions::ValidateInternalReleaseBumpAction.available_options, @params)
-      Fastlane::Actions::ValidateInternalReleaseBumpAction.run(configuration)      
+      Fastlane::Actions::ValidateInternalReleaseBumpAction.run(configuration)
     end
     include_context "common setup"
-    
+
     context "when there are changes in the release branch" do
       it "proceeds with release bump if release notes are valid" do
         expect(Fastlane::UI).to receive(:message).with("Validating release notes")

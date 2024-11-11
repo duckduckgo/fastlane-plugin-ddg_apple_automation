@@ -73,9 +73,7 @@ describe Fastlane::Helper::GitHubActionsHelper do
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git describe --tags --abbrev=0").and_return("v1.0.0\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "v1.0.0"^{}').and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git diff --name-only "v1.0.0".."origin/release_branch"')
-          .and_return("app/file1.rb\napp/file2.rb\n")
-
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git diff --name-only "v1.0.0".."origin/release_branch"').and_return("app/file1.rb\napp/file2.rb\n")
         expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch")).to eq(true)
       end
     end
@@ -85,8 +83,7 @@ describe Fastlane::Helper::GitHubActionsHelper do
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git describe --tags --abbrev=0").and_return("v1.0.0\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "v1.0.0"^{}').and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git diff --name-only "v1.0.0".."origin/release_branch"')
-          .and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git diff --name-only "v1.0.0".."origin/release_branch"').and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")
 
         expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch")).to eq(false)
       end

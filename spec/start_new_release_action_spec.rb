@@ -35,7 +35,6 @@ shared_context "on macos" do
   end
 end
 
-
 describe Fastlane::Actions::StartNewReleaseAction do
   describe '#run' do
     subject do
@@ -152,5 +151,4 @@ describe Fastlane::Actions::StartNewReleaseAction do
       expect(described_class.return_value).to eq("The newly created release task ID")
     end
   end
-
 end

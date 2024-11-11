@@ -551,7 +551,7 @@ describe Fastlane::Helper::AsanaHelper do
       allow(@asana_client.projects).to receive(:get_projects_for_task)
         .with(task_gid: "1234567890", options: { fields: ["gid"] })
         .and_return(double("response", data: [double(gid: Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID)]))
-      #
+
       allow(@asana_client.projects).to receive(:get_projects_for_task)
         .with(task_gid: "1234567891", options: { fields: ["gid"] })
         .and_return(double("response", data: [double(gid: "non_objective_id")]))

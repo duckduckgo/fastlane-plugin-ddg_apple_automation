@@ -12,7 +12,7 @@ describe Fastlane::Actions::UpdateAsanaForReleaseAction do
         target_section_id: "987654321"
       }
     end
-    
+
     subject do
       configuration = FastlaneCore::Configuration.create(Fastlane::Actions::UpdateAsanaForReleaseAction.available_options, params)
       Fastlane::Actions::UpdateAsanaForReleaseAction.run(configuration)
