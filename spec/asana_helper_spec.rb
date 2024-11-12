@@ -438,22 +438,31 @@ describe Fastlane::Helper::AsanaHelper do
     end
 
     it "fetches tasks for a given tag successfully with a next page" do
+      task1 = double("Asana::Task", gid: "12345")
+      task2 = double("Asana::Task", gid: "67890")
+      task3 = double("Asana::Task", gid: "54321")
+
       response_page1 = double(
         "Asana::Collection",
-        data: [double(gid: "12345"), double(gid: "67890")],
-        next_page: double("next_page", offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9")
+        data: [task1, task2]
       )
 
       response_page2 = double(
         "Asana::Collection",
-        data: [double(gid: "54321")]
+        data: [task3]
       )
+      allow(response_page1).to receive(:map).and_return(["12345", "67890"])
+      allow(response_page1).to receive(:next_page).and_return(response_page2)
+
+      allow(response_page2).to receive(:map).and_return(["54321"])
+      allow(response_page2).to receive(:next_page).and_return(nil)
 
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
-        .with(tag_gid: tag_id, options: { fields: ["gid"] })
+        .with(tag_gid: tag_id, options: { opt_fields: ["gid"] })
         .and_return(response_page1)
+
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
-        .with(tag_gid: tag_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+        .with(tag_gid: tag_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_tasks_for_tag(tag_id, asana_access_token)
@@ -483,23 +492,26 @@ describe Fastlane::Helper::AsanaHelper do
     end
 
     it "fetches subtasks for a given task successfully" do
-      response_page1 = double(
-        "Asana::Collection",
-        data: [double(gid: "12345"), double(gid: "67890")],
-        next_page: double("next_page", offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9")
-      )
-
       response_page2 = double(
         "Asana::Collection",
-        data: [double(gid: "54321")]
+        data: [double("Asana::Task", gid: "54321")]
       )
+      allow(response_page2).to receive(:map).and_return(["54321"])
+      allow(response_page2).to receive(:next_page).and_return(nil)
+
+      response_page1 = double(
+        "Asana::Collection",
+        data: [double("Asana::Task", gid: "12345"), double("Asana::Task", gid: "67890")]
+      )
+      allow(response_page1).to receive(:map).and_return(["12345", "67890"])
+      allow(response_page1).to receive(:next_page).and_return(response_page2)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
-        .with(task_gid: task_id, options: { fields: ["gid"] })
+        .with(task_gid: task_id, options: { opt_fields: ["gid"] })
         .and_return(response_page1)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
-        .with(task_gid: task_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+        .with(task_gid: task_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_subtasks(task_id, asana_access_token)
@@ -541,24 +553,39 @@ describe Fastlane::Helper::AsanaHelper do
 
     before do
       @asana_client = double("Asana::Client")
+      @asana_projects = double("Asana::Projects")
+      @asana_tasks = double("Asana::Tasks")
+
       allow(Fastlane::Helper::AsanaHelper).to receive(:make_asana_client).with(asana_access_token).and_return(@asana_client)
       allow(Fastlane::Helper::AsanaHelper).to receive(:fetch_subtasks).with(Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID, asana_access_token).and_return(incident_task_ids)
-      allow(@asana_client).to receive_message_chain(:projects, :get_projects_for_task)
-      allow(@asana_client).to receive_message_chain(:tasks, :update_task)
+
+      allow(@asana_client).to receive(:projects).and_return(@asana_projects)
+      allow(@asana_client).to receive(:tasks).and_return(@asana_tasks)
+      allow(Fastlane::UI).to receive(:user_error!)
     end
 
     it "completes tasks while skipping incident and current objective tasks" do
-      allow(@asana_client.projects).to receive(:get_projects_for_task)
-        .with(task_gid: "1234567890", options: { fields: ["gid"] })
-        .and_return(double("response", data: [double(gid: Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID)]))
+      response_task1 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID)])
+      allow(response_task1).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID])
+      allow(@asana_projects).to receive(:get_projects_for_task)
+        .with(task_gid: "1234567890", options: { opt_fields: ["gid"] })
+        .and_return(response_task1)
 
-      allow(@asana_client.projects).to receive(:get_projects_for_task)
-        .with(task_gid: "1234567891", options: { fields: ["gid"] })
-        .and_return(double("response", data: [double(gid: "non_objective_id")]))
+      response_task2 = double("Asana::Collection", data: [double("Asana::Project", gid: "non_objective_id")])
+      allow(response_task2).to receive(:map).and_return(["non_objective_id"])
+      allow(@asana_projects).to receive(:get_projects_for_task)
+        .with(task_gid: "1234567891", options: { opt_fields: ["gid"] })
+        .and_return(response_task2)
 
-      allow(@asana_client.projects).to receive(:get_projects_for_task)
-        .with(task_gid: "1234567892", options: { fields: ["gid"] })
-        .and_return(double("response", data: [double(gid: Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID)]))
+      response_task3 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID)])
+      allow(response_task3).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID])
+      allow(@asana_projects).to receive(:get_projects_for_task)
+        .with(task_gid: "1234567892", options: { opt_fields: ["gid"] })
+        .and_return(response_task3)
+
+      expect(@asana_tasks).to receive(:update_task)
+        .with(task_gid: "1234567891", completed: true)
+        .and_return(double("update_response"))
 
       expect(Fastlane::UI).to receive(:important).with("Not completing task 1234567890 because it's an incident task")
       expect(Fastlane::UI).to receive(:message).with("Completing task 1234567891")
