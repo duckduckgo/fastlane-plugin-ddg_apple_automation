@@ -1,25 +1,14 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "yaml"
-require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/asana_helper"
 require_relative "../helper/github_actions_helper"
 
 module Fastlane
   module Actions
     class AsanaGetUserIdForGithubHandleAction < Action
       def self.run(params)
-        github_handle = params[:github_handle]
-
-        mapping_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_get_user_id_for_github_handle/github-asana-user-id-mapping.yml")
-        user_mapping = YAML.load_file(mapping_file)
-        asana_user_id = user_mapping[github_handle]
-
-        if asana_user_id.nil? || asana_user_id.to_s.empty?
-          UI.message("Asana User ID not found for GitHub handle: #{github_handle}")
-        else
-          Helper::GitHubActionsHelper.set_output("asana_user_id", asana_user_id)
-          asana_user_id
-        end
+        Helper::AsanaHelper.get_asana_user_id_for_github_handle(params[:github_handle])
       end
 
       def self.description

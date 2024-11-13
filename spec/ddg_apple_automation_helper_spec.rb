@@ -1,20 +1,47 @@
-require "climate_control"
-
 describe Fastlane::Helper::DdgAppleAutomationHelper do
-  describe "#asana_task_url" do
-    it "constructs Asana task URL" do
-      expect(asana_task_url("1234567890")).to eq("https://app.asana.com/0/0/1234567890/f")
-      expect(asana_task_url("0")).to eq("https://app.asana.com/0/0/0/f")
+  describe "#process_erb_template" do
+    it "processes ERB template" do
+      template = "<h1>Hello, <%= x %>!</h1>"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(template)
+      expect(process_erb_template("template.erb", { 'x' => "World" })).to eq("<h1>Hello, World!</h1>")
     end
 
-    it "shows error when task_id is empty" do
+    it "shows error if provided template file does not exist" do
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(nil)
       allow(Fastlane::UI).to receive(:user_error!)
-      asana_task_url("")
-      expect(Fastlane::UI).to have_received(:user_error!).with("Task ID cannot be empty")
+      expect(ERB).not_to receive(:new)
+      process_erb_template("file.erb", {})
+      expect(Fastlane::UI).to have_received(:user_error!).with("Template file not found: file.erb")
     end
 
-    def asana_task_url(task_id)
-      Fastlane::Helper::DdgAppleAutomationHelper.asana_task_url(task_id)
+    def process_erb_template(erb_file_path, args)
+      Fastlane::Helper::DdgAppleAutomationHelper.process_erb_template(erb_file_path, args)
+    end
+  end
+
+  describe "#compute_tag" do
+    describe "when is prerelease" do
+      let(:is_prerelease) { true }
+
+      it "computes tag and returns nil promoted tag" do
+        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        expect(compute_tag(is_prerelease)).to eq(["1.0.0-123", nil])
+      end
+    end
+
+    describe "when is public release" do
+      let(:is_prerelease) { false }
+
+      it "computes tag and promoted tag" do
+        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        expect(compute_tag(is_prerelease)).to eq(["1.0.0", "1.0.0-123"])
+      end
+    end
+
+    def compute_tag(is_prerelease)
+      Fastlane::Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
     end
   end
 
@@ -28,47 +55,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
     def load_file(file)
       Fastlane::Helper::DdgAppleAutomationHelper.load_file(file)
-    end
-  end
-
-  describe "#sanitize_html_and_replace_env_vars" do
-    it "substitutes all env variables" do
-      content = "<h2>${ASSIGNEE_ID} is publishing ${TAG} hotfix release</h2>"
-      ClimateControl.modify(
-        ASSIGNEE_ID: '12345',
-        TAG: 'v1.0.0'
-      ) do
-        expect(sanitize_html_and_replace_env_vars(content)).to eq("<h2>12345 is publishing v1.0.0 hotfix release</h2>")
-      end
-    end
-
-    it "removes newlines and leading/trailing spaces" do
-      content = "   \nHello, \n\n World!\n This is a test.   \n"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("Hello, World! This is a test.")
-    end
-
-    it "removes spaces between html tags" do
-      content = "<body> <h2>Hello, World! This is a test.</h2> </body>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<body><h2>Hello, World! This is a test.</h2></body>")
-    end
-
-    it "replaces multiple whitespaces with a single space" do
-      content = "<h2>Hello,   World! This   is a test.</h2>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<h2>Hello, World! This is a test.</h2>")
-    end
-
-    it "replaces <br> tags with new lines" do
-      content = "<h2>Hello, World!<br> This is a test.</h2>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<h2>Hello, World!\n This is a test.</h2>")
-    end
-
-    it "preserves HTML-escaped characters" do
-      content = "<body>Hello -&gt; World!</body>"
-      expect(sanitize_html_and_replace_env_vars(content)).to eq("<body>Hello -&gt; World!</body>")
-    end
-
-    def sanitize_html_and_replace_env_vars(content)
-      Fastlane::Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(content)
     end
   end
 end

@@ -3,6 +3,7 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require "octokit"
 require "time"
+require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 
@@ -39,7 +40,7 @@ module Fastlane
         latest_marketing_version = find_latest_marketing_version(github_token)
         release_task_id = find_release_task(latest_marketing_version, asana_access_token)
 
-        release_task_url = Helper::DdgAppleAutomationHelper.asana_task_url(release_task_id)
+        release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
         release_branch = "release/#{latest_marketing_version}"
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
 
@@ -84,6 +85,7 @@ module Fastlane
       def self.find_release_task(version, asana_access_token)
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
 
         release_task_id = nil
@@ -143,7 +145,7 @@ module Fastlane
         hotfix_task_id = tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
 
         if hotfix_task_id
-          UI.user_error!("Found active hotfix task: #{Helper::DdgAppleAutomationHelper.asana_task_url(hotfix_task_id)}")
+          UI.user_error!("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
           return
         end
       end
@@ -170,14 +172,7 @@ module Fastlane
         [
           FastlaneCore::ConfigItem.asana_access_token,
           FastlaneCore::ConfigItem.github_token,
-          FastlaneCore::ConfigItem.new(key: :platform,
-                                       description: "Platform (iOS or macOS) - optionally to override lane context value",
-                                       optional: true,
-                                       type: String,
-                                       verify_block: proc do |value|
-                                         UI.user_error!("platform must be equal to 'ios' or 'macos'") unless ['ios', 'macos'].include?(value.to_s)
-                                       end)
-
+          FastlaneCore::ConfigItem.platform
         ]
       end
 

@@ -1,8 +1,9 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
+require "erb"
 require_relative "../helper/ddg_apple_automation_helper"
-require_relative "asana_extract_task_id_action"
+require_relative "../helper/asana_helper"
 
 module Fastlane
   module Actions
@@ -13,8 +14,9 @@ module Fastlane
         task_url = params[:task_url]
         template_name = params[:template_name]
         comment = params[:comment]
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
 
-        workflow_url = ENV.fetch('WORKFLOW_URL', '')
+        workflow_url = args["workflow_url"]
 
         begin
           validate_params(task_id, task_url, comment, template_name, workflow_url)
@@ -23,19 +25,21 @@ module Fastlane
           return
         end
 
-        task_id = AsanaExtractTaskIdAction.run(task_url: task_url) if task_url
+        task_id = Helper::AsanaHelper.extract_asana_task_id(task_url) if task_url
 
         if template_name.to_s.empty?
           text = "#{comment}\n\nWorkflow URL: #{workflow_url}"
           create_story(asana_access_token, task_id, text: text)
         else
-          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html")
-          template_content = Helper::DdgAppleAutomationHelper.load_file(template_file)
-          return unless template_content
-
-          html_text = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content)
-          create_story(asana_access_token, task_id, html_text: html_text)
+          html_text = process_template(template_name, args)
+          sanitized_html_text = Helper::AsanaHelper.sanitize_asana_html_notes(html_text)
+          create_story(asana_access_token, task_id, html_text: sanitized_html_text)
         end
+      end
+
+      def self.process_template(template_name, args)
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_add_comment/templates/#{template_name}.html.erb")
+        Helper::DdgAppleAutomationHelper.process_erb_template(template_file, args)
       end
 
       def self.description
@@ -74,7 +78,12 @@ module Fastlane
                                        description: "Name of a template file (without extension) for the comment. Templates can be found in assets/asana_add_comment/templates subdirectory.
       The file is processed before being sent to Asana",
                                        optional: true,
-                                       type: String)
+                                       type: String),
+          FastlaneCore::ConfigItem.new(key: :template_args,
+                                       description: "Template arguments. For backward compatibility, environment variables are added to this hash",
+                                       optional: true,
+                                       type: Hash,
+                                       default_value: {})
         ]
       end
 
@@ -99,8 +108,12 @@ module Fastlane
       def self.create_story(asana_access_token, task_id, text: nil, html_text: nil)
         client = Asana::Client.new do |c|
           c.authentication(:access_token, asana_access_token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
         begin
+          UI.important("Adding comment to task #{task_id}")
+          UI.important("text: #{text}")
+          UI.important("html_text: #{html_text}")
           if text
             client.stories.create_story_for_task(task_gid: task_id, text: text)
           else

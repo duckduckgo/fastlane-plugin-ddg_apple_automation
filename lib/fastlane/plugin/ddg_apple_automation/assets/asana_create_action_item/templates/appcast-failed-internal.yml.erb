@@ -1,16 +1,16 @@
-name: Generate appcast2.xml for ${TAG} internal release and upload assets to S3
+name: Generate appcast2.xml for <%= tag %> internal release and upload assets to S3
 html_notes: |
   <body>
-    Publishing ${TAG} internal release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
+    Publishing <%= tag %> internal release failed in CI. Please follow the steps to generate the appcast file and upload files to S3 from your local machine.<br>
     <ol>
-      <li>Download <a href='${DMG_URL}'>the DMG for ${TAG} release</a>.</li>
+      <li>Download <a href='<%= dmg_url %>'>the DMG for <%= tag %> release</a>.</li>
       <li>Create a new file called <code>release-notes.txt</code> on your disk.
         <ul>
           <li>Add each release note as a separate line and don't add bullet points (•) – the script will add them automatically.</li>
         </ul></li>
       <li>Run <code>appcastManager</code>:
         <ul>
-          <li><code>./scripts/appcast_manager/appcastManager.swift --release-to-internal-channel --dmg ~/Downloads/${DMG_NAME} --release-notes release-notes.txt</code></li>
+          <li><code>./scripts/appcast_manager/appcastManager.swift --release-to-internal-channel --dmg ~/Downloads/<%= dmg_name %> --release-notes release-notes.txt</code></li>
         </ul></li>
       <li>Verify that the new build is in the appcast file with the following internal channel tag:
         <ul>
@@ -26,9 +26,9 @@ html_notes: |
       <li>Launch a debug version of the app with an old version number.</li>
       <li>Identify as an internal user in the app.</li>
       <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
-      <li>Verify that you're being offered to update to ${TAG}.</li>
+      <li>Verify that you're being offered to update to <%= tag %>.</li>
       <li>Verify that the update works.</li>
     </ol><br>
-    🔗 Workflow URL: <a href='${WORKFLOW_URL}'>${WORKFLOW_URL}</a>.
+    🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
   </body>
   

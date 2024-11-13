@@ -1,14 +1,13 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "asana"
+require "erb"
 require "yaml"
+require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/github_actions_helper"
 require_relative "asana_add_comment_action"
-require_relative "asana_get_release_automation_subtask_id_action"
 require_relative "asana_get_user_id_for_github_handle_action"
-require_relative "asana_extract_task_id_action"
-require_relative "asana_extract_task_assignee_action"
 
 module Fastlane
   module Actions
@@ -16,48 +15,68 @@ module Fastlane
       def self.run(params)
         token = params[:asana_access_token]
         task_url = params[:task_url]
-        task_name = params[:task_name]
-        notes = params[:notes]
-        html_notes = params[:html_notes]
-        template_name = params[:template_name]
-        is_scheduled_release = params[:is_scheduled_release]
-        github_handle = params[:github_handle]
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
 
-        task_id = AsanaExtractTaskIdAction.run(task_url: task_url)
-        automation_subtask_id = AsanaGetReleaseAutomationSubtaskIdAction.run(task_url: task_url, asana_access_token: token)
-        if is_scheduled_release
-          assignee_id = AsanaExtractTaskAssigneeAction.run(task_id: task_id, asana_access_token: token)
-        else
-          if github_handle.to_s.empty?
-            UI.user_error!("Github handle cannot be empty for manual release")
-            return
-          end
-          assignee_id = AsanaGetUserIdForGithubHandleAction.run(github_handle: github_handle, asana_access_token: token)
-        end
+        task_id = Helper::AsanaHelper.extract_asana_task_id(task_url)
+
+        automation_task_id = Helper::AsanaHelper.get_release_automation_subtask_id(task_url, token)
+        args[:automation_task_id] = automation_task_id
+
+        assignee_id = fetch_assignee_id(
+          task_id: task_id,
+          github_handle: params[:github_handle],
+          asana_access_token: token,
+          is_scheduled_release: params[:is_scheduled_release]
+        )
+        args[:assignee_id] = assignee_id
 
         Helper::GitHubActionsHelper.set_output("asana_assignee_id", assignee_id)
 
-        if template_name
-          template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml")
-          template_content = YAML.safe_load(Helper::DdgAppleAutomationHelper.load_file(template_file))
-          task_name = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content["name"])
-          html_notes = Helper::DdgAppleAutomationHelper.sanitize_html_and_replace_env_vars(template_content["html_notes"])
+        if (template_name = params[:template_name])
+          UI.important("Adding Asana task using #{template_name} template")
+          raw_name, raw_html_notes = process_yaml_template(template_name, args)
+
+          task_name = Helper::AsanaHelper.sanitize_asana_html_notes(raw_name)
+          html_notes = Helper::AsanaHelper.sanitize_asana_html_notes(raw_html_notes)
+        else
+          task_name = params[:task_name]
+          html_notes = params[:html_notes]
+          UI.important("Adding Asana task with title: #{params[:task_name]}")
         end
 
         begin
           subtask = create_subtask(
             token: token,
-            task_id: automation_subtask_id,
+            task_id: automation_task_id,
             assignee_id: assignee_id,
             task_name: task_name,
-            notes: notes,
+            notes: params[:notes],
             html_notes: html_notes
           )
+          Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid)
+          subtask.gid
         rescue StandardError => e
           UI.user_error!("Failed to create subtask for task: #{e}")
         end
+      end
 
-        Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid) if subtask&.gid
+      def self.fetch_assignee_id(task_id:, github_handle:, asana_access_token:, is_scheduled_release:)
+        if is_scheduled_release
+          Helper::AsanaHelper.extract_asana_task_assignee(task_id, asana_access_token)
+        else
+          if github_handle.to_s.empty?
+            UI.user_error!("Github handle cannot be empty for manual release")
+            return
+          end
+          Helper::AsanaHelper.get_asana_user_id_for_github_handle(github_handle)
+        end
+      end
+
+      def self.process_yaml_template(template_name, args)
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("asana_create_action_item/templates/#{template_name}.yml.erb")
+        yaml = Helper::DdgAppleAutomationHelper.process_erb_template(template_file, args)
+        task_data = YAML.safe_load(yaml)
+        return task_data["name"], task_data["html_notes"]
       end
 
       def self.description
@@ -100,6 +119,11 @@ module Fastlane
       The file is processed before being sent to Asana",
                                        optional: true,
                                        type: String),
+          FastlaneCore::ConfigItem.new(key: :template_args,
+                                       description: "Template arguments. For backward compatibility, environment variables are added to this hash",
+                                       optional: true,
+                                       type: Hash,
+                                       default_value: {}),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,
@@ -127,6 +151,7 @@ module Fastlane
 
         asana_client = Asana::Client.new do |c|
           c.authentication(:access_token, token)
+          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
         end
         asana_client.tasks.create_subtask_for_task(**subtask_options)
       end
