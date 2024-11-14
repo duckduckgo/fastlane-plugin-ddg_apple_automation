@@ -22,7 +22,7 @@ module Fastlane
           return
         end
 
-        text = process_yaml_template(template_name, args)
+        text = process_template(template_name, args)
         payload = {
           "channel" => mattermost_user_handle,
           "username" => "GitHub Actions",
@@ -60,11 +60,9 @@ module Fastlane
         ""
       end
 
-      def self.process_yaml_template(template_name, args)
-        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("mattermost_send_message/templates/#{template_name}.yml.erb")
-        yaml = Helper::DdgAppleAutomationHelper.process_erb_template(template_file, args)
-        data = YAML.safe_load(yaml)
-        return data["text"]
+      def self.process_template(template_name, args)
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("mattermost_send_message/templates/#{template_name}.txt.erb")
+        Helper::DdgAppleAutomationHelper.process_erb_template(template_file, args)
       end
 
       def self.available_options
