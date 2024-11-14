@@ -78,6 +78,11 @@ module Fastlane
                                        description: "Github user handle",
                                        optional: false,
                                        type: String),
+          FastlaneCore::ConfigItem.new(key: :template_args,
+                                       description: "Template arguments. For backward compatibility, environment variables are added to this hash",
+                                       optional: true,
+                                       type: Hash,
+                                       default_value: {}),
           FastlaneCore::ConfigItem.new(key: :template_name,
                                        description: "Name of a template file (without extension) for the message. Templates can be found in assets/mattermost_send_message/templates subdirectory.
       The file is processed before being posted",
