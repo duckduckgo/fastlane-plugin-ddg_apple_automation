@@ -1,1 +1,0 @@
-text: ":rotating_light: **Notarized macOS app `${RELEASE_TYPE}` build failed** | [:github: Workflow run summary](${WORKFLOW_URL})${ASANA_LINK}"

@@ -8,16 +8,17 @@ describe Fastlane::Actions::MattermostSendMessageAction do
   end
 
   let(:user_mapping) { { "user" => "@mattermost_user" } }
-  let(:template_content) { { "text" => "Hello ${NAME}" } }
+  let(:template_content) { { "text" => "Hello <%= name %>" } }
+  let(:processed_template) { "Hello World" }
 
   before do
     allow(YAML).to receive(:load_file).with(anything).and_return(user_mapping)
-    allow(YAML).to receive(:safe_load).and_return(template_content)
-    allow(ENV).to receive(:fetch).with("NAME", "").and_return("World")
+    allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:path_for_asset_file).and_return("mock_path")
+    allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:process_erb_template).and_return(processed_template)
+    allow(YAML).to receive(:safe_load).and_return("text" => processed_template)
     allow(HTTParty).to receive(:post).and_return(double(success?: true))
 
-    allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:path_for_asset_file).and_return("mock_path")
-    allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return("mock_content")
+    allow(ENV).to receive(:[]).with("NAME").and_return("World")
   end
 
   it "sends a message to Mattermost with correct payload" do
@@ -51,6 +52,6 @@ describe Fastlane::Actions::MattermostSendMessageAction do
   it "handles unsuccessful HTTP response" do
     allow(HTTParty).to receive(:post).and_return(double(success?: false, body: "Error message"))
 
-    expect { Fastlane::Actions::MattermostSendMessageAction.run(params) }.to output(/Failed to send message: Error message/).to_stdout
+    expect { Fastlane::Actions::MattermostSendMessageAction.run(params) }.to raise_error(FastlaneCore::Interface::FastlaneError, "Failed to send message: Error message")
   end
 end

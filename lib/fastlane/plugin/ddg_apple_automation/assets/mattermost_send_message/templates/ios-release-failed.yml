@@ -1,1 +1,0 @@
-text: ":warning: **iOS release job failed** :thisisfine: | [:github: Workflow run summary](${WORKFLOW_URL})"

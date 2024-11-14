@@ -1,1 +1,0 @@
-text: "**Notarized macOS app `${RELEASE_TYPE}` build is ready** :goose_honk_tada: | [:github: Workflow run summary](${WORKFLOW_URL})${ASANA_LINK}",

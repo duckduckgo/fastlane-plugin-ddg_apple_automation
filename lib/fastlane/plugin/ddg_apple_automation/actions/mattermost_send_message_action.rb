@@ -12,7 +12,7 @@ module Fastlane
         github_handle = params[:github_handle]
         template_name = params[:template_name]
         mm_webhook_url = params[:mattermost_webhook_url]
-
+        args = (params[:template_args] || {}).merge(Hash(ENV).transform_keys { |key| key.downcase.gsub('-', '_') })
         mapping_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("mattermost_send_message/github-mattermost-user-id-mapping.yml")
         user_mapping = YAML.load_file(mapping_file)
         mattermost_user_handle = user_mapping[github_handle]
@@ -22,10 +22,7 @@ module Fastlane
           return
         end
 
-        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("mattermost_send_message/templates/#{template_name}.yml")
-        template_content = YAML.safe_load(Helper::DdgAppleAutomationHelper.load_file(template_file))
-        text = template_content["text"].gsub(/\$\{(\w+)\}/) { ENV.fetch($1, '') }
-
+        text = process_yaml_template(template_name, args)
         payload = {
           "channel" => mattermost_user_handle,
           "username" => "GitHub Actions",
@@ -40,9 +37,9 @@ module Fastlane
 
         # Check response status
         if response.success?
-          puts("Message sent successfully!")
+          UI.success("Message sent successfully!")
         else
-          puts("Failed to send message: #{response.body}")
+          UI.user_error!("Failed to send message: #{response.body}")
         end
       end
 
@@ -61,6 +58,13 @@ module Fastlane
       def self.details
         # Optional:
         ""
+      end
+
+      def self.process_yaml_template(template_name, args)
+        template_file = Helper::DdgAppleAutomationHelper.path_for_asset_file("mattermost_send_message/templates/#{template_name}.yml.erb")
+        yaml = Helper::DdgAppleAutomationHelper.process_erb_template(template_file, args)
+        data = YAML.safe_load(yaml)
+        return data["text"]
       end
 
       def self.available_options
