@@ -118,6 +118,41 @@ describe Fastlane::Actions::StartNewReleaseAction do
       end
     end
   end
+end
+
+describe Fastlane::Actions::StartNewReleaseAction do
+  describe '#run in TEST_MODE' do
+    before do
+      ENV['TEST_MODE'] = 'true'
+      load 'lib/fastlane/plugin/ddg_apple_automation/helper/ddg_apple_automation_helper.rb'
+    end
+
+    after do
+      ENV.delete('TEST_MODE')
+      load 'lib/fastlane/plugin/ddg_apple_automation/helper/ddg_apple_automation_helper.rb'
+    end
+
+    subject do
+      configuration = Fastlane::ConfigurationHelper.parse(Fastlane::Actions::StartNewReleaseAction, @params)
+      Fastlane::Actions::StartNewReleaseAction.run(configuration)
+    end
+
+    include_context "common setup"
+
+    context "on macos" do
+      include_context "on macos"
+
+      it 'prepares the release branch in test mode' do
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:prepare_release_branch).with(
+          "macos", "1.0.0", anything
+        ) do |platform, version, other_action|
+          expect(Fastlane::Helper::DdgAppleAutomationHelper::RELEASE_BRANCH).to eq("test-release")
+          expect(Fastlane::Helper::DdgAppleAutomationHelper::HOTFIX_BRANCH).to eq("test-hotfix")
+        end
+        subject
+      end
+    end
+  end
 
   # Constants
   describe '#available_options' do
