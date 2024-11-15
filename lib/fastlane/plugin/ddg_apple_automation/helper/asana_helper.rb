@@ -296,6 +296,32 @@ module Fastlane
         Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids)
       end
 
+      # Rertieves tasks between this release and the last internal release
+      #
+      # @param github_token [String] GitHub token
+      # @param asana_access_token [String] Asana access token
+      #
+      def self.get_tasks_in_last_internal_release(params)
+        # 1. Find last internal release tag (last internal release is the second one, because the first one is the release that's just created)
+        UI.message("Fetching tasks in latest internal release")
+        client = Octokit::Client.new(access_token: params[:github_token])
+        latest_internal_release = client.releases(Helper::GitHelper.repo_name(params[:platform]), { per_page: 2 }).last
+        UI.success("Latest internal release: #{latest_internal_release.tag_name}")
+
+        # 2. Convert Asana task URLs from git commit messages to task IDs
+        UI.message("Fetching tasks from previous release")
+        task_ids = get_task_ids_from_git_log(latest_internal_release.tag_name)
+        UI.success("Completed fetching tasks since #{latest_internal_release.tag_name}")
+
+        # 3. Construct a HTML list of task IDs
+        UI.message("Constructing tasks list")
+        tasks_list = construct_this_release_includes(task_ids)
+        UI.success("Completed constructing task")
+
+        Helper::GitHubActionsHelper.set_output("tasks", tasks_list)
+        tasks_list
+      end
+
       def self.fetch_tasks_for_tag(tag_id, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
         task_ids = []
@@ -425,6 +451,19 @@ module Fastlane
         asana_client = make_asana_client(asana_access_token)
         release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { opt_fields: ["notes"] }).notes
         ReleaseTaskHelper.extract_release_notes(release_task_body, output_type: output_type)
+      end
+
+      def self.construct_this_release_includes(task_ids)
+        return '' if task_ids.empty?
+
+        tasks_list = '<ul>'
+        task_ids.each do |task_id|
+          next if task_id == ENV['RELEASE_TASK_ID']
+
+          tasks_list += "<li><a data-asana-gid=\"#{task_id}\"/></li>"
+        end
+        tasks_list += '</ul>'
+        tasks_list
       end
     end
   end
