@@ -662,7 +662,6 @@ describe Fastlane::Helper::AsanaHelper do
     let(:params) do
       {
         github_token: "github-token",
-        asana_access_token: "secret-token",
         platform: "macos"
       }
     end
@@ -681,7 +680,7 @@ describe Fastlane::Helper::AsanaHelper do
         '<ul><li><a data-asana-gid="123"/></li><li><a data-asana-gid="456"/></li></ul>'
       )
 
-      result = Fastlane::Helper::AsanaHelper.get_tasks_in_last_internal_release(params)
+      result = Fastlane::Helper::AsanaHelper.get_tasks_in_last_internal_release(params[:platform], params[:github_token])
 
       expect(@client).to have_received(:releases).with("duckduckgo/macos-browser", { per_page: 2 })
       expect(Fastlane::UI).to have_received(:success).with("Latest internal release: v1.0.0")

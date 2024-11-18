@@ -9,7 +9,8 @@ module Fastlane
   module Actions
     class AsanaGetTasksInLastInternalReleaseAction < Action
       def self.run(params)
-        Helper::AsanaHelper.get_tasks_in_last_internal_release(params)
+        params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
+        Helper::AsanaHelper.get_tasks_in_last_internal_release(params[:platform], params[:github_token])
       end
 
       def self.description

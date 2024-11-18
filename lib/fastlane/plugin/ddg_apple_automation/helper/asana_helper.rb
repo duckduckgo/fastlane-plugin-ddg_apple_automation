@@ -299,13 +299,12 @@ module Fastlane
       # Rertieves tasks between this release and the last internal release
       #
       # @param github_token [String] GitHub token
-      # @param asana_access_token [String] Asana access token
       #
-      def self.get_tasks_in_last_internal_release(params)
+      def self.get_tasks_in_last_internal_release(platform, github_token)
         # 1. Find last internal release tag (last internal release is the second one, because the first one is the release that's just created)
         UI.message("Fetching tasks in latest internal release")
-        client = Octokit::Client.new(access_token: params[:github_token])
-        latest_internal_release = client.releases(Helper::GitHelper.repo_name(params[:platform]), { per_page: 2 }).last
+        client = Octokit::Client.new(access_token: github_token)
+        latest_internal_release = client.releases(Helper::GitHelper.repo_name(platform), { per_page: 2 }).last
         UI.success("Latest internal release: #{latest_internal_release.tag_name}")
 
         # 2. Convert Asana task URLs from git commit messages to task IDs
