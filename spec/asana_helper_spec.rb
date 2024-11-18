@@ -445,11 +445,11 @@ describe Fastlane::Helper::AsanaHelper do
       allow(response_page2).to receive(:next_page).and_return(nil)
 
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
-        .with(tag_gid: tag_id, options: { opt_fields: ["gid"] })
+        .with(tag_gid: tag_id, options: { fields: ["gid"] })
         .and_return(response_page1)
 
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
-        .with(tag_gid: tag_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+        .with(tag_gid: tag_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_tasks_for_tag(tag_id, asana_access_token)
@@ -494,11 +494,11 @@ describe Fastlane::Helper::AsanaHelper do
       allow(response_page1).to receive(:next_page).and_return(response_page2)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
-        .with(task_gid: task_id, options: { opt_fields: ["gid"] })
+        .with(task_gid: task_id, options: { fields: ["gid"] })
         .and_return(response_page1)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
-        .with(task_gid: task_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+        .with(task_gid: task_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_subtasks(task_id, asana_access_token)
@@ -555,19 +555,19 @@ describe Fastlane::Helper::AsanaHelper do
       response_task1 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID)])
       allow(response_task1).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID])
       allow(@asana_projects).to receive(:get_projects_for_task)
-        .with(task_gid: "1234567890", options: { opt_fields: ["gid"] })
+        .with(task_gid: "1234567890", options: { fields: ["gid"] })
         .and_return(response_task1)
 
       response_task2 = double("Asana::Collection", data: [double("Asana::Project", gid: "non_objective_id")])
       allow(response_task2).to receive(:map).and_return(["non_objective_id"])
       allow(@asana_projects).to receive(:get_projects_for_task)
-        .with(task_gid: "1234567891", options: { opt_fields: ["gid"] })
+        .with(task_gid: "1234567891", options: { fields: ["gid"] })
         .and_return(response_task2)
 
       response_task3 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID)])
       allow(response_task3).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID])
       allow(@asana_projects).to receive(:get_projects_for_task)
-        .with(task_gid: "1234567892", options: { opt_fields: ["gid"] })
+        .with(task_gid: "1234567892", options: { fields: ["gid"] })
         .and_return(response_task3)
 
       expect(@asana_tasks).to receive(:update_task)
