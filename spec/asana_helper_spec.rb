@@ -140,24 +140,11 @@ describe Fastlane::Helper::AsanaHelper do
   end
 
   describe "#get_asana_user_id_for_github_handle" do
-    let(:yaml_content) do
-      {
-        "duck" => "123",
-        "goose" => "456",
-        "pigeon" => nil,
-        "hawk" => ""
-      }
-    end
-
-    before do
-      allow(YAML).to receive(:load_file).and_return(yaml_content)
-    end
-
     it "sets the user ID output and GHA output correctly" do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
-      expect(get_asana_user_id_for_github_handle("duck")).to eq("123")
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_user_id", "123")
+      expect(get_asana_user_id_for_github_handle("jotaemepereira")).to eq("1203972458584419")
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_user_id", "1203972458584419")
     end
 
     it "shows warning when handle does not exist" do
