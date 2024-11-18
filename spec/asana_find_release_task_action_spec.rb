@@ -63,7 +63,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
     end
 
     def find_latest_marketing_version
-      Fastlane::Actions::AsanaFindReleaseTaskAction.find_latest_marketing_version("token")
+      Fastlane::Actions::AsanaFindReleaseTaskAction.find_latest_marketing_version("token", "ios")
     end
   end
 

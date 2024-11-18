@@ -98,6 +98,7 @@ module Fastlane
       def self.available_options
         [
           FastlaneCore::ConfigItem.asana_access_token,
+          FastlaneCore::ConfigItem.is_scheduled_release,
           FastlaneCore::ConfigItem.new(key: :task_url,
                                        description: "Asana release task URL",
                                        optional: false,
@@ -127,12 +128,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,
-                                       type: String),
-          FastlaneCore::ConfigItem.new(key: :is_scheduled_release,
-                                       description: "Indicates whether the release was scheduled or started manually",
-                                       optional: true,
-                                       type: Boolean,
-                                       default_value: false)
+                                       type: String)
         ]
       end
 
@@ -149,10 +145,7 @@ module Fastlane
         subtask_options[:notes] = notes unless notes.nil?
         subtask_options[:html_notes] = html_notes unless html_notes.nil?
 
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
+        asana_client = Helper::AsanaHelper.make_asana_client(token)
         asana_client.tasks.create_subtask_for_task(**subtask_options)
       end
     end

@@ -5,6 +5,7 @@ require "octokit"
 require "time"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
+require_relative "../helper/git_helper"
 require_relative "../helper/github_actions_helper"
 
 module Fastlane
@@ -16,14 +17,12 @@ module Fastlane
         case platform
         when "ios"
           @constants = {
-            repo_name: "duckduckgo/ios",
             release_task_prefix: "iOS App Release",
             hotfix_task_prefix: "iOS App Hotfix Release",
             release_section_id: "1138897754570756"
           }
         when "macos"
           @constants = {
-            repo_name: "duckduckgo/macos-browser",
             release_task_prefix: "macOS App Release",
             hotfix_task_prefix: "macOS App Hotfix Release",
             release_section_id: "1202202395298964"
@@ -37,8 +36,12 @@ module Fastlane
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         setup_constants(platform)
 
-        latest_marketing_version = find_latest_marketing_version(github_token)
+        UI.message("Checking latest marketing version")
+        latest_marketing_version = find_latest_marketing_version(github_token, params[:platform])
+        UI.success("Latest marketing version: #{latest_marketing_version}")
+        UI.message("Searching for release task for version #{latest_marketing_version}")
         release_task_id = find_release_task(latest_marketing_version, asana_access_token)
+        UI.user_error!("No release task found for version #{latest_marketing_version}") unless release_task_id
 
         release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
         release_branch = "release/#{latest_marketing_version}"
@@ -55,11 +58,11 @@ module Fastlane
         }
       end
 
-      def self.find_latest_marketing_version(github_token)
+      def self.find_latest_marketing_version(github_token, platform)
         client = Octokit::Client.new(access_token: github_token)
 
         # NOTE: `client.latest_release` returns release marked as "latest", i.e. a public release
-        latest_internal_release = client.releases(@constants[:repo_name], { per_page: 1 }).first
+        latest_internal_release = client.releases(Helper::GitHelper.repo_name(platform), { per_page: 1 }).first
 
         version = extract_version_from_tag_name(latest_internal_release&.tag_name)
         if version.to_s.empty?
@@ -83,11 +86,7 @@ module Fastlane
       end
 
       def self.find_release_task(version, asana_access_token)
-        asana_client = Asana::Client.new do |c|
-          c.authentication(:access_token, asana_access_token)
-          c.default_headers("Asana-Enable" => "new_goal_memberships,new_user_task_lists")
-        end
-
+        asana_client = Helper::AsanaHelper.make_asana_client(asana_access_token)
         release_task_id = nil
 
         begin
