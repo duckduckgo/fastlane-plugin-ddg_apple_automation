@@ -106,7 +106,7 @@ module Fastlane
       end
 
       def self.get_asana_user_id_for_github_handle(github_handle)
-        mapping_file = Helper::DdgAppleAutomationHelper.path_for_asset_file('github-asana-user-id-mapping.yml')
+        mapping_file = Helper::DdgAppleAutomationHelper.path_for_asset_file('asana_get_user_id_for_github_handle/github-asana-user-id-mapping.yml')
         user_mapping = YAML.load_file(mapping_file)
         asana_user_id = user_mapping[github_handle]
 
