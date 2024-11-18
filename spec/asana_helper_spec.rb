@@ -348,7 +348,7 @@ describe Fastlane::Helper::AsanaHelper do
       expect(@asana_sections).to receive(:add_task_for_section).with(section_gid: section_id, task: task_id)
       expect(@asana_tasks).to receive(:update_task).with(task_gid: task_id, assignee: assignee_id)
 
-      Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token)
+      Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token, false)
 
       expect(Fastlane::UI).to have_received(:message).with("Creating release task for #{version}")
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_task_id", task_id)
@@ -363,7 +363,7 @@ describe Fastlane::Helper::AsanaHelper do
       allow(HTTParty).to receive(:post).and_return(double(success?: false, code: 500, message: "Internal Server Error"))
 
       expect do
-        Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token)
+        Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token, false)
       end.to raise_error(FastlaneCore::Interface::FastlaneError, "Failed to instantiate task from template #{template_task_id}: (500 Internal Server Error)")
     end
   end

@@ -129,7 +129,7 @@ module Fastlane
         end
       end
 
-      def self.release_template_task_id(platform, is_hotfix: false)
+      def self.release_template_task_id(platform, is_hotfix)
         case platform
         when "ios"
           is_hotfix ? IOS_HOTFIX_TASK_TEMPLATE_ID : IOS_RELEASE_TASK_TEMPLATE_ID
@@ -140,7 +140,7 @@ module Fastlane
         end
       end
 
-      def self.release_task_name(version, platform, is_hotfix: false)
+      def self.release_task_name(version, platform, is_hotfix)
         case platform
         when "ios"
           is_hotfix ? "iOS App Hotfix Release #{version}" : "iOS App Release #{version}"
@@ -173,9 +173,9 @@ module Fastlane
         end
       end
 
-      def self.create_release_task(platform, version, assignee_id, asana_access_token)
-        template_task_id = release_template_task_id(platform)
-        task_name = release_task_name(version, platform)
+      def self.create_release_task(platform, version, assignee_id, asana_access_token, is_hotfix)
+        template_task_id = release_template_task_id(platform, is_hotfix)
+        task_name = release_task_name(version, platform, is_hotfix)
         section_id = release_section_id(platform)
 
         UI.message("Creating release task for #{version}")

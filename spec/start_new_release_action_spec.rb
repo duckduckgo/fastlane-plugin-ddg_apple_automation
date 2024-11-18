@@ -35,6 +35,12 @@ shared_context "on macos" do
   end
 end
 
+shared_context "with hotfix" do
+  before do
+    @params[:is_hotfix] = true
+  end
+end
+
 describe Fastlane::Actions::StartNewReleaseAction do
   describe '#run' do
     subject do
@@ -64,7 +70,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
-        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token")
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token", false)
       end
 
       it 'updates Asana tasks for internal release' do
@@ -101,7 +107,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
-        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token")
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token", false)
       end
 
       it 'updates Asana tasks for internal release' do
@@ -114,6 +120,40 @@ describe Fastlane::Actions::StartNewReleaseAction do
             release_task_id: "1234567890",
             asana_access_token: "secret-token"
           )
+        )
+      end
+    end
+
+    context "when creating a hotfix release task" do
+      include_context "common setup"
+      include_context "on macos"
+      include_context "with hotfix"
+
+      before do
+        allow(Fastlane::Helper::AsanaHelper).to receive(:create_release_task).and_call_original
+        allow(Fastlane::Helper::AsanaHelper).to receive(:asana_task_url).and_return("https://app.asana.com/1234567890")
+        allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+
+        asana_client_mock = double("asana_client")
+        sections_mock = double("sections")
+        tasks_mock = double("tasks")
+
+        allow(asana_client_mock).to receive(:sections).and_return(sections_mock)
+        allow(asana_client_mock).to receive(:tasks).and_return(tasks_mock)
+        allow(Fastlane::Helper::AsanaHelper).to receive(:make_asana_client).and_return(asana_client_mock)
+
+        allow(sections_mock).to receive(:add_task_for_section)
+        allow(tasks_mock).to receive(:update_task)
+      end
+
+      it "sends the correct task name to the Asana API" do
+        allow(HTTParty).to receive(:post).and_return(double(success?: true, parsed_response: { "data" => { "new_task" => { "gid" => "1234567890" } } }))
+        subject
+
+        expect(HTTParty).to have_received(:post).with(
+          "https://app.asana.com/api/1.0/task_templates/1206724592377782/instantiateTask",
+          headers: { 'Authorization' => "Bearer secret-token", 'Content-Type' => 'application/json' },
+          body: { data: { name: "macOS App Hotfix Release 1.1.0" } }.to_json
         )
       end
     end
