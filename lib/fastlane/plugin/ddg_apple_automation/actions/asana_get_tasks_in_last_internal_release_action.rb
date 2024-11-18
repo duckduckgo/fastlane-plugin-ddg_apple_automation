@@ -14,7 +14,7 @@ module Fastlane
       end
 
       def self.description
-        "This action finds the last release in Github and returns the tasks included in it"
+        "This action finds the last release in Github and returns the tasks included in it sourced via git log"
       end
 
       def self.authors
