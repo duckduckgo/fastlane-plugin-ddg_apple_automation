@@ -63,11 +63,29 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
     end
 
     context "when there are no changes in the release branch" do
-      it "skips the release" do
+      before do
         allow(Fastlane::Helper::GitHelper).to receive(:assert_branch_has_changes).and_return(false)
-        expect(Fastlane::UI).to receive(:important).with("No changes to the release branch (or only changes to scripts and workflows). Skipping automatic release.")
-        expect(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output).with("skip_release", true)
-        subject
+      end
+
+      context "when it's a scheduled release" do
+        before do
+          @params[:is_scheduled_release] = true
+        end
+
+        it "skips the release" do
+          allow(Fastlane::Helper::GitHelper).to receive(:assert_branch_has_changes).and_return(false)
+          expect(Fastlane::UI).to receive(:important).with("No changes to the release branch (or only changes to scripts and workflows). Skipping automatic release.")
+          expect(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output).with("skip_release", true)
+          subject
+        end
+      end
+
+      context "when it's not a scheduled release" do
+        it "proceeds with release bump if release notes are valid" do
+          expect(Fastlane::UI).to receive(:message).with("Validating release notes")
+          expect(Fastlane::UI).to receive(:message).with("Release notes are valid: Valid release notes")
+          subject
+        end
       end
     end
   end
