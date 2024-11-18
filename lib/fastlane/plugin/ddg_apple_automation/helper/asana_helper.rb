@@ -68,7 +68,7 @@ module Fastlane
         client = make_asana_client(asana_access_token)
 
         begin
-          task = client.tasks.get_task(task_gid: task_id, options: { fields: ["assignee"] })
+          task = client.tasks.get_task(task_gid: task_id, options: { opt_fields: ["assignee"] })
         rescue StandardError => e
           UI.user_error!("Failed to fetch task assignee: #{e}")
           return
@@ -90,7 +90,7 @@ module Fastlane
         asana_client = make_asana_client(asana_access_token)
 
         begin
-          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["name", "created_at"] })
+          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { opt_fields: ["name", "created_at"] })
         rescue StandardError => e
           UI.user_error!("Failed to fetch 'Automation' subtasks for task #{task_id}: #{e}")
           return
@@ -298,10 +298,9 @@ module Fastlane
 
       def self.fetch_tasks_for_tag(tag_id, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
-
         task_ids = []
         begin
-          response = asana_client.tasks.get_tasks_for_tag(tag_gid: tag_id, options: { fields: ["gid"] })
+          response = asana_client.tasks.get_tasks_for_tag(tag_gid: tag_id, options: { opt_fields: ["gid"] })
           loop do
             task_ids += response.map(&:gid)
             response = response.next_page
@@ -315,10 +314,9 @@ module Fastlane
 
       def self.fetch_subtasks(task_id, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
-
         task_ids = []
         begin
-          response = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["gid"] })
+          response = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { opt_fields: ["gid"] })
           loop do
             task_ids += response.map(&:gid)
             response = response.next_page
@@ -350,19 +348,18 @@ module Fastlane
 
       def self.complete_tasks(task_ids, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
-
         incident_task_ids = fetch_subtasks(INCIDENTS_PARENT_TASK_ID, asana_access_token)
 
         task_ids.each do |task_id|
           if incident_task_ids.include?(task_id)
             UI.important("Not completing task #{task_id} because it's an incident task")
-            break
+            next
           end
 
-          projects_ids = asana_client.projects.get_projects_for_task(task_gid: task_id, options: { fields: ["gid"] }).map(&:gid)
+          projects_ids = asana_client.projects.get_projects_for_task(task_gid: task_id, options: { opt_fields: ["gid"] }).map(&:gid)
           if projects_ids.include?(CURRENT_OBJECTIVES_PROJECT_ID)
             UI.important("Not completing task #{task_id} because it's a Current Objective")
-            break
+            next
           end
 
           UI.message("Completing task #{task_id}")
@@ -373,7 +370,7 @@ module Fastlane
 
       def self.find_asana_release_tag(tag_name, release_task_id, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
-        release_task_tags = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["tags"] }).tags
+        release_task_tags = asana_client.tasks.get_task(task_gid: release_task_id, options: { opt_fields: ["tags"] }).tags
 
         if (tag_id = release_task_tags.find { |t| t.name == tag_name }&.gid) && !tag_id.to_s.empty?
           return tag_id
@@ -426,7 +423,7 @@ module Fastlane
 
       def self.fetch_release_notes(release_task_id, asana_access_token, output_type: "asana")
         asana_client = make_asana_client(asana_access_token)
-        release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
+        release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { opt_fields: ["notes"] }).notes
         ReleaseTaskHelper.extract_release_notes(release_task_body, output_type: output_type)
       end
     end

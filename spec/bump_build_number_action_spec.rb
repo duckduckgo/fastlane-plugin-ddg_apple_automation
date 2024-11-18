@@ -26,6 +26,24 @@ describe Fastlane::Actions::BumpBuildNumberAction do
     end
   end
 
+  describe "class methods" do
+    it "returns the correct description" do
+      expect(Fastlane::Actions::BumpBuildNumberAction.description).to eq("Prepares a subsequent internal release")
+    end
+
+    it "returns the correct authors" do
+      expect(Fastlane::Actions::BumpBuildNumberAction.authors).to eq(["DuckDuckGo"])
+    end
+
+    it "returns the correct return value description" do
+      expect(Fastlane::Actions::BumpBuildNumberAction.return_value).to eq("The newly created release task ID")
+    end
+
+    it "returns the correct details" do
+      expect(Fastlane::Actions::BumpBuildNumberAction.details).to eq("This action increments the project build number and pushes the changes to the remote repository.")
+    end
+  end
+
   def test_action(platform)
     params = { platform: platform }
     allow(params).to receive(:values).and_return(params)
