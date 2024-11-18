@@ -457,8 +457,6 @@ module Fastlane
 
         tasks_list = '<ul>'
         task_ids.each do |task_id|
-          next if task_id == ENV['RELEASE_TASK_ID']
-
           tasks_list += "<li><a data-asana-gid=\"#{task_id}\"/></li>"
         end
         tasks_list += '</ul>'

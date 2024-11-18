@@ -724,14 +724,6 @@ describe Fastlane::Helper::AsanaHelper do
       expect(html_list).to eq('<ul><li><a data-asana-gid="123"/></li><li><a data-asana-gid="456"/></li></ul>')
     end
 
-    it "excludes the current release task ID from the list" do
-      task_ids = ["123", "456"]
-      allow(ENV).to receive(:[]).with("RELEASE_TASK_ID").and_return("123")
-
-      html_list = Fastlane::Helper::AsanaHelper.construct_this_release_includes(task_ids)
-      expect(html_list).to eq('<ul><li><a data-asana-gid="456"/></li></ul>')
-    end
-
     it "returns an empty string if no task IDs are provided" do
       html_list = Fastlane::Helper::AsanaHelper.construct_this_release_includes([])
       expect(html_list).to eq("")

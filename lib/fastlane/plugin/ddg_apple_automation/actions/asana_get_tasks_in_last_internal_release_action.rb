@@ -32,8 +32,7 @@ module Fastlane
 
       def self.available_options
         [
-          FastlaneCore::ConfigItem.github_token,
-          FastlaneCore::ConfigItem.asana_access_token
+          FastlaneCore::ConfigItem.github_token
         ]
       end
 
