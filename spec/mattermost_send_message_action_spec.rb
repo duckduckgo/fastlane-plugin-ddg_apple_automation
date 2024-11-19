@@ -128,7 +128,7 @@ describe Fastlane::Actions::MattermostSendMessageAction do
       expected = "macOS app has been successfully uploaded to testflight :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com)"
 
       expect(process_template("public-release-complete", {
-        "app_platform" => "macOS",
+        "platform" => "macOS",
         "destination" => "testflight",
         "workflow_url" => "https://workflow.com"
       })).to eq(expected)
@@ -138,6 +138,7 @@ describe Fastlane::Actions::MattermostSendMessageAction do
       expected = ":rotating_light: macOS app testflight workflow failed | [:github: Workflow run summary](https://workflow.com)"
 
       expect(process_template("public-release-failed", {
+        "platform" => "macOS",
         "destination" => "testflight",
         "workflow_url" => "https://workflow.com"
       })).to eq(expected)
