@@ -4,6 +4,7 @@ require "httparty"
 require "rexml/document"
 require "semantic"
 require_relative "github_actions_helper"
+require_relative "git_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
