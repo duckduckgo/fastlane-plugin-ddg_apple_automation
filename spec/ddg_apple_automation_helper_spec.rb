@@ -121,7 +121,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     it "prepares the release branch with version updates" do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version).and_return(version)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch).and_return("release/1.0.0")
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
       expect(other_action).to receive(:push_to_git_remote)
@@ -148,6 +148,8 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
     it "raises an error when the branch already exists" do
       allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", "hotfix/1.0.1").and_return("hotfix/1.0.1")
+      source_version = "1.0.0"
+      new_version = "1.0.1"
       expect do
         Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(source_version, new_version)
       end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/1.0.1 already exists in this repository. Aborting.")
@@ -173,7 +175,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       formatted_version = "1.0.0"
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:format_version).with(version).and_return(formatted_version)
       allow(Fastlane::Actions).to receive(:sh).with("git", "fetch", "--tags")
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:sh).with("git", "tag", "--list", formatted_version).and_return(formatted_version)
+      allow(Fastlane::Actions).to receive(:sh).with("git", "tag", "--list", formatted_version).and_return(formatted_version)
 
       result = Fastlane::Helper::DdgAppleAutomationHelper.validate_version_exists(version)
       expect(result).to eq(formatted_version)

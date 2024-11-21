@@ -122,10 +122,11 @@ module Fastlane
       def self.prepare_release_branch(platform, version, other_action)
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
-        release_branch_name = create_release_branch(new_version)
+        create_release_branch(new_version)
         update_embedded_files(platform, other_action)
         update_version_config(new_version, other_action)
         other_action.push_to_git_remote
+        release_branch_name = "#{RELEASE_BRANCH}/#{new_version}"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
@@ -200,8 +201,6 @@ module Fastlane
         # Create the branch and push
         Actions.sh('git', 'checkout', '-b', release_branch)
         Actions.sh('git', 'push', '-u', 'origin', release_branch)
-
-        release_branch
       end
 
       def self.update_embedded_files(platform, other_action)
