@@ -181,7 +181,7 @@ module Fastlane
         UI.user_error!("Incorrect version provided: #{version}. Expected x.y.z format.") unless user_version
 
         Actions.sh('git', 'fetch', '--tags')
-        existing_tag = sh('git', 'tag', '--list', user_version).chomp
+        existing_tag = Actions.sh('git', 'tag', '--list', user_version).chomp
         existing_tag = nil if existing_tag.empty?
 
         UI.user_error!("Release #{user_version} not found. Make sure you've passed the version you want to make hotfix for, not the upcoming hotfix version.") unless existing_tag
