@@ -416,7 +416,7 @@ module Fastlane
 
         git_log
           .gsub("\n", " ")
-          .scan(%r{\bTask/Issue URL:.*?https://app\.asana\.com[/0-9f]+\b})
+          .scan(%r{\bTask/Issue URL:\s*https://app\.asana\.com[/0-9f]+\b})
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
           .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
       end
