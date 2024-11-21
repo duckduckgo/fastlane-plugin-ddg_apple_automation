@@ -137,6 +137,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       source_version = "1.0.0"
       new_version = "1.0.1"
       platform = "macos"
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
       allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", branch_name).and_return("")
       allow(Fastlane::Actions).to receive(:sh).with("git", "fetch", "--tags")
       allow(Fastlane::Actions).to receive(:sh).with("git", "checkout", "-b", branch_name, source_version)
