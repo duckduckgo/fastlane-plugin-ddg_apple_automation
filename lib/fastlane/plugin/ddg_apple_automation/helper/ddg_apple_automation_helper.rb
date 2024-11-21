@@ -132,7 +132,18 @@ module Fastlane
         return release_branch_name, new_version
       end
 
-      def self.create_hotfix_branch(source_version, new_version)
+      def self.prepare_hotfix_branch(platform, version, other_action, options)
+        UI.user_error!("You must provide a version you want to hotfix.") unless version
+        source_version = validate_version_exists(version)
+        new_version = validate_hotfix_version(source_version)
+        release_branch_name = create_hotfix_branch(platform, source_version, new_version)
+        increment_build_number(platform, options, other_action)
+        Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
+
+        return release_branch_name, new_version
+      end
+
+      def self.create_hotfix_branch(platform, source_version, new_version)
         branch_name = "#{HOTFIX_BRANCH}/#{new_version}"
         UI.message("Creating new hotfix release branch for #{new_version}")
 
@@ -141,7 +152,7 @@ module Fastlane
 
         if Helper.is_ci?
           sha = Actions.sh("git", "rev-parse", "#{source_version}^").strip
-          repo = "kshann/test-automation-code" # TODO: revert
+          repo = Helper::GitHelper.repo_name(platform)
           Actions.sh("gh", "api", "--method", "POST", "/repos/#{repo}/git/refs", "-f", "ref=refs/heads/#{branch_name}", "-f", "sha=#{sha}")
           Actions.sh("git", "fetch", "origin")
           Actions.sh("git", "checkout", branch_name)
@@ -150,20 +161,8 @@ module Fastlane
           Actions.sh("git", "checkout", "-b", branch_name, source_version)
           Actions.sh("git", "push", "-u", "origin", branch_name)
         end
-        Actions.sh("git", "checkout", branch_name)
 
         branch_name
-      end
-
-      def self.prepare_hotfix_branch(platform, version, other_action, options)
-        UI.user_error!("You must provide a version you want to hotfix.") unless version
-        source_version = validate_version_exists(version)
-        new_version = validate_hotfix_version(source_version)
-        release_branch_name = create_hotfix_branch(source_version, new_version)
-        increment_build_number(platform, options, other_action)
-        Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
-
-        return release_branch_name, new_version
       end
 
       def self.validate_hotfix_version(source_version)

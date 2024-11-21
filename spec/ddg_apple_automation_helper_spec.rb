@@ -136,13 +136,14 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       branch_name = "hotfix/1.0.1"
       source_version = "1.0.0"
       new_version = "1.0.1"
+      platform = "macos"
       allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", branch_name).and_return("")
       allow(Fastlane::Actions).to receive(:sh).with("git", "fetch", "--tags")
       allow(Fastlane::Actions).to receive(:sh).with("git", "checkout", "-b", branch_name, source_version)
       allow(Fastlane::Actions).to receive(:sh).with("git", "push", "-u", "origin", branch_name)
       allow(Fastlane::Actions).to receive(:sh).with("git", "checkout", branch_name)
 
-      result = Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(source_version, new_version)
+      result = Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(platform, source_version, new_version)
       expect(result).to eq(branch_name)
     end
 
@@ -150,9 +151,47 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", "hotfix/1.0.1").and_return("hotfix/1.0.1")
       source_version = "1.0.0"
       new_version = "1.0.1"
+      platform = "macos"
       expect do
-        Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(source_version, new_version)
+        Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(platform, source_version, new_version)
       end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/1.0.1 already exists in this repository. Aborting.")
+    end
+
+    describe ".create_hotfix_branch" do
+      it "creates a new hotfix branch in CI mode" do
+        source_version = "1.0.0"
+        new_version = "1.0.1"
+        branch_name = "hotfix/#{new_version}"
+        sha = "abc123"
+        repo = "duckduckgo/macos-browser"
+        platform = "macos"
+        allow(Fastlane::Helper).to receive(:is_ci?).and_return(true)
+        allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", branch_name).and_return("")
+        allow(Fastlane::Actions).to receive(:sh).with("git", "rev-parse", "#{source_version}^").and_return(sha)
+        allow(Fastlane::Actions).to receive(:sh).with(
+          "gh", "api", "--method", "POST",
+          "/repos/#{repo}/git/refs",
+          "-f", "ref=refs/heads/#{branch_name}",
+          "-f", "sha=#{sha}"
+        )
+        allow(Fastlane::Actions).to receive(:sh).with("git", "fetch", "origin")
+        allow(Fastlane::Actions).to receive(:sh).with("git", "checkout", branch_name)
+
+        result = Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(platform, source_version, new_version)
+
+        expect(result).to eq(branch_name)
+
+        expect(Fastlane::Actions).to have_received(:sh).with("git", "branch", "--list", branch_name)
+        expect(Fastlane::Actions).to have_received(:sh).with("git", "rev-parse", "#{source_version}^")
+        expect(Fastlane::Actions).to have_received(:sh).with(
+          "gh", "api", "--method", "POST",
+          "/repos/#{repo}/git/refs",
+          "-f", "ref=refs/heads/#{branch_name}",
+          "-f", "sha=#{sha}"
+        )
+        expect(Fastlane::Actions).to have_received(:sh).with("git", "fetch", "origin")
+        expect(Fastlane::Actions).to have_received(:sh).with("git", "checkout", branch_name)
+      end
     end
   end
 
@@ -179,6 +218,46 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       result = Fastlane::Helper::DdgAppleAutomationHelper.validate_version_exists(version)
       expect(result).to eq(formatted_version)
+    end
+  end
+
+  describe ".prepare_hotfix_branch" do
+    it "prepares the hotfix branch" do
+      platform = "ios"
+      version = "1.0.0"
+      source_version = "1.0.0"
+      new_version = "1.0.1"
+      release_branch_name = "hotfix/1.0.1"
+      other_action = double("other_action")
+      options = { some_option: "value" }
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
+        .with(version).and_return(source_version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_hotfix_version)
+        .with(source_version).and_return(new_version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_hotfix_branch)
+        .with(platform, source_version, new_version).and_return(release_branch_name)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:increment_build_number)
+        .with(platform, options, other_action)
+
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+        .with("release_branch_name", release_branch_name)
+
+      result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
+        platform, version, other_action, options
+      )
+
+      expect(result_branch).to eq(release_branch_name)
+      expect(result_version).to eq(new_version)
+
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_version_exists).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_hotfix_version).with(source_version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_hotfix_branch).with(platform, source_version, new_version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:increment_build_number).with(platform, options, other_action)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
     end
   end
 
