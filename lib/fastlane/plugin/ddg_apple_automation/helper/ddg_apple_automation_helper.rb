@@ -157,7 +157,6 @@ module Fastlane
           Actions.sh("gh", "api", "--method", "POST", "/repos/#{repo}/git/refs", "-f", "ref=refs/heads/#{branch_name}", "-f", "sha=#{sha}")
           Actions.sh("git", "fetch", "origin")
           Actions.sh("git", "checkout", branch_name)
-          Actions.sh("bundle", "install")
         else
           Actions.sh("git", "fetch", "--tags")
           Actions.sh("git", "checkout", "-b", branch_name, source_version)
