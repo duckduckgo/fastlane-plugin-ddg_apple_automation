@@ -154,7 +154,7 @@ module Fastlane
         branch_name
       end
 
-      def self.prepare_hotfix_branch(platform, version, other_action)
+      def self.prepare_hotfix_branch(platform, version, other_action, options)
         UI.user_error!("You must provide a version you want to hotfix.") unless version
         source_version = validate_version_exists(version)
         new_version = validate_hotfix_version(source_version)
