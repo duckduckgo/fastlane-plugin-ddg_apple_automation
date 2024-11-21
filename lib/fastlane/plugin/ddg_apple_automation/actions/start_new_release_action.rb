@@ -29,10 +29,10 @@ module Fastlane
         options[:version] = new_version
         options[:release_branch_name] = release_branch_name
 
-        # release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token], options[:is_hotfix])
-        # options[:release_task_id] = release_task_id
+        release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token], options[:is_hotfix])
+        options[:release_task_id] = release_task_id
 
-        # Helper::AsanaHelper.update_asana_tasks_for_internal_release(options)
+        Helper::AsanaHelper.update_asana_tasks_for_internal_release(options) unless params[:is_hotfix]
       end
 
       def self.description
@@ -56,6 +56,7 @@ This action performs the following tasks:
 * pushes the changes to the remote repository,
 * creates a new Asana release task based off the provided task template,
 * updates the Asana release task with tasks included in the release.
+* if it's a hotfix release, it will create a hotfix branch, update the build number and push changes
         DETAILS
       end
 

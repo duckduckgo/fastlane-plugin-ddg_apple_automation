@@ -151,6 +151,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect do
         Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(source_version, new_version)
       end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/1.0.1 already exists in this repository. Aborting.")
+    end
   end
 
   describe ".validate_hotfix_version" do

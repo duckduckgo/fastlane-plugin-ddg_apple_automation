@@ -232,7 +232,7 @@ module Fastlane
       def self.increment_build_number(platform, options, other_action)
         current_version = Helper::DdgAppleAutomationHelper.current_version
         current_build_number = Helper::DdgAppleAutomationHelper.current_build_number
-        build_number = "401" # Helper::DdgAppleAutomationHelper.calculate_next_build_number(platform, options, other_action)
+        build_number = Helper::DdgAppleAutomationHelper.calculate_next_build_number(platform, options, other_action)
 
         UI.important("Current version in project settings is #{current_version} (#{current_build_number}).")
         UI.important("Will be updated to #{current_version} (#{build_number}).")
