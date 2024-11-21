@@ -75,6 +75,26 @@ describe Fastlane::Actions::MattermostSendMessageAction do
       })).to eq(expected)
     end
 
+    it "processes notarized-build-complete template with a nil asana_task_url" do
+      expected = "Notarized macOS app `release` build is ready :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com)"
+
+      expect(process_template("notarized-build-complete", {
+        "release_type" => "release",
+        "workflow_url" => "https://workflow.com",
+        "asana_task_url" => nil
+      })).to eq(expected)
+    end
+
+    it "processes notarized-build-complete template with an empty asana_task_url" do
+      expected = "Notarized macOS app `release` build is ready :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com)"
+
+      expect(process_template("notarized-build-complete", {
+        "release_type" => "release",
+        "workflow_url" => "https://workflow.com",
+        "asana_task_url" => ""
+      })).to eq(expected)
+    end
+
     it "processes notarized-build-complete template with Asana task URL" do
       expected = "Notarized macOS app `release` build is ready :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com) | [:asana: Asana Task](https://asana.com)"
 
@@ -108,7 +128,7 @@ describe Fastlane::Actions::MattermostSendMessageAction do
       expected = "macOS app has been successfully uploaded to testflight :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com)"
 
       expect(process_template("public-release-complete", {
-        "app_platform" => "macOS",
+        "platform" => "macOS",
         "destination" => "testflight",
         "workflow_url" => "https://workflow.com"
       })).to eq(expected)
@@ -118,6 +138,7 @@ describe Fastlane::Actions::MattermostSendMessageAction do
       expected = ":rotating_light: macOS app testflight workflow failed | [:github: Workflow run summary](https://workflow.com)"
 
       expect(process_template("public-release-failed", {
+        "platform" => "macOS",
         "destination" => "testflight",
         "workflow_url" => "https://workflow.com"
       })).to eq(expected)
