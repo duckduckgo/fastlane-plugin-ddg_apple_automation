@@ -173,9 +173,9 @@ module Fastlane
         end
       end
 
-      def self.create_release_task(platform, version, assignee_id, asana_access_token)
-        template_task_id = release_template_task_id(platform)
-        task_name = release_task_name(version, platform)
+      def self.create_release_task(platform, version, assignee_id, asana_access_token, is_hotfix: false)
+        template_task_id = release_template_task_id(platform, is_hotfix)
+        task_name = release_task_name(version, platform, is_hotfix)
         section_id = release_section_id(platform)
 
         UI.message("Creating release task for #{version}")

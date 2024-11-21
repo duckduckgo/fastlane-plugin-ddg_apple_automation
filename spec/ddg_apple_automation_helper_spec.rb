@@ -121,7 +121,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     it "prepares the release branch with version updates" do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version).and_return(version)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch).and_return("release/1.0.0")
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
       expect(other_action).to receive(:push_to_git_remote)

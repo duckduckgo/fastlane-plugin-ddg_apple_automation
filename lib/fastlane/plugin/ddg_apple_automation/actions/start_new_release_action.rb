@@ -16,16 +16,23 @@ module Fastlane
         options = params.values
         options[:asana_user_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(options[:github_handle])
 
-        release_branch_name, new_version = Helper::DdgAppleAutomationHelper.prepare_release_branch(
-          params[:platform], params[:version], other_action
-        )
+        if params[:is_hotfix]
+          release_branch_name, new_version = Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
+            params[:platform], params[:version], other_action
+          )
+        else
+          release_branch_name, new_version = Helper::DdgAppleAutomationHelper.prepare_release_branch(
+            params[:platform], params[:version], other_action
+          )
+        end
+
         options[:version] = new_version
         options[:release_branch_name] = release_branch_name
 
-        release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token])
-        options[:release_task_id] = release_task_id
+        # release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token], options[:is_hotfix])
+        # options[:release_task_id] = release_task_id
 
-        Helper::AsanaHelper.update_asana_tasks_for_internal_release(options)
+        # Helper::AsanaHelper.update_asana_tasks_for_internal_release(options)
       end
 
       def self.description
@@ -68,7 +75,12 @@ This action performs the following tasks:
           FastlaneCore::ConfigItem.new(key: :target_section_id,
                                        description: "Section ID in Asana where tasks included in the release should be moved",
                                        optional: false,
-                                       type: String)
+                                       type: String),
+          FastlaneCore::ConfigItem.new(key: :is_hotfix,
+                                       description: "Is this a hotfix release?",
+                                       optional: true,
+                                       type: Boolean,
+                                       default_value: false)
         ]
       end
 

@@ -122,14 +122,70 @@ module Fastlane
       def self.prepare_release_branch(platform, version, other_action)
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
-        create_release_branch(new_version)
+        release_branch_name = create_release_branch(new_version)
         update_embedded_files(platform, other_action)
         update_version_config(new_version, other_action)
         other_action.push_to_git_remote
-        release_branch_name = "#{RELEASE_BRANCH}/#{new_version}"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
+      end
+
+      def create_hotfix_branch(source_version, new_version)
+        branch_name = "#{HOTFIX_BRANCH}/#{new_version}"
+        UI.message("Creating new hotfix release branch for #{new_version}")
+
+        existing_branch = Action.sh("git", "branch", "--list", branch_name).strip
+        UI.abort_with_message!("Branch #{branch_name} already exists in this repository. Aborting.") unless existing_branch.empty?
+
+        if Helper.is_ci?
+          sha = Action.sh("git", "rev-parse", "#{source_version}^").strip
+          repo = Helper::GitHelper.repo_name
+          Action.sh("gh", "api", "--method", "POST", "/repos/#{repo}/git/refs", "-f", "ref=refs/heads/#{branch_name}", "-f", "sha=#{sha}")
+          Action.sh("git", "fetch", "origin")
+          Action.sh("git", "checkout", branch_name)
+        else
+          Action.sh("git", "fetch", "--tags")
+          Action.sh("git", "checkout", "-b", branch_name, source_version)
+          Action.sh("git", "push", "-u", "origin", branch_name)
+        end
+        Action.sh("git", "checkout", branch_name)
+
+        branch_name
+      end
+
+      def self.prepare_hotfix_branch(platform, version, other_action)
+        UI.user_error!("You must provide a version you want to hotfix.") unless options[:version]
+        source_version = validate_version_exists(version)
+        new_version = validate_hotfix_version(source_version)
+        release_branch_name = create_hotfix_branch(source_version, new_version)
+        increment_build_number(platform, options, other_action)
+        Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
+
+        return release_branch_name, new_version
+      end
+
+      def self.validate_hotfix_version(source_version)
+        new_version = bump_patch_version(source_version)
+        UI.important("Release #{source_version} will be hotfixed as #{new_version}.")
+
+        if UI.interactive? && !UI.confirm("Do you want to continue?")
+          UI.abort_with_message!('Aborted by user.')
+        end
+
+        new_version
+      end
+
+      def self.validate_version_exists(version)
+        user_version = format_version(version)
+        UI.user_error!("Incorrect version provided: #{options[:version]}. Expected x.y.z format.") unless user_version
+
+        Action.sh('git', 'fetch', '--tags')
+        existing_tag = sh('git', 'tag', '--list', user_version).chomp
+        existing_tag = nil if existing_tag.empty?
+
+        UI.user_error!("Release #{user_version} not found. Make sure you've passed the version you want to make hotfix for, not the upcoming hotfix version.") unless existing_tag
+        existing_tag
       end
 
       def self.create_release_branch(version)
@@ -144,6 +200,8 @@ module Fastlane
         # Create the branch and push
         Actions.sh('git', 'checkout', '-b', release_branch)
         Actions.sh('git', 'push', '-u', 'origin', release_branch)
+
+        release_branch
       end
 
       def self.update_embedded_files(platform, other_action)
