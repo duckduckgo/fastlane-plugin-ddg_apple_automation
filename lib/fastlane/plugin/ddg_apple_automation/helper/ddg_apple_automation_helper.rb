@@ -131,31 +131,31 @@ module Fastlane
         return release_branch_name, new_version
       end
 
-      def create_hotfix_branch(source_version, new_version)
+      def self.create_hotfix_branch(source_version, new_version)
         branch_name = "#{HOTFIX_BRANCH}/#{new_version}"
         UI.message("Creating new hotfix release branch for #{new_version}")
 
-        existing_branch = Action.sh("git", "branch", "--list", branch_name).strip
+        existing_branch = Actions.sh("git", "branch", "--list", branch_name).strip
         UI.abort_with_message!("Branch #{branch_name} already exists in this repository. Aborting.") unless existing_branch.empty?
 
         if Helper.is_ci?
-          sha = Action.sh("git", "rev-parse", "#{source_version}^").strip
+          sha = Actions.sh("git", "rev-parse", "#{source_version}^").strip
           repo = "kshann/test-automation-code" # TODO: revert
-          Action.sh("gh", "api", "--method", "POST", "/repos/#{repo}/git/refs", "-f", "ref=refs/heads/#{branch_name}", "-f", "sha=#{sha}")
-          Action.sh("git", "fetch", "origin")
-          Action.sh("git", "checkout", branch_name)
+          Actions.sh("gh", "api", "--method", "POST", "/repos/#{repo}/git/refs", "-f", "ref=refs/heads/#{branch_name}", "-f", "sha=#{sha}")
+          Actions.sh("git", "fetch", "origin")
+          Actions.sh("git", "checkout", branch_name)
         else
-          Action.sh("git", "fetch", "--tags")
-          Action.sh("git", "checkout", "-b", branch_name, source_version)
-          Action.sh("git", "push", "-u", "origin", branch_name)
+          Actions.sh("git", "fetch", "--tags")
+          Actions.sh("git", "checkout", "-b", branch_name, source_version)
+          Actions.sh("git", "push", "-u", "origin", branch_name)
         end
-        Action.sh("git", "checkout", branch_name)
+        Actions.sh("git", "checkout", branch_name)
 
         branch_name
       end
 
       def self.prepare_hotfix_branch(platform, version, other_action)
-        UI.user_error!("You must provide a version you want to hotfix.") unless options[:version]
+        UI.user_error!("You must provide a version you want to hotfix.") unless version
         source_version = validate_version_exists(version)
         new_version = validate_hotfix_version(source_version)
         release_branch_name = create_hotfix_branch(source_version, new_version)
@@ -178,9 +178,9 @@ module Fastlane
 
       def self.validate_version_exists(version)
         user_version = format_version(version)
-        UI.user_error!("Incorrect version provided: #{options[:version]}. Expected x.y.z format.") unless user_version
+        UI.user_error!("Incorrect version provided: #{version}. Expected x.y.z format.") unless user_version
 
-        Action.sh('git', 'fetch', '--tags')
+        Actions.sh('git', 'fetch', '--tags')
         existing_tag = sh('git', 'tag', '--list', user_version).chomp
         existing_tag = nil if existing_tag.empty?
 

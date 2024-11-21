@@ -131,6 +131,54 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
   end
 
+  describe ".create_hotfix_branch" do
+    it "creates a new hotfix branch and checks out the branch" do
+      branch_name = "hotfix/1.0.1"
+      source_version = "1.0.0"
+      new_version = "1.0.1"
+      allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", branch_name).and_return("")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "fetch", "--tags")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "checkout", "-b", branch_name, source_version)
+      allow(Fastlane::Actions).to receive(:sh).with("git", "push", "-u", "origin", branch_name)
+      allow(Fastlane::Actions).to receive(:sh).with("git", "checkout", branch_name)
+
+      result = Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(source_version, new_version)
+      expect(result).to eq(branch_name)
+    end
+
+    it "raises an error when the branch already exists" do
+      allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", "hotfix/1.0.1").and_return("hotfix/1.0.1")
+      expect do
+        Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(source_version, new_version)
+      end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/1.0.1 already exists in this repository. Aborting.")
+  end
+
+  describe ".validate_hotfix_version" do
+    it "validates and bumps the patch version" do
+      source_version = "1.0.0"
+      new_version = "1.0.1"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:bump_patch_version).with(source_version).and_return(new_version)
+      allow(Fastlane::UI).to receive(:interactive?).and_return(false)
+      allow(Fastlane::UI).to receive(:important)
+
+      result = Fastlane::Helper::DdgAppleAutomationHelper.validate_hotfix_version(source_version)
+      expect(result).to eq(new_version)
+    end
+  end
+
+  describe ".validate_version_exists" do
+    it "validates that the provided version exists as a git tag" do
+      version = "1.0.0"
+      formatted_version = "1.0.0"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:format_version).with(version).and_return(formatted_version)
+      allow(Fastlane::Actions).to receive(:sh).with("git", "fetch", "--tags")
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:sh).with("git", "tag", "--list", formatted_version).and_return(formatted_version)
+
+      result = Fastlane::Helper::DdgAppleAutomationHelper.validate_version_exists(version)
+      expect(result).to eq(formatted_version)
+    end
+  end
+
   describe ".create_release_branch" do
     it "creates a new release branch" do
       allow(Fastlane::Actions).to receive(:sh).and_return("")
