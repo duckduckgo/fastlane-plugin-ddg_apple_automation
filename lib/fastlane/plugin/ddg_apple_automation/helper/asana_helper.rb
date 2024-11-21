@@ -129,7 +129,7 @@ module Fastlane
         end
       end
 
-      def self.release_template_task_id(platform, is_hotfix: false)
+      def self.release_template_task_id(platform, is_hotfix)
         case platform
         when "ios"
           is_hotfix ? IOS_HOTFIX_TASK_TEMPLATE_ID : IOS_RELEASE_TASK_TEMPLATE_ID
@@ -140,7 +140,7 @@ module Fastlane
         end
       end
 
-      def self.release_task_name(version, platform, is_hotfix: false)
+      def self.release_task_name(version, platform, is_hotfix)
         case platform
         when "ios"
           is_hotfix ? "iOS App Hotfix Release #{version}" : "iOS App Release #{version}"
