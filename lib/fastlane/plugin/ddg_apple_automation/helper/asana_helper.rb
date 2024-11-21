@@ -20,11 +20,11 @@ module Fastlane
 
       IOS_HOTFIX_TASK_TEMPLATE_ID = "1205352950253153"
       IOS_RELEASE_TASK_TEMPLATE_ID = "1205355281110338"
-      MACOS_HOTFIX_TASK_TEMPLATE_ID = "1208772396197846" # Todo revert "1206724592377782"
+      MACOS_HOTFIX_TASK_TEMPLATE_ID = "1206724592377782"
       MACOS_RELEASE_TASK_TEMPLATE_ID = "1206127427850447"
 
       IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
-      MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1208772987727988" # TODO: revert "1202202395298964"
+      MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
 
       INCIDENTS_PARENT_TASK_ID = "1135688560894081"
       CURRENT_OBJECTIVES_PROJECT_ID = "72649045549333"
@@ -145,7 +145,7 @@ module Fastlane
         when "ios"
           is_hotfix ? "iOS App Hotfix Release #{version}" : "iOS App Release #{version}"
         when "macos"
-          is_hotfix ? "[TEST] macOS App Hotfix Release #{version}" : "macOS App Release #{version}"
+          is_hotfix ? "macOS App Hotfix Release #{version}" : "macOS App Release #{version}"
         else
           UI.user_error!("Unsupported platform: #{platform}")
         end
