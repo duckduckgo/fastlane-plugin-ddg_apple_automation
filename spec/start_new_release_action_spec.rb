@@ -64,7 +64,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
-        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token", false)
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token", { is_hotfix: false })
       end
 
       it 'updates Asana tasks for internal release' do
@@ -101,7 +101,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
-        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token", false)
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token", { is_hotfix: false })
       end
 
       it 'updates Asana tasks for internal release' do
@@ -147,7 +147,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
         it "creates a hotfix release task in Asana" do
           subject
           expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task)
-            .with("macos", "1.0.1", "user", "secret-token", true)
+            .with("macos", "1.0.1", "user", "secret-token", { is_hotfix: true })
         end
 
         it "does not update Asana tasks for internal release" do

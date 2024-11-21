@@ -177,6 +177,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
         )
         allow(Fastlane::Actions).to receive(:sh).with("git", "fetch", "origin")
         allow(Fastlane::Actions).to receive(:sh).with("git", "checkout", branch_name)
+        allow(Fastlane::Actions).to receive(:sh).with("bundle", "install")
 
         result = Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(platform, source_version, new_version)
 

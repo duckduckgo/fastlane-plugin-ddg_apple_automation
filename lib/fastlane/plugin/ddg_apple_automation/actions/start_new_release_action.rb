@@ -75,7 +75,7 @@ This action performs the following tasks:
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :target_section_id,
                                        description: "Section ID in Asana where tasks included in the release should be moved",
-                                       optional: false,
+                                       optional: true,
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :is_hotfix,
                                        description: "Is this a hotfix release?",
