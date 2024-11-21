@@ -140,7 +140,7 @@ module Fastlane
 
         if Helper.is_ci?
           sha = Action.sh("git", "rev-parse", "#{source_version}^").strip
-          repo = Helper::GitHelper.repo_name
+          repo = "kshann/test-automation-code" # TODO: revert
           Action.sh("gh", "api", "--method", "POST", "/repos/#{repo}/git/refs", "-f", "ref=refs/heads/#{branch_name}", "-f", "sha=#{sha}")
           Action.sh("git", "fetch", "origin")
           Action.sh("git", "checkout", branch_name)
