@@ -145,7 +145,7 @@ module Fastlane
         when "ios"
           is_hotfix ? "iOS App Hotfix Release #{version}" : "iOS App Release #{version}"
         when "macos"
-          is_hotfix ? "macOS App Hotfix Release #{version}" : "macOS App Release #{version}"
+          is_hotfix ? "[TEST] macOS App Hotfix Release #{version}" : "macOS App Release #{version}"
         else
           UI.user_error!("Unsupported platform: #{platform}")
         end
