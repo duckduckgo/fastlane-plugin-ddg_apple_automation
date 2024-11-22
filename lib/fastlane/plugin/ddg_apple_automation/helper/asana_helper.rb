@@ -68,7 +68,7 @@ module Fastlane
         client = make_asana_client(asana_access_token)
 
         begin
-          task = client.tasks.get_task(task_gid: task_id, options: { opt_fields: ["assignee"] })
+          task = client.tasks.get_task(task_gid: task_id, options: { fields: ["assignee"] })
         rescue StandardError => e
           UI.user_error!("Failed to fetch task assignee: #{e}")
           return
@@ -90,7 +90,7 @@ module Fastlane
         asana_client = make_asana_client(asana_access_token)
 
         begin
-          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { opt_fields: ["name", "created_at"] })
+          subtasks = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["name", "created_at"] })
         rescue StandardError => e
           UI.user_error!("Failed to fetch 'Automation' subtasks for task #{task_id}: #{e}")
           return
@@ -432,6 +432,28 @@ module Fastlane
                .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
       end
 
+      def self.get_task_ids_from_git_log(from_ref, to_ref = "HEAD")
+        git_log = `git log #{from_ref}..#{to_ref}`
+
+        git_log
+          .gsub("\n", " ")
+          .scan(%r{\bTask/Issue URL:.*?https://app\.asana\.com[/0-9f]+\b})
+          .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
+          .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
+      end
+
+      def self.fetch_release_notes(release_task_id, asana_access_token, output_type: "asana")
+        asana_client = make_asana_client(asana_access_token)
+        release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
+        ReleaseTaskHelper.extract_release_notes(release_task_body, output_type: output_type)
+      end
+
+      def self.fetch_release_notes(release_task_id, asana_access_token, output_type: "asana")
+        asana_client = make_asana_client(asana_access_token)
+        release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["notes"] }).notes
+        ReleaseTaskHelper.extract_release_notes(release_task_body, output_type: output_type)
+      end
+      
       def self.construct_this_release_includes(task_ids)
         return '' if task_ids.empty?
 
