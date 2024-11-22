@@ -14,7 +14,7 @@ module Fastlane
         options = params.values
         find_release_task_if_needed(options)
 
-        unless Helper::GitHelper.assert_branch_has_changes(options[:release_branch])
+        if params[:is_scheduled_release] && !Helper::GitHelper.assert_branch_has_changes(options[:release_branch])
           UI.important("No changes to the release branch (or only changes to scripts and workflows). Skipping automatic release.")
           Helper::GitHubActionsHelper.set_output("skip_release", true)
           return

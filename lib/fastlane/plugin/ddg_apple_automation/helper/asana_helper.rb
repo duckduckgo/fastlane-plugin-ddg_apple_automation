@@ -106,7 +106,7 @@ module Fastlane
       end
 
       def self.get_asana_user_id_for_github_handle(github_handle)
-        mapping_file = File.expand_path('../assets/github-asana-user-id-mapping.yml', __dir__)
+        mapping_file = Helper::DdgAppleAutomationHelper.path_for_asset_file('asana_get_user_id_for_github_handle/github-asana-user-id-mapping.yml')
         user_mapping = YAML.load_file(mapping_file)
         asana_user_id = user_mapping[github_handle]
 
@@ -129,7 +129,7 @@ module Fastlane
         end
       end
 
-      def self.release_template_task_id(platform, is_hotfix)
+      def self.release_template_task_id(platform, is_hotfix: false)
         case platform
         when "ios"
           is_hotfix ? IOS_HOTFIX_TASK_TEMPLATE_ID : IOS_RELEASE_TASK_TEMPLATE_ID
@@ -140,7 +140,7 @@ module Fastlane
         end
       end
 
-      def self.release_task_name(version, platform, is_hotfix)
+      def self.release_task_name(version, platform, is_hotfix: false)
         case platform
         when "ios"
           is_hotfix ? "iOS App Hotfix Release #{version}" : "iOS App Release #{version}"
@@ -173,9 +173,9 @@ module Fastlane
         end
       end
 
-      def self.create_release_task(platform, version, assignee_id, asana_access_token, is_hotfix)
-        template_task_id = release_template_task_id(platform, is_hotfix)
-        task_name = release_task_name(version, platform, is_hotfix)
+      def self.create_release_task(platform, version, assignee_id, asana_access_token)
+        template_task_id = release_template_task_id(platform)
+        task_name = release_task_name(version, platform)
         section_id = release_section_id(platform)
 
         UI.message("Creating release task for #{version}")
@@ -296,10 +296,6 @@ module Fastlane
         Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids)
       end
 
-      # Rertieves tasks between this release and the last internal release
-      #
-      # @param github_token [String] GitHub token
-      #
       def self.get_tasks_in_last_internal_release(platform, github_token)
         # 1. Find last internal release tag (last internal release is the second one, because the first one is the release that's just created)
         UI.message("Fetching tasks in latest internal release")
@@ -325,7 +321,7 @@ module Fastlane
         asana_client = make_asana_client(asana_access_token)
         task_ids = []
         begin
-          response = asana_client.tasks.get_tasks_for_tag(tag_gid: tag_id, options: { opt_fields: ["gid"] })
+          response = asana_client.tasks.get_tasks_for_tag(tag_gid: tag_id, options: { fields: ["gid"] })
           loop do
             task_ids += response.map(&:gid)
             response = response.next_page
@@ -341,7 +337,7 @@ module Fastlane
         asana_client = make_asana_client(asana_access_token)
         task_ids = []
         begin
-          response = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { opt_fields: ["gid"] })
+          response = asana_client.tasks.get_subtasks_for_task(task_gid: task_id, options: { fields: ["gid"] })
           loop do
             task_ids += response.map(&:gid)
             response = response.next_page
@@ -381,7 +377,7 @@ module Fastlane
             next
           end
 
-          projects_ids = asana_client.projects.get_projects_for_task(task_gid: task_id, options: { opt_fields: ["gid"] }).map(&:gid)
+          projects_ids = asana_client.projects.get_projects_for_task(task_gid: task_id, options: { fields: ["gid"] }).map(&:gid)
           if projects_ids.include?(CURRENT_OBJECTIVES_PROJECT_ID)
             UI.important("Not completing task #{task_id} because it's a Current Objective")
             next
@@ -395,7 +391,7 @@ module Fastlane
 
       def self.find_asana_release_tag(tag_name, release_task_id, asana_access_token)
         asana_client = make_asana_client(asana_access_token)
-        release_task_tags = asana_client.tasks.get_task(task_gid: release_task_id, options: { opt_fields: ["tags"] }).tags
+        release_task_tags = asana_client.tasks.get_task(task_gid: release_task_id, options: { fields: ["tags"] }).tags
 
         if (tag_id = release_task_tags.find { |t| t.name == tag_name }&.gid) && !tag_id.to_s.empty?
           return tag_id
@@ -434,22 +430,6 @@ module Fastlane
                .gsub(/>\s+</, '><')                        # remove spaces between HTML tags
                .strip                                      # remove leading and trailing whitespaces
                .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
-      end
-
-      def self.get_task_ids_from_git_log(from_ref, to_ref = "HEAD")
-        git_log = `git log #{from_ref}..#{to_ref}`
-
-        git_log
-          .gsub("\n", " ")
-          .scan(%r{\bTask/Issue URL:.*?https://app\.asana\.com[/0-9f]+\b})
-          .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
-          .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
-      end
-
-      def self.fetch_release_notes(release_task_id, asana_access_token, output_type: "asana")
-        asana_client = make_asana_client(asana_access_token)
-        release_task_body = asana_client.tasks.get_task(task_gid: release_task_id, options: { opt_fields: ["notes"] }).notes
-        ReleaseTaskHelper.extract_release_notes(release_task_body, output_type: output_type)
       end
 
       def self.construct_this_release_includes(task_ids)

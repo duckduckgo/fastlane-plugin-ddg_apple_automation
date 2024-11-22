@@ -35,12 +35,15 @@ shared_context "on macos" do
   end
 end
 
+<<<<<<< HEAD
 shared_context "with hotfix" do
   before do
     @params[:is_hotfix] = true
   end
 end
 
+=======
+>>>>>>> main
 describe Fastlane::Actions::StartNewReleaseAction do
   describe '#run' do
     subject do
@@ -70,7 +73,11 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
+<<<<<<< HEAD
         expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token", false)
+=======
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token")
+>>>>>>> main
       end
 
       it 'updates Asana tasks for internal release' do
@@ -107,7 +114,11 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
+<<<<<<< HEAD
         expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token", false)
+=======
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token")
+>>>>>>> main
       end
 
       it 'updates Asana tasks for internal release' do
@@ -123,6 +134,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
         )
       end
     end
+<<<<<<< HEAD
 
     context "when creating a hotfix release task" do
       include_context "common setup"
@@ -157,6 +169,8 @@ describe Fastlane::Actions::StartNewReleaseAction do
         )
       end
     end
+=======
+>>>>>>> main
   end
 
   # Constants

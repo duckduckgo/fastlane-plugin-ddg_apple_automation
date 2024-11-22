@@ -140,24 +140,11 @@ describe Fastlane::Helper::AsanaHelper do
   end
 
   describe "#get_asana_user_id_for_github_handle" do
-    let(:yaml_content) do
-      {
-        "duck" => "123",
-        "goose" => "456",
-        "pigeon" => nil,
-        "hawk" => ""
-      }
-    end
-
-    before do
-      allow(YAML).to receive(:load_file).and_return(yaml_content)
-    end
-
     it "sets the user ID output and GHA output correctly" do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
-      expect(get_asana_user_id_for_github_handle("duck")).to eq("123")
-      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_user_id", "123")
+      expect(get_asana_user_id_for_github_handle("jotaemepereira")).to eq("1203972458584419")
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_user_id", "1203972458584419")
     end
 
     it "shows warning when handle does not exist" do
@@ -348,7 +335,11 @@ describe Fastlane::Helper::AsanaHelper do
       expect(@asana_sections).to receive(:add_task_for_section).with(section_gid: section_id, task: task_id)
       expect(@asana_tasks).to receive(:update_task).with(task_gid: task_id, assignee: assignee_id)
 
+<<<<<<< HEAD
       Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token, false)
+=======
+      Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token)
+>>>>>>> main
 
       expect(Fastlane::UI).to have_received(:message).with("Creating release task for #{version}")
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_task_id", task_id)
@@ -363,7 +354,11 @@ describe Fastlane::Helper::AsanaHelper do
       allow(HTTParty).to receive(:post).and_return(double(success?: false, code: 500, message: "Internal Server Error"))
 
       expect do
+<<<<<<< HEAD
         Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token, false)
+=======
+        Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token)
+>>>>>>> main
       end.to raise_error(FastlaneCore::Interface::FastlaneError, "Failed to instantiate task from template #{template_task_id}: (500 Internal Server Error)")
     end
   end
@@ -458,11 +453,19 @@ describe Fastlane::Helper::AsanaHelper do
       allow(response_page2).to receive(:next_page).and_return(nil)
 
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
+<<<<<<< HEAD
         .with(tag_gid: tag_id, options: { opt_fields: ["gid"] })
         .and_return(response_page1)
 
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
         .with(tag_gid: tag_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+=======
+        .with(tag_gid: tag_id, options: { fields: ["gid"] })
+        .and_return(response_page1)
+
+      allow(@asana_tasks).to receive(:get_tasks_for_tag)
+        .with(tag_gid: tag_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+>>>>>>> main
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_tasks_for_tag(tag_id, asana_access_token)
@@ -507,11 +510,19 @@ describe Fastlane::Helper::AsanaHelper do
       allow(response_page1).to receive(:next_page).and_return(response_page2)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
+<<<<<<< HEAD
         .with(task_gid: task_id, options: { opt_fields: ["gid"] })
         .and_return(response_page1)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
         .with(task_gid: task_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+=======
+        .with(task_gid: task_id, options: { fields: ["gid"] })
+        .and_return(response_page1)
+
+      allow(@asana_tasks).to receive(:get_subtasks_for_task)
+        .with(task_gid: task_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
+>>>>>>> main
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_subtasks(task_id, asana_access_token)
@@ -568,19 +579,31 @@ describe Fastlane::Helper::AsanaHelper do
       response_task1 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID)])
       allow(response_task1).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID])
       allow(@asana_projects).to receive(:get_projects_for_task)
+<<<<<<< HEAD
         .with(task_gid: "1234567890", options: { opt_fields: ["gid"] })
+=======
+        .with(task_gid: "1234567890", options: { fields: ["gid"] })
+>>>>>>> main
         .and_return(response_task1)
 
       response_task2 = double("Asana::Collection", data: [double("Asana::Project", gid: "non_objective_id")])
       allow(response_task2).to receive(:map).and_return(["non_objective_id"])
       allow(@asana_projects).to receive(:get_projects_for_task)
+<<<<<<< HEAD
         .with(task_gid: "1234567891", options: { opt_fields: ["gid"] })
+=======
+        .with(task_gid: "1234567891", options: { fields: ["gid"] })
+>>>>>>> main
         .and_return(response_task2)
 
       response_task3 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID)])
       allow(response_task3).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID])
       allow(@asana_projects).to receive(:get_projects_for_task)
+<<<<<<< HEAD
         .with(task_gid: "1234567892", options: { opt_fields: ["gid"] })
+=======
+        .with(task_gid: "1234567892", options: { fields: ["gid"] })
+>>>>>>> main
         .and_return(response_task3)
 
       expect(@asana_tasks).to receive(:update_task)
@@ -657,6 +680,7 @@ describe Fastlane::Helper::AsanaHelper do
       Fastlane::Helper::AsanaHelper.tag_tasks(tag_id, task_ids, asana_access_token)
     end
   end
+<<<<<<< HEAD
 
   describe "#get_tasks_in_last_internal_release" do
     let(:params) do
@@ -729,4 +753,6 @@ describe Fastlane::Helper::AsanaHelper do
       expect(html_list).to eq("")
     end
   end
+=======
+>>>>>>> main
 end
