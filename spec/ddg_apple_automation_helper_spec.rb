@@ -168,7 +168,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
         platform = "macos"
         allow(Fastlane::Helper).to receive(:is_ci?).and_return(true)
         allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", branch_name).and_return("")
-        allow(Fastlane::Actions).to receive(:sh).with("git", "rev-parse", "#{source_version}^").and_return(sha)
+        allow(Fastlane::Actions).to receive(:sh).with("git", "rev-parse", "#{source_version}^{}").and_return(sha)
         allow(Fastlane::Actions).to receive(:sh).with(
           "gh", "api", "--method", "POST",
           "/repos/#{repo}/git/refs",
@@ -184,7 +184,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
         expect(result).to eq(branch_name)
 
         expect(Fastlane::Actions).to have_received(:sh).with("git", "branch", "--list", branch_name)
-        expect(Fastlane::Actions).to have_received(:sh).with("git", "rev-parse", "#{source_version}^")
+        expect(Fastlane::Actions).to have_received(:sh).with("git", "rev-parse", "#{source_version}^{}")
         expect(Fastlane::Actions).to have_received(:sh).with(
           "gh", "api", "--method", "POST",
           "/repos/#{repo}/git/refs",

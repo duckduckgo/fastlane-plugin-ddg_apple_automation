@@ -56,7 +56,7 @@ This action performs the following tasks:
 * pushes the changes to the remote repository,
 * creates a new Asana release task based off the provided task template,
 * updates the Asana release task with tasks included in the release.
-* if it's a hotfix release, it will create a hotfix branch, update the build number and push changes
+For hotfix releases, the action creates a hotfix branch off the latest public release tag, updates the build number and pushes the changes.
         DETAILS
       end
 

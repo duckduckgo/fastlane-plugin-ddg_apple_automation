@@ -152,7 +152,7 @@ module Fastlane
         UI.abort_with_message!("Branch #{branch_name} already exists in this repository. Aborting.") unless existing_branch.empty?
 
         if Helper.is_ci?
-          sha = Actions.sh("git", "rev-parse", "#{source_version}^").strip
+          sha = Actions.sh("git", "rev-parse", "#{source_version}^{}").strip
           repo = Helper::GitHelper.repo_name(platform)
           Actions.sh("gh", "api", "--method", "POST", "/repos/#{repo}/git/refs", "-f", "ref=refs/heads/#{branch_name}", "-f", "sha=#{sha}")
           Actions.sh("git", "fetch", "origin")
