@@ -335,11 +335,7 @@ describe Fastlane::Helper::AsanaHelper do
       expect(@asana_sections).to receive(:add_task_for_section).with(section_gid: section_id, task: task_id)
       expect(@asana_tasks).to receive(:update_task).with(task_gid: task_id, assignee: assignee_id)
 
-<<<<<<< HEAD
-      Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token, false)
-=======
       Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token)
->>>>>>> main
 
       expect(Fastlane::UI).to have_received(:message).with("Creating release task for #{version}")
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_task_id", task_id)
@@ -354,11 +350,7 @@ describe Fastlane::Helper::AsanaHelper do
       allow(HTTParty).to receive(:post).and_return(double(success?: false, code: 500, message: "Internal Server Error"))
 
       expect do
-<<<<<<< HEAD
-        Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token, false)
-=======
         Fastlane::Helper::AsanaHelper.create_release_task(platform, version, assignee_id, asana_access_token)
->>>>>>> main
       end.to raise_error(FastlaneCore::Interface::FastlaneError, "Failed to instantiate task from template #{template_task_id}: (500 Internal Server Error)")
     end
   end
@@ -453,19 +445,11 @@ describe Fastlane::Helper::AsanaHelper do
       allow(response_page2).to receive(:next_page).and_return(nil)
 
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
-<<<<<<< HEAD
-        .with(tag_gid: tag_id, options: { opt_fields: ["gid"] })
-        .and_return(response_page1)
-
-      allow(@asana_tasks).to receive(:get_tasks_for_tag)
-        .with(tag_gid: tag_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
-=======
         .with(tag_gid: tag_id, options: { fields: ["gid"] })
         .and_return(response_page1)
 
       allow(@asana_tasks).to receive(:get_tasks_for_tag)
         .with(tag_gid: tag_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
->>>>>>> main
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_tasks_for_tag(tag_id, asana_access_token)
@@ -510,19 +494,11 @@ describe Fastlane::Helper::AsanaHelper do
       allow(response_page1).to receive(:next_page).and_return(response_page2)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
-<<<<<<< HEAD
-        .with(task_gid: task_id, options: { opt_fields: ["gid"] })
-        .and_return(response_page1)
-
-      allow(@asana_tasks).to receive(:get_subtasks_for_task)
-        .with(task_gid: task_id, options: { opt_fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
-=======
         .with(task_gid: task_id, options: { fields: ["gid"] })
         .and_return(response_page1)
 
       allow(@asana_tasks).to receive(:get_subtasks_for_task)
         .with(task_gid: task_id, options: { fields: ["gid"], offset: "eyJ0eXAiOJiKV1iQLCJhbGciOiJIUzI1NiJ9" })
->>>>>>> main
         .and_return(response_page2)
 
       result = Fastlane::Helper::AsanaHelper.fetch_subtasks(task_id, asana_access_token)
@@ -579,31 +555,19 @@ describe Fastlane::Helper::AsanaHelper do
       response_task1 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID)])
       allow(response_task1).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::INCIDENTS_PARENT_TASK_ID])
       allow(@asana_projects).to receive(:get_projects_for_task)
-<<<<<<< HEAD
-        .with(task_gid: "1234567890", options: { opt_fields: ["gid"] })
-=======
         .with(task_gid: "1234567890", options: { fields: ["gid"] })
->>>>>>> main
         .and_return(response_task1)
 
       response_task2 = double("Asana::Collection", data: [double("Asana::Project", gid: "non_objective_id")])
       allow(response_task2).to receive(:map).and_return(["non_objective_id"])
       allow(@asana_projects).to receive(:get_projects_for_task)
-<<<<<<< HEAD
-        .with(task_gid: "1234567891", options: { opt_fields: ["gid"] })
-=======
         .with(task_gid: "1234567891", options: { fields: ["gid"] })
->>>>>>> main
         .and_return(response_task2)
 
       response_task3 = double("Asana::Collection", data: [double("Asana::Project", gid: Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID)])
       allow(response_task3).to receive(:map).and_return([Fastlane::Helper::AsanaHelper::CURRENT_OBJECTIVES_PROJECT_ID])
       allow(@asana_projects).to receive(:get_projects_for_task)
-<<<<<<< HEAD
-        .with(task_gid: "1234567892", options: { opt_fields: ["gid"] })
-=======
         .with(task_gid: "1234567892", options: { fields: ["gid"] })
->>>>>>> main
         .and_return(response_task3)
 
       expect(@asana_tasks).to receive(:update_task)
@@ -680,79 +644,4 @@ describe Fastlane::Helper::AsanaHelper do
       Fastlane::Helper::AsanaHelper.tag_tasks(tag_id, task_ids, asana_access_token)
     end
   end
-<<<<<<< HEAD
-
-  describe "#get_tasks_in_last_internal_release" do
-    let(:params) do
-      {
-        github_token: "github-token",
-        platform: "macos"
-      }
-    end
-
-    before do
-      @client = double("Octokit::Client")
-      allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(Fastlane::UI).to receive(:message)
-      allow(Fastlane::UI).to receive(:success)
-    end
-
-    it "fetches tasks in the latest internal release and constructs the tasks list" do
-      allow(@client).to receive(:releases).with("duckduckgo/macos-browser", { per_page: 2 }).and_return([double(tag_name: "v2.0.0"), double(tag_name: "v1.0.0")])
-      allow(Fastlane::Helper::AsanaHelper).to receive(:get_task_ids_from_git_log).with("v1.0.0").and_return(["123", "456"])
-      allow(Fastlane::Helper::AsanaHelper).to receive(:construct_this_release_includes).with(["123", "456"]).and_return(
-        '<ul><li><a data-asana-gid="123"/></li><li><a data-asana-gid="456"/></li></ul>'
-      )
-
-      result = Fastlane::Helper::AsanaHelper.get_tasks_in_last_internal_release(params[:platform], params[:github_token])
-
-      expect(@client).to have_received(:releases).with("duckduckgo/macos-browser", { per_page: 2 })
-      expect(Fastlane::UI).to have_received(:success).with("Latest internal release: v1.0.0")
-      expect(Fastlane::UI).to have_received(:success).with("Completed fetching tasks since v1.0.0")
-      expect(Fastlane::UI).to have_received(:success).with("Completed constructing task")
-      expect(result).to eq('<ul><li><a data-asana-gid="123"/></li><li><a data-asana-gid="456"/></li></ul>')
-    end
-  end
-
-  describe "#get_task_ids_from_git_log" do
-    before do
-      allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_id).and_return("1234567890")
-    end
-
-    it "extracts Asana task IDs from git log" do
-      git_log = <<~LOG
-        Task/Issue URL: https://app.asana.com/0/0/1234567890
-        Fix issue #42
-      LOG
-
-      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD").and_return(git_log)
-
-      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
-      expect(task_ids).to eq(["1234567890"])
-    end
-
-    it "returns an empty array if no task IDs are found" do
-      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD").and_return("No tasks here.")
-
-      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
-      expect(task_ids).to eq([])
-    end
-  end
-
-  describe "#construct_this_release_includes" do
-    it "constructs an HTML list of task IDs" do
-      task_ids = ["123", "456"]
-      allow(ENV).to receive(:[]).with("RELEASE_TASK_ID").and_return(nil)
-
-      html_list = Fastlane::Helper::AsanaHelper.construct_this_release_includes(task_ids)
-      expect(html_list).to eq('<ul><li><a data-asana-gid="123"/></li><li><a data-asana-gid="456"/></li></ul>')
-    end
-
-    it "returns an empty string if no task IDs are provided" do
-      html_list = Fastlane::Helper::AsanaHelper.construct_this_release_includes([])
-      expect(html_list).to eq("")
-    end
-  end
-=======
->>>>>>> main
 end
