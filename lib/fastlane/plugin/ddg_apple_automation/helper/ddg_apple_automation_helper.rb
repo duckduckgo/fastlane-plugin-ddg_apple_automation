@@ -137,6 +137,7 @@ module Fastlane
         client = Octokit::Client.new(access_token: github_token)
         latest_public_release = client.latest_release(Helper::GitHelper.repo_name(platform))
         version = latest_public_release.tag_name
+        Helper::GitHubActionsHelper.set_output("last_release", version)
         UI.user_error!("Unable to find latest release to hotfix") unless version
         source_version = validate_version_exists(version)
         new_version = validate_hotfix_version(source_version)
