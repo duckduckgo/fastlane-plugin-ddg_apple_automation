@@ -141,7 +141,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
         it "prepares the hotfix branch" do
           subject
           expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:prepare_hotfix_branch)
-            .with("macos", "1.0.0", anything, hash_including(asana_user_id: "user"))
+            .with("github_token", "macos", anything, hash_including(asana_user_id: "user"))
         end
 
         it "creates a hotfix release task in Asana" do
