@@ -18,7 +18,7 @@ module Fastlane
 
         if params[:is_hotfix]
           release_branch_name, new_version = Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
-            params[:platform], params[:version], other_action, options
+            params[:github_token], params[:platform], other_action, options
           )
         else
           release_branch_name, new_version = Helper::DdgAppleAutomationHelper.prepare_release_branch(

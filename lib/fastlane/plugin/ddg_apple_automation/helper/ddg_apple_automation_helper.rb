@@ -133,8 +133,11 @@ module Fastlane
         return release_branch_name, new_version
       end
 
-      def self.prepare_hotfix_branch(platform, version, other_action, options)
-        UI.user_error!("You must provide a version you want to hotfix.") unless version
+      def self.prepare_hotfix_branch(github_token, platform, other_action, options)
+        client = Octokit::Client.new(access_token: github_token)
+        latest_public_release = client.latest_release(Helper::GitHelper.repo_name(platform))
+        version = latest_public_release.tag_name
+        UI.user_error!("Unable to find latest release to hotfix") unless version
         source_version = validate_version_exists(version)
         new_version = validate_hotfix_version(source_version)
         release_branch_name = create_hotfix_branch(platform, source_version, new_version)
