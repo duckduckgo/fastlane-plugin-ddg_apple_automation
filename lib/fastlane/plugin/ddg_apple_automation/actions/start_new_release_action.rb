@@ -26,13 +26,13 @@ module Fastlane
           )
         end
 
-        options[:version] = new_version
-        options[:release_branch_name] = release_branch_name
+        # options[:version] = new_version
+        # options[:release_branch_name] = release_branch_name
 
-        release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token], is_hotfix: options[:is_hotfix])
-        options[:release_task_id] = release_task_id
+        # release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token], is_hotfix: options[:is_hotfix])
+        # options[:release_task_id] = release_task_id
 
-        Helper::AsanaHelper.update_asana_tasks_for_internal_release(options) unless params[:is_hotfix]
+        # Helper::AsanaHelper.update_asana_tasks_for_internal_release(options) unless params[:is_hotfix]
       end
 
       def self.description
