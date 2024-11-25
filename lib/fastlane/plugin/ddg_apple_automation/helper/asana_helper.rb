@@ -282,6 +282,7 @@ module Fastlane
 
         # Complete tasks that don't require a post-mortem.
         UI.message("Completing tasks")
+        task_ids.delete(params[:release_task_id])
         complete_tasks(task_ids, params[:asana_access_token])
         UI.message("Done completing tasks")
 
@@ -292,7 +293,6 @@ module Fastlane
 
         # Construct release announcement task description
         UI.message("Preparing release announcement task")
-        task_ids.delete(params[:release_task_id])
         Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids)
       end
 

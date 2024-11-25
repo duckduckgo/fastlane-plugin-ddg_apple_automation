@@ -369,7 +369,7 @@ describe Fastlane::Helper::AsanaHelper do
 
     let(:tag_name) { "7.122.0" }
     let(:tag_id) { "7.122.0" }
-    let(:task_ids) { ["task1", "task2", "task3"] }
+    let(:task_ids) { ["1234567890", "1234567891", "1234567892"] }
     let(:release_notes) { "Release notes content" }
 
     before do
@@ -400,10 +400,11 @@ describe Fastlane::Helper::AsanaHelper do
       expect(Fastlane::UI).to have_received(:message).with("Fetching #{tag_name} Asana tag")
       expect(Fastlane::UI).to have_received(:success).with("#{tag_name} tag URL: https://app.asana.com/0/#{tag_id}/list")
       expect(Fastlane::UI).to have_received(:message).with("Fetching tasks tagged with #{tag_name}")
-      expect(Fastlane::UI).to have_received(:success).with("#{task_ids.count} task(s) found.")
+      expect(Fastlane::UI).to have_received(:success).with("3 task(s) found.")
       expect(Fastlane::UI).to have_received(:message).with("Moving tasks to Done section")
       expect(Fastlane::UI).to have_received(:success).with("All tasks moved to Done section")
       expect(Fastlane::UI).to have_received(:message).with("Completing tasks")
+      expect(task_ids).to eq(["1234567891", "1234567892"]) # Check function removes release task
       expect(Fastlane::UI).to have_received(:message).with("Done completing tasks")
       expect(Fastlane::UI).to have_received(:message).with("Fetching release notes from Asana release task (https://app.asana.com/0/0/1234567890/f)")
       expect(Fastlane::UI).to have_received(:success).with("Release notes: #{release_notes}")
