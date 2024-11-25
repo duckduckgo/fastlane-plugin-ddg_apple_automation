@@ -129,7 +129,7 @@ module Fastlane
         end
       end
 
-      def self.release_template_task_id(platform, is_hotfix: false)
+      def self.release_template_task_id(platform, is_hotfix)
         case platform
         when "ios"
           is_hotfix ? IOS_HOTFIX_TASK_TEMPLATE_ID : IOS_RELEASE_TASK_TEMPLATE_ID
@@ -140,7 +140,7 @@ module Fastlane
         end
       end
 
-      def self.release_task_name(version, platform, is_hotfix: false)
+      def self.release_task_name(version, platform, is_hotfix)
         case platform
         when "ios"
           is_hotfix ? "iOS App Hotfix Release #{version}" : "iOS App Release #{version}"
@@ -173,9 +173,9 @@ module Fastlane
         end
       end
 
-      def self.create_release_task(platform, version, assignee_id, asana_access_token)
-        template_task_id = release_template_task_id(platform)
-        task_name = release_task_name(version, platform)
+      def self.create_release_task(platform, version, assignee_id, asana_access_token, is_hotfix: false)
+        template_task_id = release_template_task_id(platform, is_hotfix)
+        task_name = release_task_name(version, platform, is_hotfix)
         section_id = release_section_id(platform)
 
         UI.message("Creating release task for #{version}")
@@ -282,6 +282,7 @@ module Fastlane
 
         # Complete tasks that don't require a post-mortem.
         UI.message("Completing tasks")
+        task_ids.delete(params[:release_task_id])
         complete_tasks(task_ids, params[:asana_access_token])
         UI.message("Done completing tasks")
 
@@ -292,7 +293,6 @@ module Fastlane
 
         # Construct release announcement task description
         UI.message("Preparing release announcement task")
-        task_ids.delete(params[:release_task_id])
         Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids)
       end
 
@@ -416,7 +416,7 @@ module Fastlane
 
         git_log
           .gsub("\n", " ")
-          .scan(%r{\bTask/Issue URL:.*?https://app\.asana\.com[/0-9f]+\b})
+          .scan(%r{\bTask/Issue URL:\s*https://app\.asana\.com[/0-9f]+\b})
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
           .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
       end

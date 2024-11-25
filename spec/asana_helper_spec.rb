@@ -369,7 +369,7 @@ describe Fastlane::Helper::AsanaHelper do
 
     let(:tag_name) { "7.122.0" }
     let(:tag_id) { "7.122.0" }
-    let(:task_ids) { ["task1", "task2", "task3"] }
+    let(:task_ids) { ["1234567890", "1234567891", "1234567892"] }
     let(:release_notes) { "Release notes content" }
 
     before do
@@ -400,10 +400,11 @@ describe Fastlane::Helper::AsanaHelper do
       expect(Fastlane::UI).to have_received(:message).with("Fetching #{tag_name} Asana tag")
       expect(Fastlane::UI).to have_received(:success).with("#{tag_name} tag URL: https://app.asana.com/0/#{tag_id}/list")
       expect(Fastlane::UI).to have_received(:message).with("Fetching tasks tagged with #{tag_name}")
-      expect(Fastlane::UI).to have_received(:success).with("#{task_ids.count} task(s) found.")
+      expect(Fastlane::UI).to have_received(:success).with("3 task(s) found.")
       expect(Fastlane::UI).to have_received(:message).with("Moving tasks to Done section")
       expect(Fastlane::UI).to have_received(:success).with("All tasks moved to Done section")
       expect(Fastlane::UI).to have_received(:message).with("Completing tasks")
+      expect(task_ids).to eq(["1234567891", "1234567892"]) # Check function removes release task
       expect(Fastlane::UI).to have_received(:message).with("Done completing tasks")
       expect(Fastlane::UI).to have_received(:message).with("Fetching release notes from Asana release task (https://app.asana.com/0/0/1234567890/f)")
       expect(Fastlane::UI).to have_received(:success).with("Release notes: #{release_notes}")
@@ -512,6 +513,80 @@ describe Fastlane::Helper::AsanaHelper do
 
       result = Fastlane::Helper::AsanaHelper.fetch_subtasks(task_id, asana_access_token)
       expect(result).to eq([])
+    end
+  end
+
+  describe "#get_task_ids_from_git_log" do
+    it "extracts Asana task IDs from git log" do
+      git_log = <<~LOG
+commit 1b6f8be812eac431d4e36ec24d4344369f4ce470
+
+    Bump version to 1.115.0 (312)
+
+commit ca70d42a7c4e2f1b62f6716eb08d286f2a218c4d
+
+    Add attemptCount and maxAttempts to broker config (#3533)
+    Task/Issue URL:https://app.asana.com/0/72649045549333/1208700893044577/f
+    Tech Design URL:
+    https://app.asana.com/0/481882893211075/1208663928051302/f
+    CC:
+
+    **Definition of Done**:
+#{'    '}
+    * [ ] Does this PR satisfy our [Definition of
+    Done](https://app.asana.com/0/1202500774821704/1207634633537039/f)?
+
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/0/1202406491309510/1208589738926535/f
+
+commit e83fd007c0bdf054658068a79f5b7ea45d846468
+
+    Receive privacy config updates in AddressBarModel on main thread (#3574)
+#{'    '}
+    Task/Issue URL:#{' '}
+#{'    '}
+    https://app.asana.com/0/1201037661562251/1208804405760977/f
+#{'    '}
+    Description:
+    This privacy config update may update a published value so must be received on main thread.
+
+commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
+
+    Add expectation when checking email text field value (#3572)
+#{'    '}
+    Task/Issue URL:
+    Tech Design URL:
+    CC:
+#{'    '}
+    **Description**:
+    * [x] Does this PR satisfy our [Definition of
+    Done](https://app.asana.com/0/1202500774821704/1207634633537039/f)?
+#{'    '}
+    ###### Internal references:
+    [Pull Request Review
+    Checklist](https://app.asana.com/0/1202500774821704/1203764234894239/f)
+    [Software Engineering
+    Expectations](https://app.asana.com/0/59792373528535/199064865822552)
+    [Technical Design
+    Template](https://app.asana.com/0/59792373528535/184709971311943)
+    [Pull Request
+    Documentation](https://app.asana.com/0/1202500774821704/1204012835277482/f)
+      LOG
+
+      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD").and_return(git_log)
+
+      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
+      expect(task_ids).to eq(["1208700893044577", "1208589738926535", "1208804405760977"])
+    end
+
+    it "returns an empty array if no task IDs are found" do
+      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD").and_return("No tasks here.")
+
+      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
+      expect(task_ids).to eq([])
     end
   end
 

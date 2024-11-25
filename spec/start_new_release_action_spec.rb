@@ -64,7 +64,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
-        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token")
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token", { is_hotfix: false })
       end
 
       it 'updates Asana tasks for internal release' do
@@ -101,7 +101,7 @@ describe Fastlane::Actions::StartNewReleaseAction do
 
       it 'creates a release task in Asana' do
         subject
-        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token")
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("macos", "1.1.0", "user", "secret-token", { is_hotfix: false })
       end
 
       it 'updates Asana tasks for internal release' do
@@ -115,6 +115,45 @@ describe Fastlane::Actions::StartNewReleaseAction do
             asana_access_token: "secret-token"
           )
         )
+      end
+
+      context "with hotfix release" do
+        before do
+          @params[:is_hotfix] = true
+
+          allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:prepare_hotfix_branch)
+            .and_return(["hotfix_branch_name", "1.0.1"])
+          allow(Fastlane::Helper::AsanaHelper).to receive(:create_release_task)
+            .and_return("9876543210")
+          allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+        end
+
+        it "sets up git user" do
+          subject
+          expect(Fastlane::Helper::GitHelper).to have_received(:setup_git_user)
+        end
+
+        it "gets Asana user ID based on GitHub handle" do
+          subject
+          expect(Fastlane::Helper::AsanaHelper).to have_received(:get_asana_user_id_for_github_handle).with("user")
+        end
+
+        it "prepares the hotfix branch" do
+          subject
+          expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:prepare_hotfix_branch)
+            .with("github_token", "macos", anything, hash_including(asana_user_id: "user"))
+        end
+
+        it "creates a hotfix release task in Asana" do
+          subject
+          expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task)
+            .with("macos", "1.0.1", "user", "secret-token", { is_hotfix: true })
+        end
+
+        it "does not update Asana tasks for internal release" do
+          subject
+          expect(Fastlane::Helper::AsanaHelper).not_to have_received(:update_asana_tasks_for_internal_release)
+        end
       end
     end
   end

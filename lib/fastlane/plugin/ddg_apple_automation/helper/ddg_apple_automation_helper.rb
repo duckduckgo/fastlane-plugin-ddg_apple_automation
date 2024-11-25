@@ -4,6 +4,7 @@ require "httparty"
 require "rexml/document"
 require "semantic"
 require_relative "github_actions_helper"
+require_relative "git_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -130,6 +131,56 @@ module Fastlane
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
+      end
+
+      def self.prepare_hotfix_branch(github_token, platform, other_action, options)
+        client = Octokit::Client.new(access_token: github_token)
+        latest_public_release = client.latest_release(Helper::GitHelper.repo_name(platform))
+        version = latest_public_release.tag_name
+        Helper::GitHubActionsHelper.set_output("last_release", version)
+        UI.user_error!("Unable to find latest release to hotfix") unless version
+        source_version = validate_version_exists(version)
+        new_version = validate_hotfix_version(source_version)
+        release_branch_name = create_hotfix_branch(platform, source_version, new_version)
+        increment_build_number(platform, options, other_action)
+        Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
+
+        return release_branch_name, new_version
+      end
+
+      def self.create_hotfix_branch(platform, source_version, new_version)
+        branch_name = "#{HOTFIX_BRANCH}/#{new_version}"
+        UI.message("Creating new hotfix release branch for #{new_version}")
+
+        existing_branch = Actions.sh("git", "branch", "--list", branch_name).strip
+        UI.abort_with_message!("Branch #{branch_name} already exists in this repository. Aborting.") unless existing_branch.empty?
+        Actions.sh("git", "fetch", "--tags")
+        Actions.sh("git", "checkout", "-b", branch_name, source_version)
+        Actions.sh("git", "push", "-u", "origin", branch_name)
+        branch_name
+      end
+
+      def self.validate_hotfix_version(source_version)
+        new_version = bump_patch_version(source_version)
+        UI.important("Release #{source_version} will be hotfixed as #{new_version}.")
+
+        if UI.interactive? && !UI.confirm("Do you want to continue?")
+          UI.abort_with_message!('Aborted by user.')
+        end
+
+        new_version
+      end
+
+      def self.validate_version_exists(version)
+        user_version = format_version(version)
+        UI.user_error!("Incorrect version provided: #{version}. Expected x.y.z format.") unless user_version
+
+        Actions.sh('git', 'fetch', '--tags')
+        existing_tag = Actions.sh('git', 'tag', '--list', user_version).chomp
+        existing_tag = nil if existing_tag.empty?
+
+        UI.user_error!("Release #{user_version} not found. Make sure you've passed the version you want to make hotfix for, not the upcoming hotfix version.") unless existing_tag
+        existing_tag
       end
 
       def self.create_release_branch(version)
