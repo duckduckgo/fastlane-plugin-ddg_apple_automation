@@ -120,6 +120,14 @@ module Fastlane
         current_version
       end
 
+      def self.extract_version_from_tag(tag)
+        if tag && !tag.empty?
+          tag.split('-').first
+        else
+          Helper::DdgAppleAutomationHelper.current_version
+        end
+      end
+
       def self.prepare_release_branch(platform, version, other_action)
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
@@ -142,6 +150,8 @@ module Fastlane
         source_version = validate_version_exists(version)
         new_version = validate_hotfix_version(source_version)
         release_branch_name = create_hotfix_branch(platform, source_version, new_version)
+        update_version_config(new_version, other_action)
+        other_action.push_to_git_remote
         increment_build_number(platform, options, other_action)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 

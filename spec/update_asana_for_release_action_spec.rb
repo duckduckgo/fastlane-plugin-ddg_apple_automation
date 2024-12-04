@@ -1,5 +1,6 @@
 describe Fastlane::Actions::UpdateAsanaForReleaseAction do
   describe ".run" do
+    let(:tag) { nil }
     let(:params) do
       {
         asana_access_token: "secret-token",
@@ -9,7 +10,8 @@ describe Fastlane::Actions::UpdateAsanaForReleaseAction do
         github_handle: "github_user",
         release_task_id: "1234567890",
         release_type: release_type,
-        target_section_id: "987654321"
+        target_section_id: "987654321",
+        tag: tag
       }
     end
 
@@ -28,20 +30,26 @@ describe Fastlane::Actions::UpdateAsanaForReleaseAction do
       let(:release_type) { "internal" }
 
       it "updates Asana tasks for internal release" do
-        expect(Fastlane::Helper::AsanaHelper).to receive(:update_asana_tasks_for_internal_release).with(hash_including(release_task_id: "1234567890"))
+        expect(Fastlane::Helper::AsanaHelper).to receive(:update_asana_tasks_for_internal_release).with(
+          hash_including(
+            release_task_id: "1234567890",
+            version: "1.1.0"
+          )
+        )
         subject
       end
     end
 
     context "when release type is public" do
       let(:release_type) { "public" }
+      let(:tag) { "1.116.1-322" }
 
       before do
         allow(Fastlane::Helper::AsanaHelper).to receive(:update_asana_tasks_for_public_release).and_return("Announcement task notes")
       end
 
       it "updates Asana tasks for public release" do
-        expect(Fastlane::Helper::AsanaHelper).to receive(:update_asana_tasks_for_public_release).with(hash_including(release_task_id: "1234567890"))
+        expect(Fastlane::Helper::AsanaHelper).to receive(:update_asana_tasks_for_public_release).with(hash_including(release_task_id: "1234567890", version: "1.116.1"))
         subject
       end
 

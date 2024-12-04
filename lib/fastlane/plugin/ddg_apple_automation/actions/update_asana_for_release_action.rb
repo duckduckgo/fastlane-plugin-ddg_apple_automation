@@ -13,11 +13,12 @@ module Fastlane
       def self.run(params)
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         options = params.values
-        options[:version] = Helper::DdgAppleAutomationHelper.current_version
 
         if options[:release_type] == 'internal'
+          options[:version] = Helper::DdgAppleAutomationHelper.current_version
           Helper::AsanaHelper.update_asana_tasks_for_internal_release(options)
         else
+          options[:version] = Helper::DdgAppleAutomationHelper.extract_version_from_tag(options[:tag])
           announcement_task_html_notes = Helper::AsanaHelper.update_asana_tasks_for_public_release(options)
           Fastlane::Actions::AsanaCreateActionItemAction.run(
             asana_access_token: options[:asana_access_token],
@@ -56,6 +57,10 @@ This action performs the following tasks:
           FastlaneCore::ConfigItem.github_token,
           FastlaneCore::ConfigItem.is_scheduled_release,
           FastlaneCore::ConfigItem.platform,
+          FastlaneCore::ConfigItem.new(key: :tag,
+                                       description: "Tagged version from Git releases - format <app-version>-<build-number>",
+                                       optional: true,
+                                       type: String),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle - required when release_type is 'public'",
                                        optional: true,
