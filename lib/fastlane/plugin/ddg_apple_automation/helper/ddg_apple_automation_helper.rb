@@ -143,6 +143,7 @@ module Fastlane
         new_version = validate_hotfix_version(source_version)
         release_branch_name = create_hotfix_branch(platform, source_version, new_version)
         update_version_config(new_version, other_action)
+        other_action.push_to_git_remote
         increment_build_number(platform, options, other_action)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 

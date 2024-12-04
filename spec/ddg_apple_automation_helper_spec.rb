@@ -218,6 +218,8 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
+      expect(other_action).to receive(:push_to_git_remote)
+
       result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
         github_token, platform, other_action, options
       )
