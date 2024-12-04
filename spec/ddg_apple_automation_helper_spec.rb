@@ -210,6 +210,9 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_hotfix_branch)
         .with(platform, source_version, new_version).and_return(release_branch_name)
 
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
+        .with(new_version, other_action)
+
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:increment_build_number)
         .with(platform, options, other_action)
 
@@ -225,6 +228,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_version_exists).with(version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_hotfix_version).with(source_version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_hotfix_branch).with(platform, source_version, new_version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(new_version, other_action)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:increment_build_number).with(platform, options, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("last_release", source_version)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
