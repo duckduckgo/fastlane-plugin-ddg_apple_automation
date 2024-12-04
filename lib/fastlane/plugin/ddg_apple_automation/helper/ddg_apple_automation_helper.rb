@@ -120,6 +120,14 @@ module Fastlane
         current_version
       end
 
+      def self.extract_version_from_tag(tag)
+        if tag && !tag.empty?
+          tag.split('-').first
+        else
+          Helper::DdgAppleAutomationHelper.current_version
+        end
+      end
+
       def self.prepare_release_branch(platform, version, other_action)
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
