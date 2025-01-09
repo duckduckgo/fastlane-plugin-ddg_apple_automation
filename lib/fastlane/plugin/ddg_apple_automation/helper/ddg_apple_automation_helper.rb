@@ -36,6 +36,11 @@ module Fastlane
                            ])
       }.freeze
 
+      if ENV['TEST_MODE']
+        RELEASE_BRANCH = 'test-release'
+        HOTFIX_BRANCH = 'test-hotfix'
+      end
+
       def self.code_freeze_prechecks(other_action)
         other_action.ensure_git_status_clean
         other_action.ensure_git_branch(branch: DEFAULT_BRANCH)
