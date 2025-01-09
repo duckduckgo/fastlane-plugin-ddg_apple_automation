@@ -8,14 +8,18 @@ module Fastlane
   module Helper
     class GitHelper
       def self.repo_name(platform)
-        case platform
-        when "ios"
-          "duckduckgo/ios"
-        when "macos"
-          "duckduckgo/macos-browser"
-        else
-          UI.user_error!("Unsupported platform: #{platform}")
+        if ENV["TEST_MODE"] == "true"
+          UI.message("TEST_MODE is enabled. Returning test repository.")
+          return "duckduckgo/apple-automation-test"
         end
+        # case platform
+        # when "ios"
+        #   "duckduckgo/ios"
+        # when "macos"
+        #   "duckduckgo/macos-browser"
+        # else
+        #   UI.user_error!("Unsupported platform: #{platform}")
+        # end
       end
 
       def self.setup_git_user(name: "Dax the Duck", email: "dax@duckduckgo.com")

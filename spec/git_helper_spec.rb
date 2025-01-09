@@ -76,4 +76,42 @@ describe Fastlane::Helper::GitHelper do
       end
     end
   end
+
+  describe "#repo_name" do
+    subject { Fastlane::Helper::GitHelper.repo_name(platform) }
+
+    let(:platform) { "ios" }
+
+    context "when TEST_MODE is enabled" do
+      before do
+        allow(ENV).to receive(:[]).with("TEST_MODE").and_return("true")
+      end
+
+      it "returns the test repository name" do
+        expect(subject).to eq("duckduckgo/apple-automation-test")
+      end
+    end
+
+    context "when TEST_MODE is disabled and platform is ios" do
+      before do
+        allow(ENV).to receive(:[]).with("TEST_MODE").and_return(nil)
+      end
+
+      it "returns the ios repository name" do
+        expect(subject).to eq("duckduckgo/ios")
+      end
+    end
+
+    context "when TEST_MODE is disabled and platform is macos" do
+      let(:platform) { "macos" }
+
+      before do
+        allow(ENV).to receive(:[]).with("TEST_MODE").and_return(nil)
+      end
+
+      it "returns the macos repository name" do
+        expect(subject).to eq("duckduckgo/macos-browser")
+      end
+    end
+  end
 end
