@@ -138,7 +138,7 @@ module Fastlane
         new_version = validate_new_version(version)
         create_release_branch(new_version)
         update_embedded_files(platform, other_action)
-        if params[:platform] == "ios"
+        if platform == "ios"
           update_version_and_build_number_config(new_version, 0, other_action)
         else
           update_version_config(new_version, other_action)
