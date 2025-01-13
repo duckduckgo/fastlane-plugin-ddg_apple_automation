@@ -167,7 +167,7 @@ module Fastlane
       def self.release_tag_name(version, platform)
         if ENV["TEST_MODE"] == "true"
           UI.message("TEST_MODE is enabled. Returning test tag.")
-          return "test-ios-app-release-#{version}"
+          return "test-release-#{version}"
         end
         case platform
         when "ios"
@@ -251,25 +251,25 @@ module Fastlane
         UI.message("Generating release task description using fetched release notes and task IDs")
         html_notes = Helper::ReleaseTaskHelper.construct_release_task_description(release_notes, task_ids)
 
-        # UI.message("Updating release task")
-        # asana_client = make_asana_client(params[:asana_access_token])
-        # asana_client.tasks.update_task(task_gid: params[:release_task_id], html_notes: html_notes)
-        # UI.success("Release task content updated: #{asana_task_url(params[:release_task_id])}")
+        UI.message("Updating release task")
+        asana_client = make_asana_client(params[:asana_access_token])
+        asana_client.tasks.update_task(task_gid: params[:release_task_id], html_notes: html_notes)
+        UI.success("Release task content updated: #{asana_task_url(params[:release_task_id])}")
 
-        # task_ids.append(params[:release_task_id])
+        task_ids.append(params[:release_task_id])
 
-        # UI.message("Moving tasks to Validation section")
-        # move_tasks_to_section(task_ids, params[:target_section_id], params[:asana_access_token])
-        # UI.success("All tasks moved to Validation section")
+        UI.message("Moving tasks to Validation section")
+        move_tasks_to_section(task_ids, params[:target_section_id], params[:asana_access_token])
+        UI.success("All tasks moved to Validation section")
 
-        # tag_name = release_tag_name(params[:version], params[:platform])
-        # UI.message("Fetching or creating #{tag_name} Asana tag")
-        # tag_id = find_or_create_asana_release_tag(tag_name, params[:release_task_id], params[:asana_access_token])
-        # UI.success("#{tag_name} tag URL: #{asana_tag_url(tag_id)}")
+        tag_name = release_tag_name(params[:version], params[:platform])
+        UI.message("Fetching or creating #{tag_name} Asana tag")
+        tag_id = find_or_create_asana_release_tag(tag_name, params[:release_task_id], params[:asana_access_token])
+        UI.success("#{tag_name} tag URL: #{asana_tag_url(tag_id)}")
 
-        # UI.message("Tagging tasks with #{tag_name} tag")
-        # tag_tasks(tag_id, task_ids, params[:asana_access_token])
-        # UI.success("All tasks tagged with #{tag_name} tag")
+        UI.message("Tagging tasks with #{tag_name} tag")
+        tag_tasks(tag_id, task_ids, params[:asana_access_token])
+        UI.success("All tasks tagged with #{tag_name} tag")
       end
 
       # Updates asana tasks for a public release
