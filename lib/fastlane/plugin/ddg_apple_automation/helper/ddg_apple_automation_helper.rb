@@ -138,7 +138,12 @@ module Fastlane
         new_version = validate_new_version(version)
         create_release_branch(new_version)
         update_embedded_files(platform, other_action)
-        update_version_config(new_version, other_action)
+        if params[:platform] == "ios"
+          update_version_and_build_number_config(new_version, 0, other_action)
+        else
+          update_version_config(new_version, other_action)
+        end
+
         other_action.push_to_git_remote
         release_branch_name = "#{RELEASE_BRANCH}/#{new_version}"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
