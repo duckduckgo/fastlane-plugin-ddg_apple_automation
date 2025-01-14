@@ -368,7 +368,7 @@ module Fastlane
       def self.update_root_plist_version(version, other_action)
         plist_path = File.expand_path("../DuckDuckGo/Settings.bundle/Root.plist", __dir__)
 
-        sh("/usr/libexec/PlistBuddy", "-c", "Set :PreferenceSpecifiers:0:DefaultValue #{version}", plist_path)
+        Actions.sh("/usr/libexec/PlistBuddy", "-c", "Set :PreferenceSpecifiers:0:DefaultValue #{version}", plist_path)
 
         other_action.git_commit(
           path: [plist_path],
