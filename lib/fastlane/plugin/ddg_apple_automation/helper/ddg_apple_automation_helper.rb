@@ -140,6 +140,7 @@ module Fastlane
         update_embedded_files(platform, other_action)
         if platform == "ios"
           update_version_and_build_number_config(new_version, 0, other_action)
+          update_root_plist_version(new_version, other_action)
         else
           update_version_config(new_version, other_action)
         end
@@ -362,6 +363,19 @@ module Fastlane
           ],
           message: "Bump version to #{version} (#{build_number})"
         )
+      end
+
+      def self.update_root_plist_version(version, other_action)
+        plist_path = File.expand_path("../DuckDuckGo/Settings.bundle/Root.plist", __dir__)
+
+        sh("/usr/libexec/PlistBuddy", "-c", "Set :PreferenceSpecifiers:0:DefaultValue #{version}", plist_path)
+
+        other_action.git_commit(
+          path: [plist_path],
+          message: "Update Root.plist version to #{version}"
+        )
+
+        UI.message("Updated Root.plist version to #{version}")
       end
 
       def self.process_erb_template(erb_file_path, args)
