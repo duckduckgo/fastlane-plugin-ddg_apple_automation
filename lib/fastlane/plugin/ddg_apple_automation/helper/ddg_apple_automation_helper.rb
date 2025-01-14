@@ -370,7 +370,7 @@ module Fastlane
         Actions.sh("/usr/libexec/PlistBuddy -c \"Set :PreferenceSpecifiers:0:DefaultValue #{version}\" #{ROOT_PLIST}")
 
         other_action.git_commit(
-          path: [plist_path],
+          path: ROOT_PLIST,
           message: "Update Root.plist version to #{version}"
         )
 
