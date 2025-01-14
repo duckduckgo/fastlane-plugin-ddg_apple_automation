@@ -367,8 +367,7 @@ module Fastlane
       end
 
       def self.update_root_plist_version(version, other_action)
-        plist_path = File.expand_path(ROOT_PLIST, __dir__)
-        Actions.sh("/usr/libexec/PlistBuddy", "-c", "Set :PreferenceSpecifiers:0:DefaultValue #{version}", plist_path)
+        Actions.sh("/usr/libexec/PlistBuddy -c \"Set :PreferenceSpecifiers:0:DefaultValue #{version}\" #{ROOT_PLIST}")
 
         other_action.git_commit(
           path: [plist_path],
