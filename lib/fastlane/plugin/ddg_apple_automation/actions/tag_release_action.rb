@@ -14,17 +14,21 @@ module Fastlane
       @constants = {}
 
       def self.setup_constants(platform)
-        case platform
-        when "ios"
-          @constants = {
-            repo_name: "duckduckgo/ios"
-          }
-        when "macos"
-          @constants = {
-            dmg_url_prefix: "https://staticcdn.duckduckgo.com/macos-desktop-browser/",
-            repo_name: "duckduckgo/macos-browser"
-          }
+        if ENV["TEST_MODE"] == "true"
+          UI.message("TEST_MODE is enabled. Returning test repository.")
+          return "duckduckgo/apple-automation-test"
         end
+        # case platform
+        # when "ios"
+        #   @constants = {
+        #     repo_name: "duckduckgo/ios"
+        #   }
+        # when "macos"
+        #   @constants = {
+        #     dmg_url_prefix: "https://staticcdn.duckduckgo.com/macos-desktop-browser/",
+        #     repo_name: "duckduckgo/macos-browser"
+        #   }
+        # end
       end
 
       def self.run(params)
