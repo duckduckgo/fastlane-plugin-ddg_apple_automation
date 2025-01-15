@@ -14,20 +14,28 @@ module Fastlane
       @constants = {}
 
       def self.setup_constants(platform)
-        case platform
-        when "ios"
-          @constants = {
-            release_task_prefix: "iOS App Release",
-            hotfix_task_prefix: "iOS App Hotfix Release",
-            release_section_id: "1138897754570756"
-          }
-        when "macos"
-          @constants = {
-            release_task_prefix: "macOS App Release",
-            hotfix_task_prefix: "macOS App Hotfix Release",
-            release_section_id: "1202202395298964"
-          }
+        if ENV["TEST_MODE"] == "true"
+            UI.message("TEST_MODE is enabled. Returning test project")
+            @constants = {
+              release_task_prefix: "[TEST] iOS App Release",
+              hotfix_task_prefix: "iOS App Hotfix Release",
+              release_section_id: "1206716192269178"
+            }
         end
+        # case platform
+        # when "ios"
+        #   @constants = {
+        #     release_task_prefix: "iOS App Release",
+        #     hotfix_task_prefix: "iOS App Hotfix Release",
+        #     release_section_id: "1138897754570756"
+        #   }
+        # when "macos"
+        #   @constants = {
+        #     release_task_prefix: "macOS App Release",
+        #     hotfix_task_prefix: "macOS App Hotfix Release",
+        #     release_section_id: "1202202395298964"
+        #   }
+        # end
       end
 
       def self.run(params)

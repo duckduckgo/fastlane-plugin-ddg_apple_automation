@@ -16,7 +16,7 @@ module Fastlane
       def self.setup_constants(platform)
         if ENV["TEST_MODE"] == "true"
           UI.message("TEST_MODE is enabled. Returning test repository.")
-          @constants = {
+          return @constants = {
               repo_name: "duckduckgo/apple-automation-test"
           }
         end
