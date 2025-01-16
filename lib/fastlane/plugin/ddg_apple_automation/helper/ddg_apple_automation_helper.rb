@@ -16,7 +16,6 @@ module Fastlane
       HOTFIX_BRANCH = 'hotfix'
 
       INFO_PLIST = 'DuckDuckGo/Info.plist'
-      ROOT_PLIST = 'DuckDuckGo/Settings.bundle/Root.plist'
       VERSION_CONFIG_PATH = 'Configuration/Version.xcconfig'
       BUILD_NUMBER_CONFIG_PATH = 'Configuration/BuildNumber.xcconfig'
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
@@ -364,17 +363,6 @@ module Fastlane
           ],
           message: "Bump version to #{version} (#{build_number})"
         )
-      end
-
-      def self.update_root_plist_version(version, other_action)
-        Actions.sh("/usr/libexec/PlistBuddy -c \"Set :PreferenceSpecifiers:0:DefaultValue #{version}\" #{ROOT_PLIST}")
-
-        other_action.git_commit(
-          path: ROOT_PLIST,
-          message: "Update Root.plist version to #{version}"
-        )
-
-        UI.message("Updated Root.plist version to #{version}")
       end
 
       def self.process_erb_template(erb_file_path, args)
