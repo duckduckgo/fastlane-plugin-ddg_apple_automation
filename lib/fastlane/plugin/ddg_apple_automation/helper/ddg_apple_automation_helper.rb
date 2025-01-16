@@ -260,7 +260,7 @@ module Fastlane
       end
 
       def self.calculate_next_build_number(platform, options, other_action)
-        testflight_build_number = 1 # fetch_testflight_build_number(platform, options, other_action)
+        testflight_build_number = fetch_testflight_build_number(platform, options, other_action)
         xcodeproj_build_number = current_build_number
         if platform == "macos"
           appcast_build_number = fetch_appcast_build_number(platform)
@@ -311,7 +311,8 @@ module Fastlane
         other_action.latest_testflight_build_number(
           api_key: get_api_key(other_action),
           username: get_username(options),
-          platform: platform == "macos" ? "osx" : "ios"
+          platform: platform == "macos" ? "osx" : "ios",
+          app_identifier: options[:app_identifier]
         )
       end
 
