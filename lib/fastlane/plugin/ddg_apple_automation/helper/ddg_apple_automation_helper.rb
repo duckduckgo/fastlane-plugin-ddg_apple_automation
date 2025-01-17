@@ -36,9 +36,18 @@ module Fastlane
                            ])
       }.freeze
 
-      if ENV['TEST_MODE']
-        RELEASE_BRANCH = 'test-release'
-        HOTFIX_BRANCH = 'test-hotfix'
+      def self.get_release_branch_name(platform, version)
+        if ENV['TEST_MODE']
+          "test-release/#{platform}/#{version}"
+        end
+        "#{RELEASE_BRANCH}/#{platform}/#{version}"
+      end
+
+      def self.get_hotfix_branch_name(platform, version)
+        if ENV['TEST_MODE']
+          "test-hotfix/#{platform}/#{version}"
+        end
+        "#{HOTFIX_BRANCH}/#{platform}/#{version}"
       end
 
       def self.code_freeze_prechecks(other_action)
@@ -136,17 +145,16 @@ module Fastlane
       def self.prepare_release_branch(platform, version, other_action)
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
-        create_release_branch(new_version)
+        create_release_branch(platform, new_version)
         update_embedded_files(platform, other_action)
         if platform == "ios"
           update_version_and_build_number_config(new_version, 0, other_action)
-          update_root_plist_version(new_version, other_action)
         else
           update_version_config(new_version, other_action)
         end
 
         other_action.push_to_git_remote
-        release_branch_name = "#{RELEASE_BRANCH}/#{new_version}"
+        release_branch_name = get_release_branch_name(platform, new_version)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
@@ -170,7 +178,7 @@ module Fastlane
       end
 
       def self.create_hotfix_branch(platform, source_version, new_version)
-        branch_name = "#{HOTFIX_BRANCH}/#{new_version}"
+        branch_name = get_hotfix_branch_name(platform, new_version)
         UI.message("Creating new hotfix release branch for #{new_version}")
 
         existing_branch = Actions.sh("git", "branch", "--list", branch_name).strip
@@ -204,10 +212,9 @@ module Fastlane
         existing_tag
       end
 
-      def self.create_release_branch(version)
+      def self.create_release_branch(platform, version)
         UI.message("Creating new release branch for #{version}")
-        release_branch = "#{RELEASE_BRANCH}/#{version}"
-
+        release_branch = get_release_branch_name(platform, version)
         # Abort if the branch already exists
         UI.abort_with_message!("Branch #{release_branch} already exists in this repository. Aborting.") unless Actions.sh(
           'git', 'branch', '--list', release_branch

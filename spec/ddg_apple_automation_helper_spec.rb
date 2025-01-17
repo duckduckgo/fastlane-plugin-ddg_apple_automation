@@ -239,8 +239,9 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
   describe "#create_release_branch" do
     it "creates a new release branch" do
+      platform = "macos"
       allow(Fastlane::Actions).to receive(:sh).and_return("")
-      Fastlane::Helper::DdgAppleAutomationHelper.create_release_branch(version)
+      Fastlane::Helper::DdgAppleAutomationHelper.create_release_branch(platform, version)
       expect(Fastlane::Actions).to have_received(:sh).with("git", "branch", "--list", "release/#{version}")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "checkout", "-b", "release/#{version}")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "push", "-u", "origin", "release/#{version}")
