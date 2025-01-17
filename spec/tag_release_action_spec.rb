@@ -268,7 +268,7 @@ describe Fastlane::Actions::TagReleaseAction do
   describe "#merge_or_delete_branch" do
     subject { Fastlane::Actions::TagReleaseAction.merge_or_delete_branch(@params) }
 
-    let (:branch) { "release/1.1.0" }
+    let (:branch) { "release/ios/1.1.0" }
     let (:other_action) { double(git_branch: branch) }
 
     platform_contexts = [

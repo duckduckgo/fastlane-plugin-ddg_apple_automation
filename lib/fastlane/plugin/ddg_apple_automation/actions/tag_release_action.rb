@@ -34,11 +34,10 @@ module Fastlane
       end
 
       def self.run(params)
-        other_action.ensure_git_branch(branch: "^.+(release|hotfix)/.+$")
+        platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
+        other_action.ensure_git_branch(branch: "^.+(release|hotfix)/#{platform}/.+$")
         Helper::GitHelper.setup_git_user
-
-        params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        setup_constants(params[:platform])
+        setup_constants(platform)
 
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
