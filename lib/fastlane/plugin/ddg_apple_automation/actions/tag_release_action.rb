@@ -35,7 +35,7 @@ module Fastlane
 
       def self.run(params)
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        other_action.ensure_git_branch(branch: "^.+(release|hotfix)/#{platform}/.+$")
+        other_action.ensure_git_branch(branch: "^(release|hotfix)/#{platform}/.+$")
         Helper::GitHelper.setup_git_user
         setup_constants(platform)
 
