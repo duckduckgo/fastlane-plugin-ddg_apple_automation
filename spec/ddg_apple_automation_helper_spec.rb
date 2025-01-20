@@ -125,15 +125,16 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
       expect(other_action).to receive(:push_to_git_remote)
+      platform = "macos"
       release_branch, new_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(platform, version, other_action)
-      expect(release_branch).to eq("#{Fastlane::Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{version}")
+      expect(release_branch).to eq("#{Fastlane::Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{platform}/#{version}")
       expect(new_version).to eq(version)
     end
   end
 
   describe "#create_hotfix_branch" do
     it "creates a new hotfix branch and checks out the branch" do
-      branch_name = "hotfix/1.0.1"
+      branch_name = "hotfix/macos/1.0.1"
       source_version = "1.0.0"
       new_version = "1.0.1"
       platform = "macos"
@@ -149,13 +150,13 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
 
     it "raises an error when the branch already exists" do
-      allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", "hotfix/1.0.1").and_return("hotfix/1.0.1")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", "hotfix/macos/1.0.1").and_return("hotfix/macos/1.0.1")
       source_version = "1.0.0"
       new_version = "1.0.1"
       platform = "macos"
       expect do
         Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(platform, source_version, new_version)
-      end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/1.0.1 already exists in this repository. Aborting.")
+      end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/macos/1.0.1 already exists in this repository. Aborting.")
     end
   end
 
@@ -239,11 +240,12 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
   describe "#create_release_branch" do
     it "creates a new release branch" do
+      platform = "macos"
       allow(Fastlane::Actions).to receive(:sh).and_return("")
-      Fastlane::Helper::DdgAppleAutomationHelper.create_release_branch(version)
-      expect(Fastlane::Actions).to have_received(:sh).with("git", "branch", "--list", "release/#{version}")
-      expect(Fastlane::Actions).to have_received(:sh).with("git", "checkout", "-b", "release/#{version}")
-      expect(Fastlane::Actions).to have_received(:sh).with("git", "push", "-u", "origin", "release/#{version}")
+      Fastlane::Helper::DdgAppleAutomationHelper.create_release_branch(platform, version)
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "branch", "--list", "release/#{platform}/#{version}")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "checkout", "-b", "release/#{platform}/#{version}")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "push", "-u", "origin", "release/#{platform}/#{version}")
     end
   end
 

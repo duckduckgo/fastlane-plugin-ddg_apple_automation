@@ -44,7 +44,7 @@ module Fastlane
         UI.user_error!("No release task found for version #{latest_marketing_version}") unless release_task_id
 
         release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
-        release_branch = "release/#{latest_marketing_version}"
+        release_branch = Helper::DdgAppleAutomationHelper.release_branch_name(platform, latest_marketing_version)
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
 
         Helper::GitHubActionsHelper.set_output("release_branch", release_branch)
