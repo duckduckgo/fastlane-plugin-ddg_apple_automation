@@ -1,5 +1,4 @@
 <body>
   Build <%= tag %> is now available for internal testing through <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? %>Sparkle and<% end %> TestFlight.<br>
-  <br>
-  <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? %><a href='<%= dmg_url %>'>📥 DMG download link</a><% end %>
+  <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? %><br><a href='<%= dmg_url %>'>📥 DMG download link</a><% end %>
 </body>

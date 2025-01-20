@@ -36,11 +36,11 @@ module Fastlane
                            ])
       }.freeze
 
-      def self.get_release_branch_name(platform, version)
+      def self.release_branch_name(platform, version)
         "#{RELEASE_BRANCH}/#{platform}/#{version}"
       end
 
-      def self.get_hotfix_branch_name(platform, version)
+      def self.hotfix_branch_name(platform, version)
         "#{HOTFIX_BRANCH}/#{platform}/#{version}"
       end
 
@@ -148,7 +148,7 @@ module Fastlane
           update_version_config(new_version, other_action)
         end
         other_action.push_to_git_remote
-        release_branch_name = get_release_branch_name(platform, new_version)
+        release_branch_name = release_branch_name(platform, new_version)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
@@ -172,7 +172,7 @@ module Fastlane
       end
 
       def self.create_hotfix_branch(platform, source_version, new_version)
-        branch_name = get_hotfix_branch_name(platform, new_version)
+        branch_name = hotfix_branch_name(platform, new_version)
         UI.message("Creating new hotfix release branch for #{new_version}")
 
         existing_branch = Actions.sh("git", "branch", "--list", branch_name).strip
@@ -208,7 +208,7 @@ module Fastlane
 
       def self.create_release_branch(platform, version)
         UI.message("Creating new release branch for #{version}")
-        release_branch = get_release_branch_name(platform, version)
+        release_branch = release_branch_name(platform, version)
 
         # Abort if the branch already exists
         UI.abort_with_message!("Branch #{release_branch} already exists in this repository. Aborting.") unless Actions.sh(
