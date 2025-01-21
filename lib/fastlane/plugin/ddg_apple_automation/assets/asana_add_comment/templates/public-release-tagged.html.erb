@@ -1,7 +1,7 @@
 <body>
   <h2>Public release <%= tag %> has been tagged ✅</h2>
   <ul>
-    <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? -%><li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.</li><% end %>
+    <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? %><li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.</li><% end %>
     <li>🏷️ Repository is tagged with <code><%= tag %></code> tag.</li>
     <li>🚢 GitHub <a href='<%= release_url %>'><%= tag %> release</a> is created.</li>
     <li>🔱 <code><%= branch %></code> branch has been deleted.</li>
