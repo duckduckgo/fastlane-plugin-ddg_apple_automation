@@ -169,9 +169,7 @@ module Fastlane
           update_version_config(new_version, other_action)
         end
         other_action.push_to_git_remote
-        if platform == "macos"
-          increment_build_number(platform, options, other_action)
-        end
+        increment_build_number(platform, options, other_action) if platform == "macos"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
