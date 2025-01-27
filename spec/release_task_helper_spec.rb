@@ -54,6 +54,7 @@ describe Fastlane::Helper::ReleaseTaskHelper do
   describe "#construct_release_announcement_task_description" do
     let (:template_file) { "template.html.erb" }
     let (:version) { "1.0.0" }
+    let (:platform) { "macos" }
     let (:release_notes) { "<ul><li>Release note 1</li><li>Release note 2</li><li>Release note 3</li></ul>" }
     let (:task_ids) { ["1", "2", "3"] }
 
@@ -63,13 +64,14 @@ describe Fastlane::Helper::ReleaseTaskHelper do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:process_erb_template).and_return(html_notes)
       allow(Fastlane::Helper::AsanaHelper).to receive(:sanitize_asana_html_notes).and_call_original
 
-      expect(construct_release_announcement_task_description(version, release_notes, task_ids)).to eq(html_notes)
+      expect(construct_release_announcement_task_description(version, release_notes, task_ids, platform)).to eq(html_notes)
 
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:path_for_asset_file).with("release_task_helper/templates/release_announcement_task_description.html.erb")
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:process_erb_template).with(template_file, {
         marketing_version: version,
         release_notes: release_notes,
-        task_ids: task_ids
+        task_ids: task_ids,
+        platform: platform
       })
       expect(Fastlane::Helper::AsanaHelper).to have_received(:sanitize_asana_html_notes).with(html_notes)
     end
@@ -106,11 +108,78 @@ describe Fastlane::Helper::ReleaseTaskHelper do
           <hr>
         </body>
       EXPECTED
-      expect(construct_release_announcement_task_description(version, release_notes, task_ids)).to eq(expected)
+      expect(construct_release_announcement_task_description(version, release_notes, task_ids, platform)).to eq(expected)
     end
 
-    def construct_release_announcement_task_description(version, release_notes, task_ids)
-      Fastlane::Helper::ReleaseTaskHelper.construct_release_announcement_task_description(version, release_notes, task_ids)
+    def construct_release_announcement_task_description(version, release_notes, task_ids, platform)
+      Fastlane::Helper::ReleaseTaskHelper.construct_release_announcement_task_description(version, release_notes, task_ids, platform)
+    end
+  end
+
+  describe "#construct_release_announcement_task_description for ios" do
+    let (:template_file) { "template.html.erb" }
+    let (:version) { "1.0.0" }
+    let (:platform) { "ios" }
+    let (:release_notes) { "<ul><li>Release note 1</li><li>Release note 2</li><li>Release note 3</li></ul>" }
+    let (:task_ids) { ["1", "2", "3"] }
+
+    it "constructs release announcement task description" do
+      html_notes = "<body><h1>Hello</h1></body>"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:path_for_asset_file).and_return(template_file)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:process_erb_template).and_return(html_notes)
+      allow(Fastlane::Helper::AsanaHelper).to receive(:sanitize_asana_html_notes).and_call_original
+
+      expect(construct_release_announcement_task_description(version, release_notes, task_ids, platform)).to eq(html_notes)
+
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:path_for_asset_file).with("release_task_helper/templates/release_announcement_task_description.html.erb")
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:process_erb_template).with(template_file, {
+        marketing_version: version,
+        release_notes: release_notes,
+        task_ids: task_ids,
+        platform: platform
+      })
+      expect(Fastlane::Helper::AsanaHelper).to have_received(:sanitize_asana_html_notes).with(html_notes)
+    end
+
+    it "correctly processes the template" do
+      allow(Fastlane::Helper::AsanaHelper).to receive(:sanitize_asana_html_notes) do |html_notes|
+        html_notes
+      end
+
+      expected = <<~EXPECTED
+      <body>
+        As the last step of the process, post a message to <a href='https://app.asana.com/0/11984721910118/1204991209236659'>REVIEW / RELEASE</a> Asana project:
+        <ul>
+          <li>Set the title to <strong>iOS App Release 1.0.0</strong></li>
+          <li>Copy the content below (between separators) and paste as the message body.</li>
+        </ul>
+        <hr>
+        <h1>Release notes</h1>
+        <ul><li>Release note 1</li><li>Release note 2</li><li>Release note 3</li></ul>
+        <h2>This release includes:</h2>
+        <ul>
+      #{'  '}
+          <li><a data-asana-gid="1"/></li>
+      #{'  '}
+          <li><a data-asana-gid="2"/></li>
+      #{'  '}
+          <li><a data-asana-gid="3"/></li>
+      #{'  '}
+        </ul>
+        <strong>Rollout</strong><br>
+        This is now rolling out to users. New users will receive this release immediately,#{' '}
+        existing users will receive this gradually over the next few days until we reach a 5% threshold.#{' '}
+        If there are no problems we will push the release to everyone.#{' '}
+        You can force an update now by going to the App Store, finding the Update tab and downloading the latest version.
+      #{'  '}
+        <hr>
+      </body>
+      EXPECTED
+      expect(construct_release_announcement_task_description(version, release_notes, task_ids, platform)).to eq(expected)
+    end
+
+    def construct_release_announcement_task_description(version, release_notes, task_ids, platform)
+      Fastlane::Helper::ReleaseTaskHelper.construct_release_announcement_task_description(version, release_notes, task_ids, platform)
     end
   end
 
