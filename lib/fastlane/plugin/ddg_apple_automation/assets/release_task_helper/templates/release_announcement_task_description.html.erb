@@ -1,7 +1,7 @@
 <body>
   As the last step of the process, post a message to <a href='https://app.asana.com/0/11984721910118/1204991209236659'>REVIEW / RELEASE</a> Asana project:
   <ul>
-    <li>Set the title to <strong>macOS App Release <%= marketing_version %></strong></li>
+    <li>Set the title to <strong><%= platform == "ios" ? "iOS App Release" : "macOS App Release" %> <%= marketing_version %></strong></li>
     <li>Copy the content below (between separators) and paste as the message body.</li>
   </ul>
   <hr>
@@ -14,8 +14,12 @@
   <% end %>
   </ul>
   <strong>Rollout</strong><br>
-  This is now rolling out to users. New users will receive this release immediately, 
+  <% if platform == "ios" %>This is now rolling out to users. New users will receive this release immediately, 
+  existing users will receive this gradually over the next few days until we reach a 5% threshold. 
+  If there are no problems we will push the release to everyone. 
+  You can force an update now by going to the App Store, finding the Update tab and downloading the latest version.
+  <% else %>This is now rolling out to users. New users will receive this release immediately, 
   existing users will receive this gradually over the next few days. You can force an update now 
-  by going to the DuckDuckGo menu in the menu bar and selecting "Check For Updates".
+  by going to the DuckDuckGo menu in the menu bar and selecting "Check For Updates".<% end %>
   <hr>
 </body>

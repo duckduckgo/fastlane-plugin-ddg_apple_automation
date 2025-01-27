@@ -293,7 +293,7 @@ module Fastlane
 
         # Construct release announcement task description
         UI.message("Preparing release announcement task")
-        Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids)
+        Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids, params[:platform])
       end
 
       def self.fetch_tasks_for_tag(tag_id, asana_access_token)
