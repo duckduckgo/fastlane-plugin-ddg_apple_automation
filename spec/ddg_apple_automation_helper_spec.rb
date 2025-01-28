@@ -118,17 +118,100 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   end
 
   describe "#prepare_release_branch" do
-    it "prepares the release branch with version updates" do
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version).and_return(version)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
-      expect(other_action).to receive(:push_to_git_remote)
+    it "prepares the release branch with version updates for macOS" do
       platform = "macos"
-      release_branch, new_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(platform, version, other_action)
-      expect(release_branch).to eq("#{Fastlane::Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{platform}/#{version}")
-      expect(new_version).to eq(version)
+      version = "1.0.0"
+      release_branch_name = "release/#{platform}/#{version}"
+      other_action = double("other_action")
+      options = { some_option: "value" }
+      github_token = "github-token"
+
+      @client = double("Octokit::Client")
+      allow(Octokit::Client).to receive(:new).and_return(@client)
+      allow(@client).to receive(:latest_release).and_return(double(tag_name: version))
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
+      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("macOS")
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version)
+        .with(version).and_return(version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
+        .with(platform, version).and_return(release_branch_name)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
+        .with(platform, other_action)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
+        .with(version, other_action)
+
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+
+      expect(other_action).to receive(:push_to_git_remote)
+
+      result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
+        platform, version, other_action
+      )
+
+      expect(result_branch).to eq(release_branch_name)
+      expect(result_version).to eq(version)
+
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:code_freeze_prechecks)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_release_branch).with(platform, version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(version, other_action)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+    end
+
+    it "prepares the release branch with version updates for iOS" do
+      platform = "ios"
+      version = "1.0.0"
+      release_branch_name = "release/#{platform}/#{version}"
+      other_action = double("other_action")
+      options = { some_option: "value" }
+      github_token = "github-token"
+
+      @client = double("Octokit::Client")
+      allow(Octokit::Client).to receive(:new).and_return(@client)
+      allow(@client).to receive(:latest_release).and_return(double(tag_name: version))
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
+      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version)
+        .with(version).and_return(version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
+        .with(platform, version).and_return(release_branch_name)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
+        .with(platform, other_action)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_and_build_number_config)
+        .with(version, 0, other_action)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_root_plist_version)
+        .with(version, other_action)
+
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+
+      expect(other_action).to receive(:push_to_git_remote)
+
+      result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
+        platform, version, other_action
+      )
+
+      expect(result_branch).to eq("release/ios/1.0.0")
+      expect(result_version).to eq(version)
+
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:code_freeze_prechecks)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_release_branch).with(platform, version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(version, 0, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_root_plist_version).with(version, other_action)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
     end
   end
 
@@ -263,6 +346,9 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_and_build_number_config)
         .with(new_version, 0, other_action)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_root_plist_version)
+        .with(new_version, other_action)
 
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
