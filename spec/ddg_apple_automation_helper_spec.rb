@@ -215,7 +215,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
   end
 
-
   describe "#create_hotfix_branch" do
     it "creates a new hotfix branch and checks out the branch" do
       branch_name = "hotfix/macos/1.0.1"
