@@ -394,7 +394,7 @@ describe Fastlane::Helper::AsanaHelper do
       expect(Fastlane::Helper::AsanaHelper).to receive(:move_tasks_to_section).with(task_ids, params[:target_section_id], params[:asana_access_token])
       expect(Fastlane::Helper::AsanaHelper).to receive(:complete_tasks).with(task_ids, params[:asana_access_token])
       expect(Fastlane::Helper::AsanaHelper).to receive(:fetch_release_notes).with(params[:release_task_id], params[:asana_access_token])
-      expect(Fastlane::Helper::ReleaseTaskHelper).to receive(:construct_release_announcement_task_description).with(params[:version], release_notes, task_ids - [params[:release_task_id]])
+      expect(Fastlane::Helper::ReleaseTaskHelper).to receive(:construct_release_announcement_task_description).with(params[:version], release_notes, task_ids - [params[:release_task_id]], "ios")
       Fastlane::Helper::AsanaHelper.update_asana_tasks_for_public_release(params)
 
       expect(Fastlane::UI).to have_received(:message).with("Fetching #{tag_name} Asana tag")

@@ -36,6 +36,14 @@ module Fastlane
                            ])
       }.freeze
 
+      def self.release_branch_name(platform, version)
+        "#{RELEASE_BRANCH}/#{platform}/#{version}"
+      end
+
+      def self.hotfix_branch_name(platform, version)
+        "#{HOTFIX_BRANCH}/#{platform}/#{version}"
+      end
+
       def self.code_freeze_prechecks(other_action)
         other_action.ensure_git_status_clean
         other_action.ensure_git_branch(branch: DEFAULT_BRANCH)
@@ -131,11 +139,16 @@ module Fastlane
       def self.prepare_release_branch(platform, version, other_action)
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
-        create_release_branch(new_version)
+        create_release_branch(platform, new_version)
         update_embedded_files(platform, other_action)
-        update_version_config(new_version, other_action)
+        if platform == "ios"
+          # Any time we prepare a release branch for iOS the the build number should be reset to 0
+          update_version_and_build_number_config(new_version, 0, other_action)
+        else
+          update_version_config(new_version, other_action)
+        end
         other_action.push_to_git_remote
-        release_branch_name = "#{RELEASE_BRANCH}/#{new_version}"
+        release_branch_name = release_branch_name(platform, new_version)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
@@ -150,16 +163,20 @@ module Fastlane
         source_version = validate_version_exists(version)
         new_version = validate_hotfix_version(source_version)
         release_branch_name = create_hotfix_branch(platform, source_version, new_version)
-        update_version_config(new_version, other_action)
+        if platform == "ios"
+          update_version_and_build_number_config(new_version, 0, other_action)
+        else
+          update_version_config(new_version, other_action)
+        end
         other_action.push_to_git_remote
-        increment_build_number(platform, options, other_action)
+        increment_build_number(platform, options, other_action) if platform == "macos"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
         return release_branch_name, new_version
       end
 
       def self.create_hotfix_branch(platform, source_version, new_version)
-        branch_name = "#{HOTFIX_BRANCH}/#{new_version}"
+        branch_name = hotfix_branch_name(platform, new_version)
         UI.message("Creating new hotfix release branch for #{new_version}")
 
         existing_branch = Actions.sh("git", "branch", "--list", branch_name).strip
@@ -193,9 +210,9 @@ module Fastlane
         existing_tag
       end
 
-      def self.create_release_branch(version)
+      def self.create_release_branch(platform, version)
         UI.message("Creating new release branch for #{version}")
-        release_branch = "#{RELEASE_BRANCH}/#{version}"
+        release_branch = release_branch_name(platform, version)
 
         # Abort if the branch already exists
         UI.abort_with_message!("Branch #{release_branch} already exists in this repository. Aborting.") unless Actions.sh(

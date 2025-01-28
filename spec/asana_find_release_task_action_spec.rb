@@ -13,11 +13,11 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         expect(test_action("ios")).to eq({
           release_task_id: "1234567890",
           release_task_url: "https://app.asana.com/0/0/1234567890/f",
-          release_branch: "release/1.0.0"
+          release_branch: "release/ios/1.0.0"
         })
 
         expect(Fastlane::UI).to have_received(:success).with("Found 1.0.0 release task: https://app.asana.com/0/0/1234567890/f")
-        expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch", "release/1.0.0")
+        expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch", "release/ios/1.0.0")
         expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_task_id", "1234567890")
         expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_task_url", "https://app.asana.com/0/0/1234567890/f")
       end

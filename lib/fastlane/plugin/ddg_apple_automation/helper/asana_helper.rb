@@ -18,8 +18,8 @@ module Fastlane
       ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
       ASANA_WORKSPACE_ID = "137249556945"
 
-      IOS_HOTFIX_TASK_TEMPLATE_ID = "1205352950253153"
-      IOS_RELEASE_TASK_TEMPLATE_ID = "1205355281110338"
+      IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242676101485"
+      IOS_RELEASE_TASK_TEMPLATE_ID = "1209175074761732"
       MACOS_HOTFIX_TASK_TEMPLATE_ID = "1206724592377782"
       MACOS_RELEASE_TASK_TEMPLATE_ID = "1206127427850447"
 
@@ -293,7 +293,7 @@ module Fastlane
 
         # Construct release announcement task description
         UI.message("Preparing release announcement task")
-        Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids)
+        Helper::ReleaseTaskHelper.construct_release_announcement_task_description(params[:version], release_notes, task_ids, params[:platform])
       end
 
       def self.fetch_tasks_for_tag(tag_id, asana_access_token)

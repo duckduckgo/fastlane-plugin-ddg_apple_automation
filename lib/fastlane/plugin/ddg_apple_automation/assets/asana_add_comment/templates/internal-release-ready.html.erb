@@ -1,12 +1,12 @@
 <body>
   <h2>Internal release build <%= tag %> ready ✅</h2>
   <ul>
-    <li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.
+    <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? %><li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.
       <ul>
         <li>If this is a subsequent internal release (started by calling <em>Bump Internal Release</em> workflow), the
           DMG will be automatically published to Sparkle in a few minutes. Sit tight.</li>
       </ul>
-    </li>
+    </li><% end %>
     <li>🏷️ Repository is tagged with <code><%= tag %></code> tag.</li>
     <li>🚢 GitHub <a href='<%= release_url %>'><%= tag %> pre-release</a> is created.</li>
     <li>🔱 <code><%= branch %></code> branch has been successfully merged to <code><%= base_branch %></code>.</li>

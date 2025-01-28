@@ -1,7 +1,7 @@
 <body>
   <h2>[ACTION NEEDED] Internal release build <%= tag %> ready</h2>
   <ul>
-    <li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.</li>
+    <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? %><li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.</li><% end %>
     <li><b>❗️ Tagging repository failed.</b></li>
     <li><b>⚠️ GitHub release creation was skipped.</b></li>
     <li><b>⚠️ Merging <code><%= branch %></code> to <code><%= base_branch %></code> was skipped.</b></li>

@@ -214,8 +214,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       expected = <<~EXPECTED
         <body>
           Build 1.0.0-123 is now available for internal testing through Sparkle and TestFlight.<br>
-          <br>
-          <a href='https://cdn.com/bucket/duckduckgo-1.0.0.123.dmg'>📥 DMG download link</a>
+          <br><a href='https://cdn.com/bucket/duckduckgo-1.0.0.123.dmg'>📥 DMG download link</a>
         </body>
       EXPECTED
 

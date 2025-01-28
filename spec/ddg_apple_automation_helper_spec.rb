@@ -125,15 +125,16 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
       expect(other_action).to receive(:push_to_git_remote)
+      platform = "macos"
       release_branch, new_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(platform, version, other_action)
-      expect(release_branch).to eq("#{Fastlane::Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{version}")
+      expect(release_branch).to eq("#{Fastlane::Helper::DdgAppleAutomationHelper::RELEASE_BRANCH}/#{platform}/#{version}")
       expect(new_version).to eq(version)
     end
   end
 
   describe "#create_hotfix_branch" do
     it "creates a new hotfix branch and checks out the branch" do
-      branch_name = "hotfix/1.0.1"
+      branch_name = "hotfix/macos/1.0.1"
       source_version = "1.0.0"
       new_version = "1.0.1"
       platform = "macos"
@@ -149,13 +150,13 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
 
     it "raises an error when the branch already exists" do
-      allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", "hotfix/1.0.1").and_return("hotfix/1.0.1")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "branch", "--list", "hotfix/macos/1.0.1").and_return("hotfix/macos/1.0.1")
       source_version = "1.0.0"
       new_version = "1.0.1"
       platform = "macos"
       expect do
         Fastlane::Helper::DdgAppleAutomationHelper.create_hotfix_branch(platform, source_version, new_version)
-      end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/1.0.1 already exists in this repository. Aborting.")
+      end.to raise_error(FastlaneCore::Interface::FastlaneCommonException, "Branch hotfix/macos/1.0.1 already exists in this repository. Aborting.")
     end
   end
 
@@ -186,7 +187,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   end
 
   describe "#prepare_hotfix_branch" do
-    it "prepares the hotfix branch" do
+    it "prepares the hotfix branch for macos" do
       platform = "macos"
       version = "1.0.0"
       source_version = "1.0.0"
@@ -235,15 +236,62 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("last_release", source_version)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
     end
+
+    it "prepares the hotfix branch for ios" do
+      platform = "ios"
+      version = "1.0.0"
+      source_version = "1.0.0"
+      new_version = "1.0.1"
+      release_branch_name = "hotfix/1.0.1"
+      other_action = double("other_action")
+      options = { some_option: "value" }
+      github_token = "github-token"
+
+      @client = double("Octokit::Client")
+      allow(Octokit::Client).to receive(:new).and_return(@client)
+      allow(@client).to receive(:latest_release).and_return(double(tag_name: source_version))
+      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
+        .with(version).and_return(source_version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_hotfix_version)
+        .with(source_version).and_return(new_version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_hotfix_branch)
+        .with(platform, source_version, new_version).and_return(release_branch_name)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_and_build_number_config)
+        .with(new_version, 0, other_action)
+
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+
+      expect(other_action).to receive(:push_to_git_remote)
+
+      result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
+        github_token, platform, other_action, options
+      )
+
+      expect(result_branch).to eq(release_branch_name)
+      expect(result_version).to eq(new_version)
+
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_version_exists).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_hotfix_version).with(source_version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_hotfix_branch).with(platform, source_version, new_version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(new_version, 0, other_action)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("last_release", source_version)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+    end
   end
 
   describe "#create_release_branch" do
     it "creates a new release branch" do
+      platform = "macos"
       allow(Fastlane::Actions).to receive(:sh).and_return("")
-      Fastlane::Helper::DdgAppleAutomationHelper.create_release_branch(version)
-      expect(Fastlane::Actions).to have_received(:sh).with("git", "branch", "--list", "release/#{version}")
-      expect(Fastlane::Actions).to have_received(:sh).with("git", "checkout", "-b", "release/#{version}")
-      expect(Fastlane::Actions).to have_received(:sh).with("git", "push", "-u", "origin", "release/#{version}")
+      Fastlane::Helper::DdgAppleAutomationHelper.create_release_branch(platform, version)
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "branch", "--list", "release/#{platform}/#{version}")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "checkout", "-b", "release/#{platform}/#{version}")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "push", "-u", "origin", "release/#{platform}/#{version}")
     end
   end
 

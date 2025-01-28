@@ -1,7 +1,7 @@
 <body>
   <h2>[ACTION NEEDED] Internal release build <%= tag %> ready</h2>
   <ul>
-    <li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.</li>
+    <% if defined?(dmg_url) && !dmg_url.to_s.strip.empty? %><li>📥 DMG is available from <a href='<%= dmg_url %>'><%= dmg_url %></a>.</li><% end %>
     <li>🏷️ Repository is tagged with <code><%= tag %></code> tag.</li>
     <li>🚢 GitHub <a href='<%= release_url %>'><%= tag %> pre-release</a> is created.</li>
     <li><b>❗️ Merging <code><%= branch %></code> to <code><%= base_branch %></code> failed.</b>
