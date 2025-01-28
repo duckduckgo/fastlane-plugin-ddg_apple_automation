@@ -219,8 +219,8 @@ module Fastlane
       #
       def self.update_asana_tasks_for_internal_release(params)
         UI.message("Checking latest public release in GitHub")
-        client = Octokit::Client.new(access_token: params[:github_token])
-        latest_public_release = client.latest_release(Helper::GitHelper.repo_name(params[:platform]))
+
+        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name(params[:platform]), false, params[:github_token])
         UI.success("Latest public release: #{latest_public_release.tag_name}")
 
         UI.message("Extracting task IDs from git log since #{latest_public_release.tag_name} release")

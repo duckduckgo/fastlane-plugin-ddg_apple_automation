@@ -242,7 +242,8 @@ describe Fastlane::Helper::AsanaHelper do
     before do
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(@client).to receive(:latest_release).and_return(double(tag_name: "7.122.0"))
+      allow(@client).to receive(:releases).with("iOS", { page: 1, per_page: 25 }).and_return([double(tag_name: "7.122.0", prerelease: false)])
+      allow(@client).to receive(:releases).with("iOS", { page: 2, per_page: 25 }).and_return([])
       allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
 
       @asana_client = double("Asana::Client")
@@ -263,7 +264,7 @@ describe Fastlane::Helper::AsanaHelper do
     end
 
     it "completes the update of Asana tasks for internal release" do
-      expect(@client).to receive(:latest_release).with("iOS")
+      expect(@client).to receive(:releases).with("iOS", { page: 1, per_page: 25 })
 
       expect(Fastlane::Helper::AsanaHelper).to receive(:fetch_release_notes).with("1234567890", "secret-token")
       expect(Fastlane::Helper::ReleaseTaskHelper).to receive(:construct_release_task_description).with("Release notes content", ["1234567890"])
