@@ -16,6 +16,7 @@ module Fastlane
       HOTFIX_BRANCH = 'hotfix'
 
       INFO_PLIST = 'DuckDuckGo/Info.plist'
+      ROOT_PLIST = 'DuckDuckGo/Settings.bundle/Root.plist'
       VERSION_CONFIG_PATH = 'Configuration/Version.xcconfig'
       BUILD_NUMBER_CONFIG_PATH = 'Configuration/BuildNumber.xcconfig'
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
@@ -144,6 +145,7 @@ module Fastlane
         if platform == "ios"
           # Any time we prepare a release branch for iOS the the build number should be reset to 0
           update_version_and_build_number_config(new_version, 0, other_action)
+          update_root_plist_version(new_version, other_action)
         else
           update_version_config(new_version, other_action)
         end
@@ -165,6 +167,7 @@ module Fastlane
         release_branch_name = create_hotfix_branch(platform, source_version, new_version)
         if platform == "ios"
           update_version_and_build_number_config(new_version, 0, other_action)
+          update_root_plist_version(new_version, other_action)
         else
           update_version_config(new_version, other_action)
         end
@@ -369,6 +372,15 @@ module Fastlane
           ],
           message: "Bump version to #{version} (#{build_number})"
         )
+      end
+
+      def self.update_root_plist_version(version, other_action)
+        Actions.sh("/usr/libexec/PlistBuddy -c \"Set :PreferenceSpecifiers:0:DefaultValue #{version}\" #{ROOT_PLIST}")
+        other_action.git_commit(
+          path: ROOT_PLIST,
+          message: "Update Root.plist version to #{version}"
+        )
+        UI.message("Updated Root.plist version to #{version}")
       end
 
       def self.process_erb_template(erb_file_path, args)
