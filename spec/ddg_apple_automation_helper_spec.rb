@@ -129,7 +129,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
       allow(@client).to receive(:latest_release).and_return(double(tag_name: version))
-
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
       allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("macOS")
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
@@ -175,7 +175,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
         @client = double("Octokit::Client")
         allow(Octokit::Client).to receive(:new).and_return(@client)
         allow(@client).to receive(:latest_release).and_return(double(tag_name: version))
-
+        allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
         allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
 
         allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
