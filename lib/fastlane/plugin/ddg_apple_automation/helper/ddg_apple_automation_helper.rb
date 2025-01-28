@@ -382,7 +382,7 @@ module Fastlane
         erb_template.result_with_hash(args)
       end
 
-      def self.compute_tag(is_prerelease)
+      def self.compute_tag(is_prerelease, platform_suffix)
         version = File.read(VERSION_CONFIG_PATH).chomp.split(" = ").last
         build_number = File.read(BUILD_NUMBER_CONFIG_PATH).chomp.split(" = ").last
         if is_prerelease
@@ -390,6 +390,11 @@ module Fastlane
         else
           tag = version
           promoted_tag = "#{version}-#{build_number}"
+        end
+
+        if platform_suffix && !platform_suffix.empty?
+          tag = "#{tag}+#{platform_suffix}"
+          promoted_tag = "#{promoted_tag}+#{platform_suffix}" unless is_prerelease
         end
 
         return tag, promoted_tag

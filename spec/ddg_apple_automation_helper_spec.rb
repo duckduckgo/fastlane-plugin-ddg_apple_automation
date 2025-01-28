@@ -28,26 +28,50 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   describe "#compute_tag" do
     describe "when is prerelease" do
       let(:is_prerelease) { true }
+      let(:platform_suffix) { nil }
 
       it "computes tag and returns nil promoted tag" do
         allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
         allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
-        expect(compute_tag(is_prerelease)).to eq(["1.0.0-123", nil])
+        expect(compute_tag(is_prerelease, platform_suffix)).to eq(["1.0.0-123", nil])
       end
     end
 
     describe "when is public release" do
       let(:is_prerelease) { false }
+      let(:platform_suffix) { nil }
 
       it "computes tag and promoted tag" do
         allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
         allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
-        expect(compute_tag(is_prerelease)).to eq(["1.0.0", "1.0.0-123"])
+        expect(compute_tag(is_prerelease, platform_suffix)).to eq(["1.0.0", "1.0.0-123"])
       end
     end
 
-    def compute_tag(is_prerelease)
-      Fastlane::Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
+    describe "when is prerelease and includes platform suffix" do
+      let(:is_prerelease) { true }
+      let(:platform_suffix) { 'suffix' }
+
+      it "computes tag and returns nil promoted tag" do
+        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        expect(compute_tag(is_prerelease, platform_suffix)).to eq(["1.0.0-123+suffix", nil])
+      end
+    end
+
+    describe "when is public release and includes platform suffix" do
+      let(:is_prerelease) { false }
+      let(:platform_suffix) { 'suffix' }
+
+      it "computes tag and returns nil promoted tag" do
+        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        expect(compute_tag(is_prerelease, platform_suffix)).to eq(["1.0.0+suffix", "1.0.0-123+suffix"])
+      end
+    end
+
+    def compute_tag(is_prerelease, platform_suffix)
+      Fastlane::Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform_suffix)
     end
   end
 
