@@ -63,8 +63,8 @@ module Fastlane
         end
 
         begin
-          client = Octokit::Client.new(access_token: github_token)
-          latest_public_release = client.latest_release(@constants[:repo_name])
+          latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, github_token)
+
           UI.message("Latest public release: #{latest_public_release.tag_name}")
           UI.message("Generating #{@constants[:repo_name]} release notes for GitHub release for tag: #{tag}")
 

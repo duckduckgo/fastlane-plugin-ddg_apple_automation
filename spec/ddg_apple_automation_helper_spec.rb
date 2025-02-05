@@ -306,7 +306,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(@client).to receive(:latest_release).and_return(double(tag_name: source_version))
+      allow(@client).to receive(:releases).and_return([double(tag_name: source_version, prerelease: false)])
       allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("macOS")
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
@@ -356,7 +356,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(@client).to receive(:latest_release).and_return(double(tag_name: source_version))
+      allow(@client).to receive(:releases).and_return([double(tag_name: source_version, prerelease: false)])
       allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)

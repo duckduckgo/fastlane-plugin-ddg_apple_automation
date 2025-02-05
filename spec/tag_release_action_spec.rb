@@ -105,10 +105,10 @@ describe Fastlane::Actions::TagReleaseAction do
   describe "#create_tag_and_github_release" do
     subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], @params[:github_token]) }
 
-    let (:latest_public_release) { double(tag_name: "1.0.0") }
+    let (:latest_public_release) { double(tag_name: "1.0.0", prerelease: false) }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
-    let (:octokit_client) { double(latest_release: latest_public_release) }
+    let (:octokit_client) { double(releases: [latest_public_release]) }
 
     shared_context "local setup" do
       before(:each) do
@@ -174,7 +174,7 @@ describe Fastlane::Actions::TagReleaseAction do
 
     shared_context "when failed to fetch latest GitHub release" do
       before do
-        allow(octokit_client).to receive(:latest_release).and_raise(StandardError)
+        allow(octokit_client).to receive(:releases).and_raise(StandardError)
       end
     end
 

@@ -77,6 +77,31 @@ module Fastlane
 
         changed_files.any?
       end
+
+      def self.latest_release(repo_name, prerelease, platform = nil, github_token)
+        client = Octokit::Client.new(access_token: github_token)
+
+        current_page = 1
+        page_size = 25
+
+        loop do
+          releases = client.releases(repo_name, per_page: page_size, page: current_page)
+          break if releases.empty?
+
+          # If `prerelease` is true, return the latest release that matches the platform regardless of whether it's public.
+          # If `prerelease` is false, then ensure that the release is public.
+          matching_release = releases.find do |release|
+            (prerelease || !release.prerelease) && (platform.nil? || release.tag_name.end_with?("+#{platform}"))
+          end
+
+          return matching_release if matching_release
+          break if releases.size < page_size
+
+          current_page += 1
+        end
+
+        return nil
+      end
     end
   end
 end

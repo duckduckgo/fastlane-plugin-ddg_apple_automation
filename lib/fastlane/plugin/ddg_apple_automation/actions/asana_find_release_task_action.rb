@@ -59,10 +59,7 @@ module Fastlane
       end
 
       def self.find_latest_marketing_version(github_token, platform)
-        client = Octokit::Client.new(access_token: github_token)
-
-        # NOTE: `client.latest_release` returns release marked as "latest", i.e. a public release
-        latest_internal_release = client.releases(Helper::GitHelper.repo_name(platform), { per_page: 1 }).first
+        latest_internal_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name(platform), true, github_token)
 
         version = extract_version_from_tag_name(latest_internal_release&.tag_name)
         if version.to_s.empty?
