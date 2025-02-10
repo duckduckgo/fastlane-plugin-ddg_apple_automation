@@ -296,10 +296,10 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   describe "#prepare_hotfix_branch" do
     it "prepares the hotfix branch for macos" do
       platform = "macos"
-      version = "1.0.0"
-      source_version = "1.0.0"
-      new_version = "1.0.1"
-      release_branch_name = "hotfix/1.0.1"
+      version = "1.0.0+#{platform}"
+      source_version = "1.0.0+#{platform}"
+      new_version = "1.0.1+#{platform}"
+      release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
       options = { some_option: "value" }
       github_token = "github-token"
@@ -307,7 +307,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
       allow(@client).to receive(:releases).and_return([double(tag_name: source_version, prerelease: false)])
-      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("macOS")
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
         .with(version).and_return(source_version)
@@ -346,10 +345,10 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
     it "prepares the hotfix branch for ios" do
       platform = "ios"
-      version = "1.0.0"
-      source_version = "1.0.0"
-      new_version = "1.0.1"
-      release_branch_name = "hotfix/1.0.1"
+      version = "1.0.0+#{platform}"
+      source_version = "1.0.0+#{platform}"
+      new_version = "1.0.1+#{platform}"
+      release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
       options = { some_option: "value" }
       github_token = "github-token"
@@ -357,7 +356,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
       allow(@client).to receive(:releases).and_return([double(tag_name: source_version, prerelease: false)])
-      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
         .with(version).and_return(source_version)

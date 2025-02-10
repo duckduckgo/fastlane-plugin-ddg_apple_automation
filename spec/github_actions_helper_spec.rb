@@ -53,39 +53,41 @@ describe Fastlane::Helper::GitHubActionsHelper do
   end
 
   describe ".assert_branch_has_changes" do
+    let(:platform) { "ios" }
+    let(:version) { "1.0.0+#{platform}" }
+
     before do
       allow(Fastlane::UI).to receive(:important)
     end
 
     context "when the release branch has no changes since the latest tag" do
       it "returns false and shows a message" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git describe --tags --abbrev=0").and_return("v1.0.0\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "v1.0.0"^{}').and_return("abc123\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("abc123\n")
 
-        expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch")).to eq(false)
+        expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch", platform)).to eq(false)
         expect(Fastlane::UI).to have_received(:important).with("Release branch's HEAD is already tagged. Skipping automatic release.")
       end
     end
 
     context "when the release branch has changes since the latest tag" do
       it "returns true" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git describe --tags --abbrev=0").and_return("v1.0.0\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "v1.0.0"^{}').and_return("abc123\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git diff --name-only "v1.0.0".."origin/release_branch"').and_return("app/file1.rb\napp/file2.rb\n")
-        expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch")).to eq(true)
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return("app/file1.rb\napp/file2.rb\n")
+        expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch", platform)).to eq(true)
       end
     end
 
     context "when changes are only in scripts or workflows" do
       it "returns false" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git describe --tags --abbrev=0").and_return("v1.0.0\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "v1.0.0"^{}').and_return("abc123\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git diff --name-only "v1.0.0".."origin/release_branch"').and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")
-
-        expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch")).to eq(false)
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")
+        expect(Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch", platform)).to eq(false)
       end
     end
   end

@@ -157,7 +157,7 @@ module Fastlane
       end
 
       def self.prepare_hotfix_branch(github_token, platform, other_action, options)
-        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name(platform), false, github_token)
+        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name, false, platform, github_token)
         version = latest_public_release.tag_name
         Helper::GitHubActionsHelper.set_output("last_release", version)
         UI.user_error!("Unable to find latest release to hotfix") unless version
@@ -202,7 +202,7 @@ module Fastlane
 
       def self.validate_version_exists(version)
         user_version = format_version(version)
-        UI.user_error!("Incorrect version provided: #{version}. Expected x.y.z format.") unless user_version
+        UI.user_error!("Incorrect version provided: #{version}. Expected x.y.z+platform format.") unless user_version
 
         Actions.sh('git', 'fetch', '--tags')
         existing_tag = Actions.sh('git', 'tag', '--list', user_version).chomp

@@ -441,7 +441,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           <code>gh workflow run publish_dmg_release.yml --ref release/1.1.0 -f asana-task-url=https://app.asana.com/0/0/12345/f -f tag=1.1.0-123 -f release-type=internal</code>
           <h1>Using GitHub web UI</h1>
           <ol>
-            <li>Open <a href='https://github.com/duckduckgo/macos-browser/actions/workflows/publish_dmg_release.yml'>Publish DMG Release workflow page</a>.</li>
+            <li>Open <a href='https://github.com/duckduckgo/apple-browsers/actions/workflows/macos_publish_dmg_release.yml'>Publish DMG Release workflow page</a>.</li>
             <li>Click "Run Workflow" and fill in the form as follows:
               <ul>
                 <li><b>Branch</b> <code>release/1.1.0</code></li>

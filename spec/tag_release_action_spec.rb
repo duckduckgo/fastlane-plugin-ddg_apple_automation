@@ -103,9 +103,10 @@ describe Fastlane::Actions::TagReleaseAction do
   end
 
   describe "#create_tag_and_github_release" do
-    subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], @params[:github_token]) }
+    let(:platform) { @params[:platform] }
+    subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], platform, @params[:github_token]) }
 
-    let (:latest_public_release) { double(tag_name: "1.0.0", prerelease: false) }
+    let (:latest_public_release) { double(tag_name: "1.0.0+#{platform}", prerelease: false) }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
     let (:octokit_client) { double(releases: [latest_public_release]) }
@@ -222,8 +223,8 @@ describe Fastlane::Actions::TagReleaseAction do
     end
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/ios" },
-      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+      { name: "on ios", repo_name: "duckduckgo/apple-monorepo-test" },
+      { name: "on macos", repo_name: "duckduckgo/apple-monorepo-test" }
     ]
     release_type_contexts = ["for prerelease", "for public release"]
     tag_contexts = ["when failed to create tag", "when failed to push tag"]
@@ -272,8 +273,8 @@ describe Fastlane::Actions::TagReleaseAction do
     let (:other_action) { double(git_branch: branch) }
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/ios" },
-      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+      { name: "on ios", repo_name: "duckduckgo/apple-monorepo-test" },
+      { name: "on macos", repo_name: "duckduckgo/apple-monorepo-test" }
     ]
 
     include_context "common setup"
@@ -443,8 +444,8 @@ describe Fastlane::Actions::TagReleaseAction do
     end
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/ios" },
-      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+      { name: "on ios", repo_name: "duckduckgo/apple-monorepo-test" },
+      { name: "on macos", repo_name: "duckduckgo/apple-monorepo-test" }
     ]
 
     shared_examples "populating tag, promoted_tag and release_url" do |repo_name|
