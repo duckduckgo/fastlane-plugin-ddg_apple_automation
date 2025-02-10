@@ -43,7 +43,7 @@ module Fastlane
       end
 
       def self.create_tag_and_github_release(is_prerelease, platform, github_token)
-        tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
+        tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
 
         begin
           other_action.add_git_tag(tag: tag)
