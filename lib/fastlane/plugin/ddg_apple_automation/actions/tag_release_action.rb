@@ -14,16 +14,11 @@ module Fastlane
       @constants = {}
 
       def self.setup_constants(platform)
-        case platform
-        when "ios"
-          @constants = {
-            repo_name: "duckduckgo/ios"
-          }
-        when "macos"
-          @constants = {
-            dmg_url_prefix: "https://staticcdn.duckduckgo.com/macos-desktop-browser/",
-            repo_name: "duckduckgo/macos-browser"
-          }
+        @constants = {
+          repo_name: "duckduckgo/apple-monorepo-test" # KS TODO: Update to apple-browsers
+        }
+        if platform == "macos"
+          @constants[:dmg_url_prefix] = "https://staticcdn.duckduckgo.com/macos-desktop-browser/"
         end
       end
 
@@ -34,7 +29,7 @@ module Fastlane
 
         setup_constants(platform)
 
-        tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], params[:github_token])
+        tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
         begin
@@ -47,7 +42,7 @@ module Fastlane
         report_status(params.values.merge(tag_and_release_output))
       end
 
-      def self.create_tag_and_github_release(is_prerelease, github_token)
+      def self.create_tag_and_github_release(is_prerelease, platform, github_token)
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
 
         begin
@@ -63,7 +58,7 @@ module Fastlane
         end
 
         begin
-          latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, github_token)
+          latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, platform, github_token)
 
           UI.message("Latest public release: #{latest_public_release.tag_name}")
           UI.message("Generating #{@constants[:repo_name]} release notes for GitHub release for tag: #{tag}")

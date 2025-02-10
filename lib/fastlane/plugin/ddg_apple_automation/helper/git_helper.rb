@@ -7,15 +7,8 @@ module Fastlane
 
   module Helper
     class GitHelper
-      def self.repo_name(platform)
-        case platform
-        when "ios"
-          "duckduckgo/ios"
-        when "macos"
-          "duckduckgo/macos-browser"
-        else
-          UI.user_error!("Unsupported platform: #{platform}")
-        end
+      def self.repo_name
+        "duckduckgo/apple-monorepo-test" # KS TODO: Update to apple-browsers
       end
 
       def self.setup_git_user(name: "Dax the Duck", email: "dax@duckduckgo.com")
@@ -61,8 +54,8 @@ module Fastlane
         end
       end
 
-      def self.assert_branch_has_changes(release_branch)
-        latest_tag = `git describe --tags --abbrev=0`.chomp
+      def self.assert_branch_has_changes(release_branch, platform)
+        latest_tag = `git tag --sort=-v:refname | grep '+#{platform}' | head -n 1`.chomp
         latest_tag_sha = `git rev-parse "#{latest_tag}"^{}`.chomp
         release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
 
@@ -78,7 +71,7 @@ module Fastlane
         changed_files.any?
       end
 
-      def self.latest_release(repo_name, prerelease, platform = nil, github_token)
+      def self.latest_release(repo_name, prerelease, platform, github_token)
         client = Octokit::Client.new(access_token: github_token)
 
         current_page = 1

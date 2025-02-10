@@ -31,8 +31,8 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       let(:platform) { nil }
 
       it "computes tag and returns nil promoted tag" do
-        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
-        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        allow(File).to receive(:read).with("/Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("/Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
         expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0-123", nil])
       end
     end
@@ -42,8 +42,8 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       let(:platform) { nil }
 
       it "computes tag and promoted tag" do
-        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
-        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        allow(File).to receive(:read).with("/Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("/Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
         expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0", "1.0.0-123"])
       end
     end
@@ -53,8 +53,8 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       let(:platform) { 'suffix' }
 
       it "computes tag and returns nil promoted tag" do
-        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
-        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        allow(File).to receive(:read).with("suffix/Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("suffix/Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
         expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0-123+suffix", nil])
       end
     end
@@ -64,8 +64,8 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       let(:platform) { 'suffix' }
 
       it "computes tag and returns nil promoted tag" do
-        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
-        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        allow(File).to receive(:read).with("suffix/Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("suffix/Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
         expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0+suffix", "1.0.0-123+suffix"])
       end
     end
@@ -99,13 +99,14 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   end
 
   describe "#validate_new_version" do
+    platform = "ios"
     it "validates and returns the new version" do
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:current_version).and_return(version)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:current_version).with("ios").and_return(version)
       expect(Fastlane::UI).to receive(:important).with("Current version in project settings is #{version}.")
       expect(Fastlane::UI).to receive(:important).with("New version is #{version}.")
       allow(Fastlane::UI).to receive(:interactive?).and_return(true)
       allow(Fastlane::UI).to receive(:confirm).and_return(true)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper.validate_new_version(version)).to eq(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper.validate_new_version(platform, version)).to eq(version)
     end
   end
 
@@ -128,16 +129,17 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   end
 
   describe "#current_build_number" do
+    platform = "ios"
     it "reads the current build number from config" do
       allow(File).to receive(:read).and_return("CURRENT_PROJECT_VERSION = 123")
-      expect(Fastlane::Helper::DdgAppleAutomationHelper.current_build_number).to eq(123)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper.current_build_number(platform)).to eq(123)
     end
   end
 
   describe "#current_version" do
     it "reads the current version from config" do
       allow(File).to receive(:read).and_return("MARKETING_VERSION = 1.2.3")
-      expect(Fastlane::Helper::DdgAppleAutomationHelper.current_version).to eq("1.2.3")
+      expect(Fastlane::Helper::DdgAppleAutomationHelper.current_version(platform)).to eq("1.2.3")
     end
   end
 
@@ -158,7 +160,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version)
-        .with(version).and_return(version)
+        .with(platform, version).and_return(version)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
         .with(platform, version).and_return(release_branch_name)
@@ -167,7 +169,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
         .with(platform, other_action)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
-        .with(version, other_action)
+        .with(platform, version, other_action)
 
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
@@ -181,10 +183,10 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(result_version).to eq(version)
 
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:code_freeze_prechecks)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(platform, version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_release_branch).with(platform, version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(version, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(platform, version, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
     end
 
@@ -204,7 +206,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version)
-        .with(version).and_return(version)
+        .with(platform, version).and_return(version)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
         .with(platform, version).and_return(release_branch_name)
@@ -213,7 +215,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
         .with(platform, other_action)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_and_build_number_config)
-        .with(version, 0, other_action)
+        .with(platform, version, 0, other_action)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_root_plist_version)
         .with(version, other_action)
@@ -230,10 +232,10 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(result_version).to eq(version)
 
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:code_freeze_prechecks)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(platform, version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_release_branch).with(platform, version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(version, 0, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(platform, version, 0, other_action)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_root_plist_version).with(version, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
     end
@@ -296,10 +298,10 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   describe "#prepare_hotfix_branch" do
     it "prepares the hotfix branch for macos" do
       platform = "macos"
-      version = "1.0.0"
-      source_version = "1.0.0"
-      new_version = "1.0.1"
-      release_branch_name = "hotfix/1.0.1"
+      version = "1.0.0+#{platform}"
+      source_version = "1.0.0+#{platform}"
+      new_version = "1.0.1+#{platform}"
+      release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
       options = { some_option: "value" }
       github_token = "github-token"
@@ -319,7 +321,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
         .with(platform, source_version, new_version).and_return(release_branch_name)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
-        .with(new_version, other_action)
+        .with(platform, new_version, other_action)
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:increment_build_number)
         .with(platform, options, other_action)
@@ -338,7 +340,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_version_exists).with(version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_hotfix_version).with(source_version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_hotfix_branch).with(platform, source_version, new_version)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(new_version, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(platform, new_version, other_action)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:increment_build_number).with(platform, options, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("last_release", source_version)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
@@ -346,10 +348,10 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
     it "prepares the hotfix branch for ios" do
       platform = "ios"
-      version = "1.0.0"
-      source_version = "1.0.0"
-      new_version = "1.0.1"
-      release_branch_name = "hotfix/1.0.1"
+      version = "1.0.0+#{platform}"
+      source_version = "1.0.0+#{platform}"
+      new_version = "1.0.1+#{platform}"
+      release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
       options = { some_option: "value" }
       github_token = "github-token"
@@ -357,7 +359,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
       allow(@client).to receive(:releases).and_return([double(tag_name: source_version, prerelease: false)])
-      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
         .with(version).and_return(source_version)
@@ -407,23 +408,24 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
   describe "#update_embedded_files" do
     it "updates embedded files and commits them" do
-      allow(Fastlane::Actions).to receive(:sh).with("./scripts/update_embedded.sh").and_return("")
-      git_status_output = "On branch main\nmodified: Core/trackerData.json\n"
+      allow(Fastlane::Actions).to receive(:sh).with("./#{platform}/scripts/update_embedded.sh").and_return("")
+      git_status_output = "On branch main\nmodified: #{platform}/Core/trackerData.json\n"
       allow(Fastlane::Actions).to receive(:sh).with("git", "status").and_return(git_status_output)
-      allow(Fastlane::Actions).to receive(:sh).with("git", "add", "Core/trackerData.json").and_return("")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "add", "#{platform}/Core/trackerData.json").and_return("")
       allow(Fastlane::Actions).to receive(:sh).with("git", "commit", "-m", "Update embedded files").and_return("")
       expect(other_action).to receive(:ensure_git_status_clean)
       described_class.update_embedded_files(platform, other_action)
       expect(Fastlane::Actions).to have_received(:sh).with("git", "status")
-      expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "Core/trackerData.json")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "#{platform}/Core/trackerData.json")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")
     end
   end
 
   describe "#increment_build_number" do
     it "increments the build number" do
-      allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0\n")
-      allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123\n")
+      platform = "macos"
+      allow(File).to receive(:read).with("macos/Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0\n")
+      allow(File).to receive(:read).with("macos/Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123\n")
       allow(File).to receive(:write)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:calculate_next_build_number).and_return(124)
       allow(Fastlane::UI).to receive(:interactive?).and_return(false)
@@ -499,27 +501,29 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   end
 
   describe "#update_version_config" do
+    let(:platform) { "ios" }
     it "updates the version in the config file" do
       expect(File).to receive(:write).with(
-        Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_PATH,
+        "ios/#{Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_PATH}",
         "#{Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_DEFINITION} = #{version}\n"
       )
 
       expect(other_action).to receive(:git_commit).with(
-        path: Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_PATH,
+        path: "ios/#{Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_PATH}",
         message: "Set marketing version to #{version}"
       )
 
-      Fastlane::Helper::DdgAppleAutomationHelper.update_version_config(version, other_action)
+      Fastlane::Helper::DdgAppleAutomationHelper.update_version_config(platform, version, other_action)
     end
   end
 
   describe "#update_version_and_build_number_config" do
+    let(:platform) { "ios" }
     it "updates both version and build number in config files" do
-      expect(File).to receive(:write).with(Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_PATH, "#{Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_DEFINITION} = #{version}\n")
-      expect(File).to receive(:write).with(Fastlane::Helper::DdgAppleAutomationHelper::BUILD_NUMBER_CONFIG_PATH, "#{Fastlane::Helper::DdgAppleAutomationHelper::BUILD_NUMBER_CONFIG_DEFINITION} = 123\n")
+      expect(File).to receive(:write).with("ios/#{Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_PATH}", "#{Fastlane::Helper::DdgAppleAutomationHelper::VERSION_CONFIG_DEFINITION} = #{version}\n")
+      expect(File).to receive(:write).with("ios/#{Fastlane::Helper::DdgAppleAutomationHelper::BUILD_NUMBER_CONFIG_PATH}", "#{Fastlane::Helper::DdgAppleAutomationHelper::BUILD_NUMBER_CONFIG_DEFINITION} = 123\n")
       expect(other_action).to receive(:git_commit)
-      Fastlane::Helper::DdgAppleAutomationHelper.update_version_and_build_number_config(version, 123, other_action)
+      Fastlane::Helper::DdgAppleAutomationHelper.update_version_and_build_number_config(platform, version, 123, other_action)
     end
   end
 end

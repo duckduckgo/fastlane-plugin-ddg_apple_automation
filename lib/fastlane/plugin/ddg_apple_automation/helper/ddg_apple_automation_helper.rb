@@ -10,13 +10,13 @@ module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
 
   module Helper
-    class DdgAppleAutomationHelper
+    class DdgAppleAutomationHelper # rubocop:disable Metrics/ClassLength
       DEFAULT_BRANCH = 'main'
       RELEASE_BRANCH = 'release'
       HOTFIX_BRANCH = 'hotfix'
 
-      INFO_PLIST = 'DuckDuckGo/Info.plist'
-      ROOT_PLIST = 'DuckDuckGo/Settings.bundle/Root.plist'
+      INFO_PLIST = 'macos/DuckDuckGo/Info.plist'
+      ROOT_PLIST = 'ios/DuckDuckGo/Settings.bundle/Root.plist'
       VERSION_CONFIG_PATH = 'Configuration/Version.xcconfig'
       BUILD_NUMBER_CONFIG_PATH = 'Configuration/BuildNumber.xcconfig'
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
@@ -24,18 +24,26 @@ module Fastlane
 
       UPGRADABLE_EMBEDDED_FILES = {
         "ios" => Set.new([
-                           'Core/AppPrivacyConfigurationDataProvider.swift',
-                           'Core/AppTrackerDataSetProvider.swift',
-                           'Core/ios-config.json',
-                           'Core/trackerData.json'
+                           'ios/Core/AppPrivacyConfigurationDataProvider.swift',
+                           'ios/Core/AppTrackerDataSetProvider.swift',
+                           'ios/Core/ios-config.json',
+                           'ios/Core/trackerData.json'
                          ]),
         "macos" => Set.new([
-                             'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
-                             'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
-                             'DuckDuckGo/ContentBlocker/trackerData.json',
-                             'DuckDuckGo/ContentBlocker/macos-config.json'
+                             'macos/DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
+                             'macos/DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
+                             'macos/DuckDuckGo/ContentBlocker/trackerData.json',
+                             'macos/DuckDuckGo/ContentBlocker/macos-config.json'
                            ])
       }.freeze
+
+      def self.version_config_path(platform)
+        "#{platform}/#{VERSION_CONFIG_PATH}"
+      end
+
+      def self.build_number_config_path(platform)
+        "#{platform}/#{BUILD_NUMBER_CONFIG_PATH}"
+      end
 
       def self.release_branch_name(platform, version)
         "#{RELEASE_BRANCH}/#{platform}/#{version}"
@@ -54,8 +62,8 @@ module Fastlane
         other_action.ensure_git_status_clean
       end
 
-      def self.validate_new_version(version)
-        current_version = current_version()
+      def self.validate_new_version(platform, version)
+        current_version = current_version(platform)
         user_version = format_version(version)
         new_version = user_version.nil? ? bump_minor_version(current_version) : user_version
 
@@ -103,10 +111,10 @@ module Fastlane
       #
       # @return [String] build number read from the file, or nil in case of failure
       #
-      def self.current_build_number
+      def self.current_build_number(platform)
         current_build_number = 0
 
-        file_data = File.read(BUILD_NUMBER_CONFIG_PATH).split("\n")
+        file_data = File.read(build_number_config_path(platform)).split("\n")
         file_data.each do |line|
           current_build_number = line.split('=')[1].strip.to_i if line.start_with?(BUILD_NUMBER_CONFIG_DEFINITION)
         end
@@ -118,10 +126,10 @@ module Fastlane
       #
       # @return [String] version read from the file, or nil in case of failure
       #
-      def self.current_version
+      def self.current_version(platform)
         current_version = nil
 
-        file_data = File.read(VERSION_CONFIG_PATH).split("\n")
+        file_data = File.read(version_config_path(platform)).split("\n")
         file_data.each do |line|
           current_version = line.split('=')[1].strip if line.start_with?(VERSION_CONFIG_DEFINITION)
         end
@@ -129,25 +137,25 @@ module Fastlane
         current_version
       end
 
-      def self.extract_version_from_tag(tag)
+      def self.extract_version_from_tag(platform, tag)
         if tag && !tag.empty?
           tag.split('-').first
         else
-          Helper::DdgAppleAutomationHelper.current_version
+          Helper::DdgAppleAutomationHelper.current_version(platform)
         end
       end
 
       def self.prepare_release_branch(platform, version, other_action)
         code_freeze_prechecks(other_action) unless Helper.is_ci?
-        new_version = validate_new_version(version)
+        new_version = validate_new_version(platform, version)
         create_release_branch(platform, new_version)
         update_embedded_files(platform, other_action)
         if platform == "ios"
           # Any time we prepare a release branch for iOS the the build number should be reset to 0
-          update_version_and_build_number_config(new_version, 0, other_action)
+          update_version_and_build_number_config(platform, new_version, 0, other_action)
           update_root_plist_version(new_version, other_action)
         else
-          update_version_config(new_version, other_action)
+          update_version_config(platform, new_version, other_action)
         end
         other_action.push_to_git_remote
         release_branch_name = release_branch_name(platform, new_version)
@@ -157,7 +165,7 @@ module Fastlane
       end
 
       def self.prepare_hotfix_branch(github_token, platform, other_action, options)
-        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name(platform), false, github_token)
+        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name, false, platform, github_token)
         version = latest_public_release.tag_name
         Helper::GitHubActionsHelper.set_output("last_release", version)
         UI.user_error!("Unable to find latest release to hotfix") unless version
@@ -168,7 +176,7 @@ module Fastlane
           update_version_and_build_number_config(new_version, 0, other_action)
           update_root_plist_version(new_version, other_action)
         else
-          update_version_config(new_version, other_action)
+          update_version_config(platform, new_version, other_action)
         end
         other_action.push_to_git_remote
         increment_build_number(platform, options, other_action) if platform == "macos"
@@ -202,7 +210,7 @@ module Fastlane
 
       def self.validate_version_exists(version)
         user_version = format_version(version)
-        UI.user_error!("Incorrect version provided: #{version}. Expected x.y.z format.") unless user_version
+        UI.user_error!("Incorrect version provided: #{version}. Expected x.y.z+platform format.") unless user_version
 
         Actions.sh('git', 'fetch', '--tags')
         existing_tag = Actions.sh('git', 'tag', '--list', user_version).chomp
@@ -227,7 +235,7 @@ module Fastlane
       end
 
       def self.update_embedded_files(platform, other_action)
-        Actions.sh("./scripts/update_embedded.sh")
+        Actions.sh("./#{platform}/scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
         git_status = Actions.sh('git', 'status')
@@ -252,8 +260,8 @@ module Fastlane
       end
 
       def self.increment_build_number(platform, options, other_action)
-        current_version = Helper::DdgAppleAutomationHelper.current_version
-        current_build_number = Helper::DdgAppleAutomationHelper.current_build_number
+        current_version = Helper::DdgAppleAutomationHelper.current_version(platform)
+        current_build_number = Helper::DdgAppleAutomationHelper.current_build_number(platform)
         build_number = Helper::DdgAppleAutomationHelper.calculate_next_build_number(platform, options, other_action)
 
         UI.important("Current version in project settings is #{current_version} (#{current_build_number}).")
@@ -353,21 +361,21 @@ module Fastlane
         end
       end
 
-      def self.update_version_config(version, other_action)
-        File.write(VERSION_CONFIG_PATH, "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
+      def self.update_version_config(platform, version, other_action)
+        File.write(version_config_path(platform), "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
         other_action.git_commit(
-          path: VERSION_CONFIG_PATH,
+          path:     version_config_path(platform),
           message: "Set marketing version to #{version}"
         )
       end
 
-      def self.update_version_and_build_number_config(version, build_number, other_action)
-        File.write(VERSION_CONFIG_PATH, "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
-        File.write(BUILD_NUMBER_CONFIG_PATH, "#{BUILD_NUMBER_CONFIG_DEFINITION} = #{build_number}\n")
+      def self.update_version_and_build_number_config(platform, version, build_number, other_action)
+        File.write(version_config_path(platform), "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
+        File.write(build_number_config_path(platform), "#{BUILD_NUMBER_CONFIG_DEFINITION} = #{build_number}\n")
         other_action.git_commit(
           path: [
-            VERSION_CONFIG_PATH,
-            BUILD_NUMBER_CONFIG_PATH
+            version_config_path(platform),
+            build_number_config_path(platform)
           ],
           message: "Bump version to #{version} (#{build_number})"
         )
@@ -394,8 +402,8 @@ module Fastlane
       end
 
       def self.compute_tag(is_prerelease, platform)
-        version = File.read(VERSION_CONFIG_PATH).chomp.split(" = ").last
-        build_number = File.read(BUILD_NUMBER_CONFIG_PATH).chomp.split(" = ").last
+        version = File.read(version_config_path(platform)).chomp.split(" = ").last
+        build_number = File.read(build_number_config_path(platform)).chomp.split(" = ").last
         if is_prerelease
           tag = "#{version}-#{build_number}"
         else

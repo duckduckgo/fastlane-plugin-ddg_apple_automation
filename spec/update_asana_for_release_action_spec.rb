@@ -21,7 +21,7 @@ describe Fastlane::Actions::UpdateAsanaForReleaseAction do
     end
 
     before do
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:current_version).and_return("1.1.0")
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:current_version).with(params[:platform]).and_return("1.1.0")
       allow(Fastlane::Helper::AsanaHelper).to receive(:asana_task_url).and_return("https://app.asana.com/0/1234567890/1234567890")
       allow(Fastlane::Actions::AsanaCreateActionItemAction).to receive(:run)
     end

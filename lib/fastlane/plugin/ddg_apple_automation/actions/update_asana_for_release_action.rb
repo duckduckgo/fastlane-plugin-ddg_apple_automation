@@ -15,10 +15,10 @@ module Fastlane
         options = params.values
 
         if options[:release_type] == 'internal'
-          options[:version] = Helper::DdgAppleAutomationHelper.current_version
+          options[:version] = Helper::DdgAppleAutomationHelper.current_version(params[:platform])
           Helper::AsanaHelper.update_asana_tasks_for_internal_release(options)
         else
-          options[:version] = Helper::DdgAppleAutomationHelper.extract_version_from_tag(options[:tag])
+          options[:version] = Helper::DdgAppleAutomationHelper.extract_version_from_tag(params[:platform], options[:tag])
           announcement_task_html_notes = Helper::AsanaHelper.update_asana_tasks_for_public_release(options)
           Fastlane::Actions::AsanaCreateActionItemAction.run(
             asana_access_token: options[:asana_access_token],

@@ -18,16 +18,26 @@ module Fastlane
       ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
       ASANA_WORKSPACE_ID = "137249556945"
 
-      IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242676101485"
-      IOS_RELEASE_TASK_TEMPLATE_ID = "1209175074761732"
-      MACOS_HOTFIX_TASK_TEMPLATE_ID = "1206724592377782"
-      MACOS_RELEASE_TASK_TEMPLATE_ID = "1206127427850447"
+      # IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242676101485" KS TODO: Revert back.
+      # IOS_RELEASE_TASK_TEMPLATE_ID = "1209175074761732"
+      # MACOS_HOTFIX_TASK_TEMPLATE_ID = "1206724592377782"
+      # MACOS_RELEASE_TASK_TEMPLATE_ID = "1206127427850447"
 
-      IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
-      MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
+      # IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
+      # MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
 
       INCIDENTS_PARENT_TASK_ID = "1135688560894081"
       CURRENT_OBJECTIVES_PROJECT_ID = "72649045549333"
+
+      ##################### Start test values ############################
+      IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242491060608"
+      IOS_RELEASE_TASK_TEMPLATE_ID = "1209134250290262"
+      MACOS_HOTFIX_TASK_TEMPLATE_ID = "1208772396197846"
+      MACOS_RELEASE_TASK_TEMPLATE_ID = "1208772396197843"
+
+      IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1208772987727988"
+      MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1208772987727988"
+      ##################### End test values ##############################
 
       def self.make_asana_client(asana_access_token)
         Asana::Client.new do |c|
@@ -154,9 +164,9 @@ module Fastlane
       def self.release_tag_name(version, platform)
         case platform
         when "ios"
-          "ios-app-release-#{version}"
+          "test-ios-app-release-#{version}" # KS TODO: Remove test-
         when "macos"
-          "macos-app-release-#{version}"
+          "test-macos-app-release-#{version}" # KS TODO: Remove test-
         else
           UI.user_error!("Unsupported platform: #{platform}")
         end
@@ -220,11 +230,11 @@ module Fastlane
       def self.update_asana_tasks_for_internal_release(params)
         UI.message("Checking latest public release in GitHub")
 
-        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name(params[:platform]), false, params[:github_token])
+        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name, false, params[:platform], params[:github_token])
         UI.success("Latest public release: #{latest_public_release.tag_name}")
 
         UI.message("Extracting task IDs from git log since #{latest_public_release.tag_name} release")
-        task_ids = get_task_ids_from_git_log(latest_public_release.tag_name)
+        task_ids = get_task_ids_from_git_log(latest_public_release.tag_name, params[:platform])
         UI.success("#{task_ids.count} task(s) found.")
 
         UI.message("Fetching release notes from Asana release task (#{asana_task_url(params[:release_task_id])})")
@@ -411,8 +421,15 @@ module Fastlane
                .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
       end
 
-      def self.get_task_ids_from_git_log(from_ref, to_ref = "HEAD")
-        git_log = `git log #{from_ref}..#{to_ref}`
+      def self.get_task_ids_from_git_log(from_ref, to_ref = "HEAD", platform)
+        platform_path = case platform.downcase
+                        when "ios" then "iOS"
+                        when "macos" then "macOS"
+                        when "bsk" then "BSK"
+                        else platform
+                        end
+
+        git_log = `git log #{from_ref}..#{to_ref} -- #{platform_path}/`
 
         git_log
           .gsub("\n", " ")

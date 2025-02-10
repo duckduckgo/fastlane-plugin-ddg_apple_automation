@@ -38,7 +38,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
       allow(@client).to receive(:releases).and_return(
         [
           double(tag_name: '2.0.0-1', prerelease: true),
-          double(tag_name: '2.0.0-0', prerelease: true),
+          double(tag_name: '2.0.0-0+ios', prerelease: true),
           double(tag_name: '1.0.0', prerelease: false),
           double(tag_name: '1.0.0-1', prerelease: true),
           double(tag_name: '1.0.0-0', prerelease: true)
@@ -61,12 +61,12 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
     describe "when latest release is not a valid semver" do
       it "shows error" do
-        allow(@client).to receive(:releases).and_return([double(tag_name: '1.0', prerelease: false)])
+        allow(@client).to receive(:releases).and_return([double(tag_name: '1.0+ios', prerelease: false)])
         allow(Fastlane::UI).to receive(:user_error!)
 
         find_latest_marketing_version
 
-        expect(Fastlane::UI).to have_received(:user_error!).with("Invalid marketing version: 1.0, expected format: MAJOR.MINOR.PATCH")
+        expect(Fastlane::UI).to have_received(:user_error!).with("Invalid marketing version: 1.0+ios, expected format: MAJOR.MINOR.PATCH")
       end
     end
 

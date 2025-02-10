@@ -242,7 +242,7 @@ describe Fastlane::Helper::AsanaHelper do
     before do
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(@client).to receive(:releases).with("iOS", { page: 1, per_page: 25 }).and_return([double(tag_name: "7.122.0", prerelease: false)])
+      allow(@client).to receive(:releases).with("iOS", { page: 1, per_page: 25 }).and_return([double(tag_name: "7.122.0+ios", prerelease: false)])
       allow(@client).to receive(:releases).with("iOS", { page: 2, per_page: 25 }).and_return([])
       allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
 
@@ -257,7 +257,7 @@ describe Fastlane::Helper::AsanaHelper do
       allow(Fastlane::Helper::AsanaHelper).to receive(:asana_task_url).and_return("https://app.asana.com/0/1234567890/1234567890")
       allow(Fastlane::Helper::AsanaHelper).to receive(:fetch_release_notes).and_return("Release notes content")
       allow(Fastlane::Helper::AsanaHelper).to receive(:get_task_ids_from_git_log).and_return(["1234567890"])
-      allow(Fastlane::Helper::AsanaHelper).to receive(:release_tag_name).and_return("7.122.0")
+      allow(Fastlane::Helper::AsanaHelper).to receive(:release_tag_name).and_return("7.122.0+ios")
       allow(Fastlane::Helper::AsanaHelper).to receive(:find_or_create_asana_release_tag).and_return("tag_id")
       allow(Fastlane::Helper::AsanaHelper).to receive(:move_tasks_to_section)
       allow(Fastlane::Helper::AsanaHelper).to receive(:tag_tasks)
@@ -276,8 +276,8 @@ describe Fastlane::Helper::AsanaHelper do
       expect(@asana_tasks).to receive(:update_task).with(task_gid: "1234567890", html_notes: html_notes)
 
       expect(Fastlane::UI).to receive(:message).with("Checking latest public release in GitHub")
-      expect(Fastlane::UI).to receive(:success).with("Latest public release: 7.122.0")
-      expect(Fastlane::UI).to receive(:message).with("Extracting task IDs from git log since 7.122.0 release")
+      expect(Fastlane::UI).to receive(:success).with("Latest public release: 7.122.0+ios")
+      expect(Fastlane::UI).to receive(:message).with("Extracting task IDs from git log since 7.122.0+ios release")
       expect(Fastlane::UI).to receive(:success).with("1 task(s) found.")
       expect(Fastlane::UI).to receive(:message).with("Fetching release notes from Asana release task (https://app.asana.com/0/1234567890/1234567890)")
       expect(Fastlane::UI).to receive(:success).with("Release notes: Release notes content")
@@ -286,10 +286,10 @@ describe Fastlane::Helper::AsanaHelper do
       expect(Fastlane::UI).to receive(:success).with("Release task content updated: https://app.asana.com/0/1234567890/1234567890")
       expect(Fastlane::UI).to receive(:message).with("Moving tasks to Validation section")
       expect(Fastlane::UI).to receive(:success).with("All tasks moved to Validation section")
-      expect(Fastlane::UI).to receive(:message).with("Fetching or creating 7.122.0 Asana tag")
-      expect(Fastlane::UI).to receive(:success).with("7.122.0 tag URL: https://app.asana.com/0/tag_id/list")
-      expect(Fastlane::UI).to receive(:message).with("Tagging tasks with 7.122.0 tag")
-      expect(Fastlane::UI).to receive(:success).with("All tasks tagged with 7.122.0 tag")
+      expect(Fastlane::UI).to receive(:message).with("Fetching or creating 7.122.0+ios Asana tag")
+      expect(Fastlane::UI).to receive(:success).with("7.122.0+ios tag URL: https://app.asana.com/0/tag_id/list")
+      expect(Fastlane::UI).to receive(:message).with("Tagging tasks with 7.122.0+ios tag")
+      expect(Fastlane::UI).to receive(:success).with("All tasks tagged with 7.122.0+ios tag")
 
       Fastlane::Helper::AsanaHelper.update_asana_tasks_for_internal_release(params)
     end
@@ -577,16 +577,16 @@ commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
     Documentation](https://app.asana.com/0/1202500774821704/1204012835277482/f)
       LOG
 
-      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD").and_return(git_log)
+      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- iOS/").and_return(git_log)
 
-      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
+      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0", "ios")
       expect(task_ids).to eq(["1208700893044577", "1208589738926535", "1208804405760977"])
     end
 
     it "returns an empty array if no task IDs are found" do
-      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD").and_return("No tasks here.")
+      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- macOS/").and_return("No tasks here.")
 
-      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
+      task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0", "macos")
       expect(task_ids).to eq([])
     end
   end
