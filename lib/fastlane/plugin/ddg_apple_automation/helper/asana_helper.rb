@@ -11,7 +11,7 @@ module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
 
   module Helper
-    class AsanaHelper
+    class AsanaHelper # rubocop:disable Metrics/ClassLength
       ASANA_API_URL = "https://app.asana.com/api/1.0"
       ASANA_TASK_URL_TEMPLATE = "https://app.asana.com/0/0/%s/f"
       ASANA_TAG_URL_TEMPLATE = "https://app.asana.com/0/%s/list"
