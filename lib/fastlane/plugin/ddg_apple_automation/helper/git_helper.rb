@@ -8,7 +8,7 @@ module Fastlane
   module Helper
     class GitHelper
       def self.repo_name
-        "duckduckgo/apple-monorepo-test" # KS TODO: Update to apple-browsers
+        "duckduckgo/apple-browsers"
       end
 
       def self.setup_git_user(name: "Dax the Duck", email: "dax@duckduckgo.com")

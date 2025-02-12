@@ -57,13 +57,13 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     it "correctly builds text payload" do
       allow(@asana_client_stories).to receive(:create_story_for_task)
       ClimateControl.modify(
-        WORKFLOW_URL: "http://github.com/duckduckgo/apple-monorepo-test/actions/runs/123"
+        WORKFLOW_URL: "http://github.com/duckduckgo/apple-browsers/actions/runs/123"
       ) do
         test_action(task_id: "123", comment: "This is a test comment.")
       end
       expect(@asana_client_stories).to have_received(:create_story_for_task).with(
         task_gid: "123",
-        text: "This is a test comment.\n\nWorkflow URL: http://github.com/duckduckgo/apple-monorepo-test/actions/runs/123"
+        text: "This is a test comment.\n\nWorkflow URL: http://github.com/duckduckgo/apple-browsers/actions/runs/123"
       )
     end
 

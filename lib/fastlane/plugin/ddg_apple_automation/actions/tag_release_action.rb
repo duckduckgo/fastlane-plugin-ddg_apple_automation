@@ -15,7 +15,7 @@ module Fastlane
 
       def self.setup_constants(platform)
         @constants = {
-          repo_name: "duckduckgo/apple-monorepo-test" # KS TODO: Update to apple-browsers
+          repo_name: "duckduckgo/apple-browsers"
         }
         if platform == "macos"
           @constants[:dmg_url_prefix] = "https://staticcdn.duckduckgo.com/macos-desktop-browser/"

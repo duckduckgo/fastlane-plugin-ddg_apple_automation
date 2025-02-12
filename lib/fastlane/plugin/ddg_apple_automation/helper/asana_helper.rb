@@ -18,26 +18,16 @@ module Fastlane
       ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
       ASANA_WORKSPACE_ID = "137249556945"
 
-      # IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242676101485" KS TODO: Revert back.
-      # IOS_RELEASE_TASK_TEMPLATE_ID = "1209175074761732"
-      # MACOS_HOTFIX_TASK_TEMPLATE_ID = "1206724592377782"
-      # MACOS_RELEASE_TASK_TEMPLATE_ID = "1206127427850447"
+      IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242676101485"
+      IOS_RELEASE_TASK_TEMPLATE_ID = "1209175074761732"
+      MACOS_HOTFIX_TASK_TEMPLATE_ID = "1206724592377782"
+      MACOS_RELEASE_TASK_TEMPLATE_ID = "1206127427850447"
 
-      # IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
-      # MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
+      IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
+      MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
 
       INCIDENTS_PARENT_TASK_ID = "1135688560894081"
       CURRENT_OBJECTIVES_PROJECT_ID = "72649045549333"
-
-      ##################### Start test values ############################
-      IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242491060608"
-      IOS_RELEASE_TASK_TEMPLATE_ID = "1209134250290262"
-      MACOS_HOTFIX_TASK_TEMPLATE_ID = "1208772396197846"
-      MACOS_RELEASE_TASK_TEMPLATE_ID = "1208772396197843"
-
-      IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1208772987727988"
-      MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1208772987727988"
-      ##################### End test values ##############################
 
       def self.make_asana_client(asana_access_token)
         Asana::Client.new do |c|
@@ -164,9 +154,9 @@ module Fastlane
       def self.release_tag_name(version, platform)
         case platform
         when "ios"
-          "test-ios-app-release-#{version}" # KS TODO: Remove test-
+          "ios-app-release-#{version}"
         when "macos"
-          "test-macos-app-release-#{version}" # KS TODO: Remove test-
+          "macos-app-release-#{version}"
         else
           UI.user_error!("Unsupported platform: #{platform}")
         end

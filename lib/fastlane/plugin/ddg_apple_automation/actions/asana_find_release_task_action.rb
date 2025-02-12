@@ -19,13 +19,13 @@ module Fastlane
           @constants = {
             release_task_prefix: "iOS App Release",
             hotfix_task_prefix: "iOS App Hotfix Release",
-            release_section_id: "1208772987727988" # KS TODO revert "1138897754570756"
+            release_section_id: "1138897754570756"
           }
         when "macos"
           @constants = {
             release_task_prefix: "macOS App Release",
             hotfix_task_prefix: "macOS App Hotfix Release",
-            release_section_id: "1208772987727988" # KS TODO revert "1202202395298964"
+            release_section_id: "1202202395298964"
           }
         end
       end

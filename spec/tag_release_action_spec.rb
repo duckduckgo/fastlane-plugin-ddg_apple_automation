@@ -223,8 +223,8 @@ describe Fastlane::Actions::TagReleaseAction do
     end
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/apple-monorepo-test" },
-      { name: "on macos", repo_name: "duckduckgo/apple-monorepo-test" }
+      { name: "on ios", repo_name: "duckduckgo/apple-browsers" },
+      { name: "on macos", repo_name: "duckduckgo/apple-browsers" }
     ]
     release_type_contexts = ["for prerelease", "for public release"]
     tag_contexts = ["when failed to create tag", "when failed to push tag"]
@@ -273,8 +273,8 @@ describe Fastlane::Actions::TagReleaseAction do
     let (:other_action) { double(git_branch: branch) }
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/apple-monorepo-test" },
-      { name: "on macos", repo_name: "duckduckgo/apple-monorepo-test" }
+      { name: "on ios", repo_name: "duckduckgo/apple-browsers" },
+      { name: "on macos", repo_name: "duckduckgo/apple-browsers" }
     ]
 
     include_context "common setup"
@@ -444,8 +444,8 @@ describe Fastlane::Actions::TagReleaseAction do
     end
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/apple-monorepo-test" },
-      { name: "on macos", repo_name: "duckduckgo/apple-monorepo-test" }
+      { name: "on ios", repo_name: "duckduckgo/apple-browsers" },
+      { name: "on macos", repo_name: "duckduckgo/apple-browsers" }
     ]
 
     shared_examples "populating tag, promoted_tag and release_url" do |repo_name|
