@@ -143,7 +143,7 @@ module Fastlane
           template_args['last_release_tag'] = params[:latest_public_release_tag]
         end
         if params[:platform] == "macos"
-          dmg_version = (params[:is_prerelease] ? params[:tag] : params[:promoted_tag])&.gsub('-', '.')
+          dmg_version = (params[:is_prerelease] ? params[:tag]&.sub(/\+.*/, '')&.tr('-', '.') : params[:promoted_tag])&.sub(/\+.*/, '')&.tr('-', '.')
           template_args['dmg_url'] = "#{@constants[:dmg_url_prefix]}duckduckgo-#{dmg_version}.dmg"
         end
         template_args

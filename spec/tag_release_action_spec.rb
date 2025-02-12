@@ -28,7 +28,7 @@ end
 shared_context "for prerelease" do
   before do
     @params[:is_prerelease] = true
-    @tag = "1.1.0-123"
+    @tag = "1.1.0-123+macos"
     @promoted_tag = nil
     allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, @promoted_tag])
   end
@@ -37,8 +37,8 @@ end
 shared_context "for public release" do
   before do
     @params[:is_prerelease] = false
-    @tag = "1.1.0"
-    @promoted_tag = "1.1.0-123"
+    @tag = "1.1.0+macos"
+    @promoted_tag = "1.1.0-123+macos"
     allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, @promoted_tag])
   end
 end
@@ -560,6 +560,63 @@ describe Fastlane::Actions::TagReleaseAction do
         it "task_template = public-release-tag-failed, comment_template = public-release-tag-failed" do
           expect(subject).to eq(["public-release-tag-failed", "public-release-tag-failed"])
         end
+      end
+    end
+  end
+
+  describe Fastlane::Actions::TagReleaseAction do
+    describe ".template_arguments" do
+      let(:params) do
+        {
+          base_branch: "develop",
+          tag: "1.123.0-321+macos",
+          promoted_tag: "1.123.0-321",
+          tag_created: false,
+          latest_public_release_tag: "1.122.0",
+          platform: "macos",
+          is_prerelease: true
+        }
+      end
+  
+      let(:constants) do
+        {
+          repo_name: "org/repo",
+          dmg_url_prefix: "https://example.com/"
+        }
+      end
+  
+      before do
+        allow(Fastlane::Action).to receive(:other_action).and_return(double(git_branch: "feature-branch"))
+        Fastlane::Actions::TagReleaseAction.instance_variable_set(:@constants, constants)
+      end
+  
+      it "returns correct template arguments for macOS release" do
+        expected_result = {
+          "base_branch" => "develop",
+          "branch" => "feature-branch",
+          "tag" => "1.123.0-321+macos",
+          "promoted_tag" => "1.123.0-321",
+          "release_url" => "https://github.com/org/repo/releases/tag/1.123.0-321+macos",
+          "last_release_tag" => "1.122.0",
+          "dmg_url" => "https://example.com/duckduckgo-1.123.0.321.dmg"
+        }
+  
+        result = Fastlane::Actions::TagReleaseAction.template_arguments(params)
+        expect(result).to eq(expected_result)
+      end
+  
+      it "omits last_release_tag if tag_created is true" do
+        params[:tag_created] = true
+        result = Fastlane::Actions::TagReleaseAction.template_arguments(params)
+  
+        expect(result).not_to have_key("last_release_tag")
+      end
+  
+      it "handles prerelease version correctly" do
+        expected_dmg_url = "https://example.com/duckduckgo-1.123.0.321.dmg"
+  
+        result = Fastlane::Actions::TagReleaseAction.template_arguments(params)
+        expect(result["dmg_url"]).to eq(expected_dmg_url)
       end
     end
   end

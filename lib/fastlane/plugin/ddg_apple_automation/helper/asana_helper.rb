@@ -422,14 +422,9 @@ module Fastlane
       end
 
       def self.get_task_ids_from_git_log(platform, from_ref, to_ref = "HEAD")
-        platform_path = case platform.downcase
-                        when "ios" then "iOS"
-                        when "macos" then "macOS"
-                        when "bsk" then "BSK"
-                        else platform
-                        end
+        platform_paths = platform.downcase == "ios" ? ["iOS/", "BrowserServicesKit/"] : ["macOS/", "BrowserServicesKit/"]
 
-        git_log = `git log #{from_ref}..#{to_ref} -- #{platform_path}/`
+        git_log = `git log #{from_ref}..#{to_ref} -- #{platform_paths.join(' ')}`
 
         git_log
           .gsub("\n", " ")

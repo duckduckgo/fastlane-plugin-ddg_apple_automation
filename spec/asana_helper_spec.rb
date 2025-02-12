@@ -577,14 +577,14 @@ commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
     Documentation](https://app.asana.com/0/1202500774821704/1204012835277482/f)
       LOG
 
-      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- iOS/").and_return(git_log)
+      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- iOS/ BrowserServicesKit/").and_return(git_log)
 
       task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("ios", "v1.0.0")
       expect(task_ids).to eq(["1208700893044577", "1208589738926535", "1208804405760977"])
     end
 
     it "returns an empty array if no task IDs are found" do
-      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- macOS/").and_return("No tasks here.")
+      allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- macOS/ BrowserServicesKit/").and_return("No tasks here.")
 
       task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("macos", "v1.0.0")
       expect(task_ids).to eq([])
