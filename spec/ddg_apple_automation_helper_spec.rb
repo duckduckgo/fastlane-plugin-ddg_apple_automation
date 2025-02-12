@@ -28,26 +28,50 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   describe "#compute_tag" do
     describe "when is prerelease" do
       let(:is_prerelease) { true }
+      let(:platform) { nil }
 
       it "computes tag and returns nil promoted tag" do
         allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
         allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
-        expect(compute_tag(is_prerelease)).to eq(["1.0.0-123", nil])
+        expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0-123", nil])
       end
     end
 
     describe "when is public release" do
       let(:is_prerelease) { false }
+      let(:platform) { nil }
 
       it "computes tag and promoted tag" do
         allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
         allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
-        expect(compute_tag(is_prerelease)).to eq(["1.0.0", "1.0.0-123"])
+        expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0", "1.0.0-123"])
       end
     end
 
-    def compute_tag(is_prerelease)
-      Fastlane::Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease)
+    describe "when is prerelease and includes platform suffix" do
+      let(:is_prerelease) { true }
+      let(:platform) { 'suffix' }
+
+      it "computes tag and returns nil promoted tag" do
+        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0-123+suffix", nil])
+      end
+    end
+
+    describe "when is public release and includes platform suffix" do
+      let(:is_prerelease) { false }
+      let(:platform) { 'suffix' }
+
+      it "computes tag and returns nil promoted tag" do
+        allow(File).to receive(:read).with("Configuration/Version.xcconfig").and_return("MARKETING_VERSION = 1.0.0")
+        allow(File).to receive(:read).with("Configuration/BuildNumber.xcconfig").and_return("CURRENT_PROJECT_VERSION = 123")
+        expect(compute_tag(is_prerelease, platform)).to eq(["1.0.0+suffix", "1.0.0-123+suffix"])
+      end
+    end
+
+    def compute_tag(is_prerelease, platform)
+      Fastlane::Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
     end
   end
 
@@ -272,18 +296,17 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
   describe "#prepare_hotfix_branch" do
     it "prepares the hotfix branch for macos" do
       platform = "macos"
-      version = "1.0.0"
-      source_version = "1.0.0"
-      new_version = "1.0.1"
-      release_branch_name = "hotfix/1.0.1"
+      version = "1.0.0+#{platform}"
+      source_version = "1.0.0+#{platform}"
+      new_version = "1.0.1+#{platform}"
+      release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
       options = { some_option: "value" }
       github_token = "github-token"
 
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(@client).to receive(:latest_release).and_return(double(tag_name: source_version))
-      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("macOS")
+      allow(@client).to receive(:releases).and_return([double(tag_name: source_version, prerelease: false)])
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
         .with(version).and_return(source_version)
@@ -322,18 +345,17 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
     it "prepares the hotfix branch for ios" do
       platform = "ios"
-      version = "1.0.0"
-      source_version = "1.0.0"
-      new_version = "1.0.1"
-      release_branch_name = "hotfix/1.0.1"
+      version = "1.0.0+#{platform}"
+      source_version = "1.0.0+#{platform}"
+      new_version = "1.0.1+#{platform}"
+      release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
       options = { some_option: "value" }
       github_token = "github-token"
 
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(@client).to receive(:latest_release).and_return(double(tag_name: source_version))
-      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
+      allow(@client).to receive(:releases).and_return([double(tag_name: source_version, prerelease: false)])
 
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_version_exists)
         .with(version).and_return(source_version)

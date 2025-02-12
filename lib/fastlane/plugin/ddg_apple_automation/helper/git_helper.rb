@@ -7,15 +7,8 @@ module Fastlane
 
   module Helper
     class GitHelper
-      def self.repo_name(platform)
-        case platform
-        when "ios"
-          "duckduckgo/ios"
-        when "macos"
-          "duckduckgo/macos-browser"
-        else
-          UI.user_error!("Unsupported platform: #{platform}")
-        end
+      def self.repo_name
+        "duckduckgo/apple-browsers"
       end
 
       def self.setup_git_user(name: "Dax the Duck", email: "dax@duckduckgo.com")
@@ -61,8 +54,8 @@ module Fastlane
         end
       end
 
-      def self.assert_branch_has_changes(release_branch)
-        latest_tag = `git describe --tags --abbrev=0`.chomp
+      def self.assert_branch_has_changes(release_branch, platform)
+        latest_tag = `git tag --sort=-v:refname | grep '+#{platform}' | head -n 1`.chomp
         latest_tag_sha = `git rev-parse "#{latest_tag}"^{}`.chomp
         release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
 
@@ -76,6 +69,31 @@ module Fastlane
                         .filter { |file| !file.match?(/^(:?\.github|scripts|fastlane)/) }
 
         changed_files.any?
+      end
+
+      def self.latest_release(repo_name, prerelease, platform, github_token)
+        client = Octokit::Client.new(access_token: github_token)
+
+        current_page = 1
+        page_size = 25
+
+        loop do
+          releases = client.releases(repo_name, per_page: page_size, page: current_page)
+          break if releases.empty?
+
+          # If `prerelease` is true, return the latest release that matches the platform regardless of whether it's public.
+          # If `prerelease` is false, then ensure that the release is public.
+          matching_release = releases.find do |release|
+            (prerelease || !release.prerelease) && (platform.nil? || release.tag_name.end_with?("+#{platform}"))
+          end
+
+          return matching_release if matching_release
+          break if releases.size < page_size
+
+          current_page += 1
+        end
+
+        return nil
       end
     end
   end

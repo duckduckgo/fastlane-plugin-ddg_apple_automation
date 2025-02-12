@@ -76,4 +76,108 @@ describe Fastlane::Helper::GitHelper do
       end
     end
   end
+
+  describe "#latest_release" do
+    subject { Fastlane::Helper::GitHelper.latest_release(repo_name, prerelease, platform, github_token) }
+
+    include_context "common setup"
+
+    context "when no releases matching platform are found" do
+      let(:platform) { "ios" }
+      let(:prerelease) { false }
+
+      before do
+        allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
+          [
+            double(tag_name: "2.0.0+macos", prerelease: false),
+            double(tag_name: "1.0.0+macos", prerelease: false)
+          ]
+        )
+      end
+
+      it "returns nil" do
+        expect(subject).to be_nil
+      end
+    end
+
+    context "when platform is not provided" do
+      let(:platform) { nil }
+
+      context "and prerelease is true" do
+        let(:prerelease) { true }
+
+        before do
+          allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
+            [
+              double(tag_name: "1.2.3-4", prerelease: true),
+              double(tag_name: "1.2.2-3", prerelease: true),
+              double(tag_name: "1.2.3", prerelease: false)
+            ]
+          )
+        end
+
+        it "returns the latest prerelease" do
+          expect(subject.tag_name).to eq("1.2.3-4")
+        end
+      end
+
+      context "and prerelease is false" do
+        let(:prerelease) { false }
+
+        before do
+          allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
+            [
+              double(tag_name: "2.0.0-1", prerelease: true),
+              double(tag_name: "1.0.0", prerelease: false),
+              double(tag_name: "1.0.0-1", prerelease: true)
+            ]
+          )
+        end
+
+        it "returns the latest full release" do
+          expect(subject.tag_name).to eq("1.0.0")
+        end
+      end
+    end
+
+    context "when platform is provided" do
+      let(:platform) { "ios" }
+
+      context "and prerelease is true" do
+        let(:prerelease) { true }
+
+        before do
+          allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
+            [
+              double(tag_name: "1.0.0-1+macos", prerelease: true),
+              double(tag_name: "2.0.0-1+ios", prerelease: true),
+              double(tag_name: "1.0.0-1+ios", prerelease: true)
+            ]
+          )
+        end
+
+        it "returns the latest prerelease with the platform suffix" do
+          expect(subject.tag_name).to eq("2.0.0-1+ios")
+        end
+      end
+
+      context "and prerelease is false" do
+        let(:prerelease) { false }
+
+        before do
+          allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
+            [
+              double(tag_name: "1.0.0+macos", prerelease: false),
+              double(tag_name: "1.0.0+ios", prerelease: false),
+              double(tag_name: "1.0.0-1+ios", prerelease: true)
+            ]
+          )
+        end
+
+        it "returns the latest full release with the platform suffix" do
+          expect(subject.tag_name).to eq("1.0.0+ios")
+        end
+      end
+    end
+  end
 end

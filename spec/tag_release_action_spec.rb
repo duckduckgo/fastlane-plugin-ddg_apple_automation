@@ -28,7 +28,7 @@ end
 shared_context "for prerelease" do
   before do
     @params[:is_prerelease] = true
-    @tag = "1.1.0-123"
+    @tag = "1.1.0-123+macos"
     @promoted_tag = nil
     allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, @promoted_tag])
   end
@@ -37,8 +37,8 @@ end
 shared_context "for public release" do
   before do
     @params[:is_prerelease] = false
-    @tag = "1.1.0"
-    @promoted_tag = "1.1.0-123"
+    @tag = "1.1.0+macos"
+    @promoted_tag = "1.1.0-123+macos"
     allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, @promoted_tag])
   end
 end
@@ -103,12 +103,13 @@ describe Fastlane::Actions::TagReleaseAction do
   end
 
   describe "#create_tag_and_github_release" do
-    subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], @params[:github_token]) }
+    let(:platform) { @params[:platform] }
+    subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], platform, @params[:github_token]) }
 
-    let (:latest_public_release) { double(tag_name: "1.0.0") }
+    let (:latest_public_release) { double(tag_name: "1.0.0+#{platform}", prerelease: false) }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
-    let (:octokit_client) { double(latest_release: latest_public_release) }
+    let (:octokit_client) { double(releases: [latest_public_release]) }
 
     shared_context "local setup" do
       before(:each) do
@@ -174,7 +175,7 @@ describe Fastlane::Actions::TagReleaseAction do
 
     shared_context "when failed to fetch latest GitHub release" do
       before do
-        allow(octokit_client).to receive(:latest_release).and_raise(StandardError)
+        allow(octokit_client).to receive(:releases).and_raise(StandardError)
       end
     end
 
@@ -222,8 +223,8 @@ describe Fastlane::Actions::TagReleaseAction do
     end
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/ios" },
-      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+      { name: "on ios", repo_name: "duckduckgo/apple-browsers" },
+      { name: "on macos", repo_name: "duckduckgo/apple-browsers" }
     ]
     release_type_contexts = ["for prerelease", "for public release"]
     tag_contexts = ["when failed to create tag", "when failed to push tag"]
@@ -272,8 +273,8 @@ describe Fastlane::Actions::TagReleaseAction do
     let (:other_action) { double(git_branch: branch) }
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/ios" },
-      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+      { name: "on ios", repo_name: "duckduckgo/apple-browsers" },
+      { name: "on macos", repo_name: "duckduckgo/apple-browsers" }
     ]
 
     include_context "common setup"
@@ -443,8 +444,8 @@ describe Fastlane::Actions::TagReleaseAction do
     end
 
     platform_contexts = [
-      { name: "on ios", repo_name: "duckduckgo/ios" },
-      { name: "on macos", repo_name: "duckduckgo/macos-browser" }
+      { name: "on ios", repo_name: "duckduckgo/apple-browsers" },
+      { name: "on macos", repo_name: "duckduckgo/apple-browsers" }
     ]
 
     shared_examples "populating tag, promoted_tag and release_url" do |repo_name|
@@ -559,6 +560,63 @@ describe Fastlane::Actions::TagReleaseAction do
         it "task_template = public-release-tag-failed, comment_template = public-release-tag-failed" do
           expect(subject).to eq(["public-release-tag-failed", "public-release-tag-failed"])
         end
+      end
+    end
+  end
+
+  describe Fastlane::Actions::TagReleaseAction do
+    describe ".template_arguments" do
+      let(:params) do
+        {
+          base_branch: "develop",
+          tag: "1.123.0-321+macos",
+          promoted_tag: "1.123.0-321",
+          tag_created: false,
+          latest_public_release_tag: "1.122.0",
+          platform: "macos",
+          is_prerelease: true
+        }
+      end
+
+      let(:constants) do
+        {
+          repo_name: "org/repo",
+          dmg_url_prefix: "https://example.com/"
+        }
+      end
+
+      before do
+        allow(Fastlane::Action).to receive(:other_action).and_return(double(git_branch: "feature-branch"))
+        Fastlane::Actions::TagReleaseAction.instance_variable_set(:@constants, constants)
+      end
+
+      it "returns correct template arguments for macOS release" do
+        expected_result = {
+          "base_branch" => "develop",
+          "branch" => "feature-branch",
+          "tag" => "1.123.0-321+macos",
+          "promoted_tag" => "1.123.0-321",
+          "release_url" => "https://github.com/org/repo/releases/tag/1.123.0-321+macos",
+          "last_release_tag" => "1.122.0",
+          "dmg_url" => "https://example.com/duckduckgo-1.123.0.321.dmg"
+        }
+
+        result = Fastlane::Actions::TagReleaseAction.template_arguments(params)
+        expect(result).to eq(expected_result)
+      end
+
+      it "omits last_release_tag if tag_created is true" do
+        params[:tag_created] = true
+        result = Fastlane::Actions::TagReleaseAction.template_arguments(params)
+
+        expect(result).not_to have_key("last_release_tag")
+      end
+
+      it "handles prerelease version correctly" do
+        expected_dmg_url = "https://example.com/duckduckgo-1.123.0.321.dmg"
+
+        result = Fastlane::Actions::TagReleaseAction.template_arguments(params)
+        expect(result["dmg_url"]).to eq(expected_dmg_url)
       end
     end
   end
