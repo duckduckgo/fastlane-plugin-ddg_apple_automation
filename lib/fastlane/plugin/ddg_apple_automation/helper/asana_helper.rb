@@ -421,6 +421,7 @@ module Fastlane
           .scan(%r{\bTask/Issue URL:\s*https://app\.asana\.com[/0-9f]+\b})
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
           .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
+          .uniq
       end
 
       def self.fetch_release_notes(release_task_id, asana_access_token, output_type: "asana")
