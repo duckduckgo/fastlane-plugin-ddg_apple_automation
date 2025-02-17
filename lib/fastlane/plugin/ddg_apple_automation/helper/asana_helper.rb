@@ -224,7 +224,7 @@ module Fastlane
         UI.success("Latest public release: #{latest_public_release.tag_name}")
 
         UI.message("Extracting task IDs from git log since #{latest_public_release.tag_name} release")
-        task_ids = get_task_ids_from_git_log(params[:platform], latest_public_release.tag_name)
+        task_ids = get_task_ids_from_git_log(latest_public_release.tag_name)
         UI.success("#{task_ids.count} task(s) found.")
 
         UI.message("Fetching release notes from Asana release task (#{asana_task_url(params[:release_task_id])})")
@@ -411,10 +411,8 @@ module Fastlane
                .gsub(%r{<br\s*/?>}, "\n")                  # replace <br> tags with newlines
       end
 
-      def self.get_task_ids_from_git_log(platform, from_ref, to_ref = "HEAD")
-        platform_paths = platform.downcase == "ios" ? ["iOS/", "BrowserServicesKit/"] : ["macOS/", "BrowserServicesKit/"]
-
-        git_log = `git log #{from_ref}..#{to_ref} -- #{platform_paths.join(' ')}`
+      def self.get_task_ids_from_git_log(from_ref, to_ref = "HEAD")
+        git_log = `git log #{from_ref}..#{to_ref} -- ./ ../BrowserServicesKit/`
 
         git_log
           .gsub("\n", " ")
