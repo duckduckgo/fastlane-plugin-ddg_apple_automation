@@ -40,6 +40,10 @@ describe Fastlane::Helper::AsanaHelper do
         expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999")).to eq("9999")
       end
 
+      it "extracts task ID when subtask is present" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999/subtask/0001")).to eq("9999")
+      end
+
       it "extracts task ID when project is missing in the URL" do
         expect(extract_asana_task_id("https://app.asana.com/1/1234/task/9999")).to eq("9999")
       end
