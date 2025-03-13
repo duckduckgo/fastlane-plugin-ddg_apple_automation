@@ -576,6 +576,30 @@ commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
 #{'    '}
     Task/Issue URL: https://app.asana.com/0/1202406491309510/1208589738926535/f
 
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/task/1208589738999999
+
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/task/1208589738888888?focus=true
+
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/project/123/task/1208589738777777?focus=true
+
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/project/123/task/1208589738666666/subtask/527?focus=true
+
 commit e83fd007c0bdf054658068a79f5b7ea45d846468
 
     Receive privacy config updates in AddressBarModel on main thread (#3574)
@@ -613,7 +637,15 @@ commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
       allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- ./ ../BrowserServicesKit/").and_return(git_log)
 
       task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
-      expect(task_ids).to eq(["1208700893044577", "1208589738926535", "1208804405760977"])
+      expect(task_ids).to eq([
+                               "1208700893044577",
+                               "1208589738926535",
+                               "1208589738999999",
+                               "1208589738888888",
+                               "1208589738777777",
+                               "1208589738666666",
+                               "1208804405760977"
+                             ])
     end
 
     it "returns an empty array if no task IDs are found" do
