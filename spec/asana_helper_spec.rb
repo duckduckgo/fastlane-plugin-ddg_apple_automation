@@ -17,24 +17,40 @@ describe Fastlane::Helper::AsanaHelper do
   end
 
   describe "#extract_asana_task_id" do
-    it "extracts task ID" do
-      expect(extract_asana_task_id("https://app.asana.com/0/0/0")).to eq("0")
+    context "v0 task URL" do
+      it "extracts task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/0/0/0")).to eq("0")
+      end
+
+      it "extracts task ID when project ID is non-zero" do
+        expect(extract_asana_task_id("https://app.asana.com/0/753241/9999")).to eq("9999")
+      end
+
+      it "extracts long task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/0/0/12837864576817392")).to eq("12837864576817392")
+      end
+
+      it "extracts task ID from a URL in focused mode" do
+        expect(extract_asana_task_id("https://app.asana.com/0/0/1234/f")).to eq("1234")
+      end
     end
 
-    it "extracts task ID when project ID is non-zero" do
-      expect(extract_asana_task_id("https://app.asana.com/0/753241/9999")).to eq("9999")
-    end
+    context "v1 task URL" do
+      it "extracts task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999")).to eq("9999")
+      end
 
-    it "extracts task ID when first digit is non-zero" do
-      expect(extract_asana_task_id("https://app.asana.com/4/753241/9999")).to eq("9999")
-    end
+      it "extracts task ID when project is missing in the URL" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/task/9999")).to eq("9999")
+      end
 
-    it "extracts long task ID" do
-      expect(extract_asana_task_id("https://app.asana.com/0/0/12837864576817392")).to eq("12837864576817392")
-    end
+      it "extracts long task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/task/12837864576817392")).to eq("12837864576817392")
+      end
 
-    it "extracts task ID from a URL with a trailing /f" do
-      expect(extract_asana_task_id("https://app.asana.com/0/0/1234/f")).to eq("1234")
+      it "extracts task ID from a URL in focused mode" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999?focused=true")).to eq("9999")
+      end
     end
 
     it "sets GHA output" do
@@ -46,7 +62,7 @@ describe Fastlane::Helper::AsanaHelper do
 
     it "fails when garbage is passed" do
       expect(Fastlane::UI).to receive(:user_error!)
-        .with("URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_TASK_URL_REGEX})")
+        .with("URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_V0_TASK_URL_REGEX} or #{Fastlane::Helper::AsanaHelper::ASANA_V1_TASK_URL_REGEX})")
 
       extract_asana_task_id("not a URL")
     end
