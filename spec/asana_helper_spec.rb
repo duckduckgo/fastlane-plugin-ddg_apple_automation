@@ -17,24 +17,44 @@ describe Fastlane::Helper::AsanaHelper do
   end
 
   describe "#extract_asana_task_id" do
-    it "extracts task ID" do
-      expect(extract_asana_task_id("https://app.asana.com/0/0/0")).to eq("0")
+    context "v0 task URL" do
+      it "extracts task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/0/0/0")).to eq("0")
+      end
+
+      it "extracts task ID when project ID is non-zero" do
+        expect(extract_asana_task_id("https://app.asana.com/0/753241/9999")).to eq("9999")
+      end
+
+      it "extracts long task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/0/0/12837864576817392")).to eq("12837864576817392")
+      end
+
+      it "extracts task ID from a URL in focused mode" do
+        expect(extract_asana_task_id("https://app.asana.com/0/0/1234/f")).to eq("1234")
+      end
     end
 
-    it "extracts task ID when project ID is non-zero" do
-      expect(extract_asana_task_id("https://app.asana.com/0/753241/9999")).to eq("9999")
-    end
+    context "v1 task URL" do
+      it "extracts task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999")).to eq("9999")
+      end
 
-    it "extracts task ID when first digit is non-zero" do
-      expect(extract_asana_task_id("https://app.asana.com/4/753241/9999")).to eq("9999")
-    end
+      it "extracts task ID when subtask is present" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999/subtask/0001")).to eq("9999")
+      end
 
-    it "extracts long task ID" do
-      expect(extract_asana_task_id("https://app.asana.com/0/0/12837864576817392")).to eq("12837864576817392")
-    end
+      it "extracts task ID when project is missing in the URL" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/task/9999")).to eq("9999")
+      end
 
-    it "extracts task ID from a URL with a trailing /f" do
-      expect(extract_asana_task_id("https://app.asana.com/0/0/1234/f")).to eq("1234")
+      it "extracts long task ID" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/task/12837864576817392")).to eq("12837864576817392")
+      end
+
+      it "extracts task ID from a URL in focused mode" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999?focused=true")).to eq("9999")
+      end
     end
 
     it "sets GHA output" do
@@ -46,7 +66,7 @@ describe Fastlane::Helper::AsanaHelper do
 
     it "fails when garbage is passed" do
       expect(Fastlane::UI).to receive(:user_error!)
-        .with("URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_TASK_URL_REGEX})")
+        .with("URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_V0_TASK_URL_REGEX} or #{Fastlane::Helper::AsanaHelper::ASANA_V1_TASK_URL_REGEX})")
 
       extract_asana_task_id("not a URL")
     end
@@ -556,6 +576,30 @@ commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
 #{'    '}
     Task/Issue URL: https://app.asana.com/0/1202406491309510/1208589738926535/f
 
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/task/1208589738999999
+
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/task/1208589738888888?focus=true
+
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/project/123/task/1208589738777777?focus=true
+
+commit 7202ff2597d21db57fd6dc9a295e11991c81b3e7
+
+    Hide continue setup cards after 1 week (#3471)
+#{'    '}
+    Task/Issue URL: https://app.asana.com/1/1552213/project/123/task/1208589738666666/subtask/527?focus=true
+
 commit e83fd007c0bdf054658068a79f5b7ea45d846468
 
     Receive privacy config updates in AddressBarModel on main thread (#3574)
@@ -593,7 +637,15 @@ commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
       allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- ./ ../BrowserServicesKit/").and_return(git_log)
 
       task_ids = Fastlane::Helper::AsanaHelper.get_task_ids_from_git_log("v1.0.0")
-      expect(task_ids).to eq(["1208700893044577", "1208589738926535", "1208804405760977"])
+      expect(task_ids).to eq([
+                               "1208700893044577",
+                               "1208589738926535",
+                               "1208589738999999",
+                               "1208589738888888",
+                               "1208589738777777",
+                               "1208589738666666",
+                               "1208804405760977"
+                             ])
     end
 
     it "returns an empty array if no task IDs are found" do

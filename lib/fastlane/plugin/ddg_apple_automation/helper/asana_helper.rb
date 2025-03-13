@@ -15,7 +15,12 @@ module Fastlane
       ASANA_API_URL = "https://app.asana.com/api/1.0"
       ASANA_TASK_URL_TEMPLATE = "https://app.asana.com/0/0/%s/f"
       ASANA_TAG_URL_TEMPLATE = "https://app.asana.com/0/%s/list"
-      ASANA_TASK_URL_REGEX = %r{https://app.asana.com/[0-9]/[0-9]+/([0-9]+)(:/f)?}
+
+      # https://app.asana.com/0/<project_id>/<task_id>
+      ASANA_V0_TASK_URL_REGEX = %r{https://app.asana.com/0/[0-9]+/([0-9]+)(?:/f)?}
+      # https://app.asana.com/<url_format_version>/<workspace_id>/<object_name>/<object_id>/<subobject_name>/<subobject_id>
+      ASANA_V1_TASK_URL_REGEX = %r{https://app.asana.com/1/[0-9]+(?:/[0-9a-z/]*)?/task/([0-9]+)(:?/[0-9a-z/]*)?(?:\?focus=true)?}
+
       ASANA_WORKSPACE_ID = "137249556945"
 
       IOS_HOTFIX_TASK_TEMPLATE_ID = "1209242676101485"
@@ -53,14 +58,14 @@ module Fastlane
       end
 
       def self.extract_asana_task_id(task_url, set_gha_output: true)
-        if (match = task_url.match(ASANA_TASK_URL_REGEX))
+        if (match = task_url.match(ASANA_V0_TASK_URL_REGEX)) || (match = task_url.match(ASANA_V1_TASK_URL_REGEX))
           task_id = match[1]
           if set_gha_output
             Helper::GitHubActionsHelper.set_output("asana_task_id", task_id)
           end
           task_id
         else
-          UI.user_error!("URL has incorrect format (attempted to match #{ASANA_TASK_URL_REGEX})")
+          UI.user_error!("URL has incorrect format (attempted to match #{ASANA_V0_TASK_URL_REGEX} or #{ASANA_V1_TASK_URL_REGEX})")
         end
       end
 
@@ -416,7 +421,7 @@ module Fastlane
 
         git_log
           .gsub("\n", " ")
-          .scan(%r{\bTask/Issue URL:\s*https://app\.asana\.com[/0-9f]+\b})
+          .scan(%r{\bTask/Issue URL:\s*https://app\.asana\.com[/0-9a-z]+\b})
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
           .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
           .uniq
