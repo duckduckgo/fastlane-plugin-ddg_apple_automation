@@ -52,6 +52,10 @@ describe Fastlane::Helper::AsanaHelper do
         expect(extract_asana_task_id("https://app.asana.com/1/1234/task/12837864576817392")).to eq("12837864576817392")
       end
 
+      it "extracts item ID from an inbox URL" do
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/inbox/1201462763372724/item/1209665761833605/story/1209665761833609")).to eq("1209665761833605")
+      end
+
       it "extracts task ID from a URL in focused mode" do
         expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999?focused=true")).to eq("9999")
       end
@@ -66,7 +70,7 @@ describe Fastlane::Helper::AsanaHelper do
 
     it "fails when garbage is passed" do
       expect(Fastlane::UI).to receive(:user_error!)
-        .with("URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_V0_TASK_URL_REGEX} or #{Fastlane::Helper::AsanaHelper::ASANA_V1_TASK_URL_REGEX})")
+        .with("URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_V0_TASK_URL_REGEX}, #{Fastlane::Helper::AsanaHelper::ASANA_V1_TASK_URL_REGEX} or #{Fastlane::Helper::AsanaHelper::ASANA_V1_INBOX_URL_REGEX")
 
       extract_asana_task_id("not a URL")
     end
