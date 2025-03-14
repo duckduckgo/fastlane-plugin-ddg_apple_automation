@@ -20,7 +20,7 @@ module Fastlane
       ASANA_V0_TASK_URL_REGEX = %r{https://app.asana.com/0/[0-9]+/([0-9]+)(?:/f)?}
       # https://app.asana.com/<url_format_version>/<workspace_id>/<object_name>/<object_id>/<subobject_name>/<subobject_id>
       ASANA_V1_TASK_URL_REGEX = %r{https://app.asana.com/1/[0-9]+(?:/[0-9a-z/]*)?/task/([0-9]+)(:?/[0-9a-z/]*)?(?:\?focus=true)?}
-      ASANA_V1_INBOX_URL_REGEX = %r{https://app.asana.com/1/[0-9]+/inbox/([0-9]+)/item/([0-9]+)/story/([0-9]+)}
+      ASANA_V1_INBOX_URL_REGEX = %r{https://app.asana.com/1/[0-9]+/inbox/[0-9]+/item/([0-9]+)/story/([0-9]+)}
 
       ASANA_WORKSPACE_ID = "137249556945"
 

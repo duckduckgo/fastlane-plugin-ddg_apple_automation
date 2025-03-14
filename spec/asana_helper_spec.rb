@@ -69,9 +69,11 @@ describe Fastlane::Helper::AsanaHelper do
     end
 
     it "fails when garbage is passed" do
-      expect(Fastlane::UI).to receive(:user_error!)
-        .with("URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_V0_TASK_URL_REGEX}, #{Fastlane::Helper::AsanaHelper::ASANA_V1_TASK_URL_REGEX} or #{Fastlane::Helper::AsanaHelper::ASANA_V1_INBOX_URL_REGEX")
-
+      expect(Fastlane::UI).to receive(:user_error!).with(
+        "URL has incorrect format (attempted to match #{Fastlane::Helper::AsanaHelper::ASANA_V0_TASK_URL_REGEX}, " \
+        "#{Fastlane::Helper::AsanaHelper::ASANA_V1_TASK_URL_REGEX} or " \
+        "#{Fastlane::Helper::AsanaHelper::ASANA_V1_INBOX_URL_REGEX})"
+      )
       extract_asana_task_id("not a URL")
     end
 
