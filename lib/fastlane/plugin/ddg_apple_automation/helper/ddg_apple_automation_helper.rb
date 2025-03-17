@@ -5,6 +5,7 @@ require "rexml/document"
 require "semantic"
 require_relative "github_actions_helper"
 require_relative "git_helper"
+require_relative "perf_testing_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -227,19 +228,7 @@ module Fastlane
       end
 
       def self.update_embedded_files(platform, other_action)
-        tds_perf_test_result = other_action.tds_perf_test(
-          ut_file_name: "your_ut_file_name.json",
-          ut_url: "https://example.com/your_ut_file.json",
-          ref_file_name: "your_ref_file_name.json",
-          ref_url: "https://example.com/your_ref_file.json"
-        )
-  
-        unless tds_perf_test_result
-          UI.important("TDS performance tests failed. Proceeding with caution.")
-          # Optionally, you could abort here if you want to make passing tests mandatory
-          # UI.abort_with_message!("TDS performance tests failed. Aborting embedded file update.")
-        end
-        
+        Helper::PerfTestingHelper.test_tds_embedded_files(other_action)
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
