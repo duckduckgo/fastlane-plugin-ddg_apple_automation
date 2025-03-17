@@ -5,7 +5,6 @@ require "rexml/document"
 require "semantic"
 require_relative "github_actions_helper"
 require_relative "git_helper"
-require_relative "perf_testing_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -228,7 +227,11 @@ module Fastlane
       end
 
       def self.update_embedded_files(platform, other_action)
-        Helper::PerfTestingHelper.test_tds_embedded_files(other_action)
+        tds_perf_test_result = other_action.tds_perf_test
+
+        unless tds_perf_test_result
+          UI.important("TDS performance tests failed. Proceeding with caution.")
+        end
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified

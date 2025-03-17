@@ -108,14 +108,6 @@ describe Fastlane::Actions::TdsPerfTestAction do
         :ref_url
       )
     end
-
-    it 'marks all parameters as required' do
-      options = Fastlane::Actions::TdsPerfTestAction.available_options
-
-      options.each do |option|
-        expect(option.optional).to be false
-      end
-    end
   end
 
   describe '#is_supported?' do

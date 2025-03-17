@@ -8,8 +8,39 @@ require_relative "../helper/git_helper"
 module Fastlane
   module Actions
     class TdsPerfTestAction < Action
+      # Define platform-specific constants
+      IOS_TEST_PARAMS = {
+        ut_file_name: "ios-tds.json",
+        ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v5/current/ios-tds.json",
+        ref_file_name: "trackerData.json",
+        ref_url: "https://github.com/duckduckgo/apple-browsers/tree/main/iOS/Core"
+      }.freeze
+
+      MAC_TEST_PARAMS = {
+        ut_file_name: "macos-tds.json",
+        ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v6/current/",
+        ref_file_name: "trackerData.json",
+        ref_url: "https://github.com/duckduckgo/apple-browsers/tree/main/macOS/DuckDuckGo/ContentBlocker"
+      }.freeze
+
       def self.run(params)
         UI.message("Starting TDS Performance Testing...")
+
+        # Determine platform and set default parameters if needed
+        platform = lane_context[SharedValues::PLATFORM_NAME]
+        default_params = platform == :ios ? IOS_TEST_PARAMS : MAC_TEST_PARAMS
+
+        # Use provided parameters or defaults
+        ut_file_name = params[:ut_file_name] || default_params[:ut_file_name]
+        ut_url = params[:ut_url] || default_params[:ut_url]
+        ref_file_name = params[:ref_file_name] || default_params[:ref_file_name]
+        ref_url = params[:ref_url] || default_params[:ref_url]
+
+        UI.message("Using TDS parameters for #{platform} platform:")
+        UI.message("  Under-test file: #{ut_file_name}")
+        UI.message("  Under-test URL: #{ut_url}")
+        UI.message("  Reference file: #{ref_file_name}")
+        UI.message("  Reference URL: #{ref_url}")
 
         # Create temporary directory
         tmp_dir = "#{ENV.fetch('TMPDIR', nil)}/tds-perf-testing"
@@ -27,10 +58,10 @@ module Fastlane
               # Set environment variables and run test
               test_command = [
                 "env",
-                "TEST_RUNNER_TDS_UT_FILE_NAME=#{params[:ut_file_name]}",
-                "TEST_RUNNER_TDS_UT_URL=#{params[:ut_url]}",
-                "TEST_RUNNER_TDS_REF_FILE_NAME=#{params[:ref_file_name]}",
-                "TEST_RUNNER_TDS_REF_URL=#{params[:ref_url]}",
+                "TEST_RUNNER_TDS_UT_FILE_NAME=#{ut_file_name}",
+                "TEST_RUNNER_TDS_UT_URL=#{ut_url}",
+                "TEST_RUNNER_TDS_REF_FILE_NAME=#{ref_file_name}",
+                "TEST_RUNNER_TDS_REF_URL=#{ref_url}",
                 "xcodebuild test-without-building",
                 "-scheme TrackerRadarKit",
                 "-destination 'platform=macOS'",
@@ -58,7 +89,7 @@ module Fastlane
       end
 
       def self.authors
-        ["Your Name"]
+        ["Lorenzo Mattei"]
       end
 
       def self.available_options
@@ -68,28 +99,28 @@ module Fastlane
             env_name: "TEST_RUNNER_TDS_UT_FILE_NAME",
             description: "The file name for the under-test TDS",
             type: String,
-            optional: false
+            optional: true
           ),
           FastlaneCore::ConfigItem.new(
             key: :ut_url,
             env_name: "TEST_RUNNER_TDS_UT_URL",
             description: "The URL for the under-test TDS",
             type: String,
-            optional: false
+            optional: true
           ),
           FastlaneCore::ConfigItem.new(
             key: :ref_file_name,
             env_name: "TEST_RUNNER_TDS_REF_FILE_NAME",
             description: "The file name for the reference TDS",
             type: String,
-            optional: false
+            optional: true
           ),
           FastlaneCore::ConfigItem.new(
             key: :ref_url,
             env_name: "TEST_RUNNER_TDS_REF_URL",
             description: "The URL for the reference TDS",
             type: String,
-            optional: false
+            optional: true
           )
         ]
       end
