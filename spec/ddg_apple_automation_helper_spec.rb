@@ -410,6 +410,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Actions).to receive(:sh).with("git", "status").and_return(git_status_output)
       allow(Fastlane::Actions).to receive(:sh).with("git", "add", "Core/trackerData.json").and_return("")
       allow(Fastlane::Actions).to receive(:sh).with("git", "commit", "-m", "Update embedded files").and_return("")
+      allow(other_action).to receive(:tds_perf_test).and_return(true)
       expect(other_action).to receive(:ensure_git_status_clean)
       described_class.update_embedded_files(platform, other_action)
       expect(Fastlane::Actions).to have_received(:sh).with("git", "status")
