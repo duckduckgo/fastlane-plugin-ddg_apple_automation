@@ -227,11 +227,7 @@ module Fastlane
       end
 
       def self.update_embedded_files(platform, other_action)
-        tds_perf_test_result = other_action.tds_perf_test
-
-        unless tds_perf_test_result
-          UI.important("TDS performance tests failed. Proceeding with caution.")
-        end
+        pre_update_embedded_tests
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
@@ -253,6 +249,14 @@ module Fastlane
           modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
           Actions.sh('git', 'commit', '-m', 'Update embedded files')
           other_action.ensure_git_status_clean
+        end
+      end
+
+      def pre_update_embedded_tests
+        tds_perf_test_result = other_action.tds_perf_test
+
+        unless tds_perf_test_result
+          UI.important("TDS performance tests failed. Proceeding with caution.")
         end
       end
 
