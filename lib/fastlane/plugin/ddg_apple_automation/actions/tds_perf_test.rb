@@ -13,14 +13,14 @@ module Fastlane
         ut_file_name: "ios-tds.json",
         ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v5/current/ios-tds.json",
         ref_file_name: "trackerData.json",
-        ref_url: "https://github.com/duckduckgo/apple-browsers/tree/main/iOS/Core"
+        ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/iOS/Core/"
       }.freeze
 
       MAC_TEST_PARAMS = {
         ut_file_name: "macos-tds.json",
         ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v6/current/",
         ref_file_name: "trackerData.json",
-        ref_url: "https://github.com/duckduckgo/apple-browsers/tree/main/macOS/DuckDuckGo/ContentBlocker"
+        ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/macOS/DuckDuckGo/ContentBlocker/"
       }.freeze
 
       def self.run(params)
@@ -55,6 +55,14 @@ module Fastlane
 
             # Navigate to cloned repository
             Dir.chdir("TrackerRadarKit") do
+              # Build for testing 
+              begin
+                Actions.sh("xcodebuild build-for-testing -scheme TrackerRadarKit -destination 'platform=macOS'")
+              rescue StandardError => e
+                UI.error("Failed to build for testing: #{e}")   
+                false
+              end
+
               # Set environment variables and run test
               test_command = [
                 "env",
