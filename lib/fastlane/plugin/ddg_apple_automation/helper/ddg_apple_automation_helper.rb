@@ -5,16 +5,12 @@ require "rexml/document"
 require "semantic"
 require_relative "github_actions_helper"
 require_relative "git_helper"
+require_relative "embedded_files_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
 
   module Helper
-    # This class exceeds the maximum allowed length, so we should refactor it to reduce complexity.
-    # The rubocop exception has been added in a PR which only added one line to the class, so the
-    # work to refactor could be hardly justified, but we should prioritise refactoring in a dedicated
-    # PR or as soon as we touch this file with bigger changes.
-    # rubocop:disable Metrics/ClassLength
     class DdgAppleAutomationHelper
       DEFAULT_BRANCH = 'main'
       RELEASE_BRANCH = 'release'
@@ -26,21 +22,6 @@ module Fastlane
       BUILD_NUMBER_CONFIG_PATH = 'Configuration/BuildNumber.xcconfig'
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
       BUILD_NUMBER_CONFIG_DEFINITION = 'CURRENT_PROJECT_VERSION'
-
-      UPGRADABLE_EMBEDDED_FILES = {
-        "ios" => Set.new([
-                           'Core/AppPrivacyConfigurationDataProvider.swift',
-                           'Core/AppTrackerDataSetProvider.swift',
-                           'Core/ios-config.json',
-                           'Core/trackerData.json'
-                         ]),
-        "macos" => Set.new([
-                             'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
-                             'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
-                             'DuckDuckGo/ContentBlocker/trackerData.json',
-                             'DuckDuckGo/ContentBlocker/macos-config.json'
-                           ])
-      }.freeze
 
       def self.release_branch_name(platform, version)
         "#{RELEASE_BRANCH}/#{platform}/#{version}"
@@ -232,37 +213,7 @@ module Fastlane
       end
 
       def self.update_embedded_files(platform, other_action)
-        pre_update_embedded_tests
-        Actions.sh("./scripts/update_embedded.sh")
-
-        # Verify no unexpected files were modified
-        git_status = Actions.sh('git', 'status')
-        modified_files = git_status.split("\n").select { |line| line.include?('modified:') }
-        modified_files = modified_files.map { |str| str.split(':')[1].strip.delete_prefix('../') }
-
-        modified_files.each do |modified_file|
-          UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |s|
-            s.include?(modified_file)
-          end
-        end
-
-        # Run tests (CI will run them separately)
-        # run_tests(scheme: 'DuckDuckGo Privacy Browser') unless Helper.is_ci?
-
-        # Everything looks good: commit and push
-        unless modified_files.empty?
-          modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
-          Actions.sh('git', 'commit', '-m', 'Update embedded files')
-          other_action.ensure_git_status_clean
-        end
-      end
-
-      def pre_update_embedded_tests
-        tds_perf_test_result = other_action.tds_perf_test
-
-        unless tds_perf_test_result
-          UI.important("TDS performance tests failed. Proceeding with caution.")
-        end
+        Helper::EmbeddedFilesHelper.update_embedded_files(platform, other_action)
       end
 
       def self.increment_build_number(platform, options, other_action)
@@ -436,7 +387,6 @@ module Fastlane
       end
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end
 
 module FastlaneCore
