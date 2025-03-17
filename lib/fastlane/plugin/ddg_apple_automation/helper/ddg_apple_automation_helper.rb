@@ -10,6 +10,11 @@ module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
 
   module Helper
+    # This class exceeds the maximum allowed length, so we should refactor it to reduce complexity.
+    # The rubocop exception has been added in a PR which only added one line to the class, so the
+    # work to refactor could be hardly justified, but we should prioritise refactoring in a dedicated
+    # PR or as soon as we touch this file with bigger changes.
+    # rubocop:disable Metrics/ClassLength
     class DdgAppleAutomationHelper
       DEFAULT_BRANCH = 'main'
       RELEASE_BRANCH = 'release'
@@ -431,6 +436,7 @@ module Fastlane
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
 
 module FastlaneCore

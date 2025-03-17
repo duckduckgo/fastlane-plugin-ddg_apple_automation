@@ -55,11 +55,11 @@ module Fastlane
 
             # Navigate to cloned repository
             Dir.chdir("TrackerRadarKit") do
-              # Build for testing 
+              # Build for testing
               begin
                 Actions.sh("xcodebuild build-for-testing -scheme TrackerRadarKit -destination 'platform=macOS'")
               rescue StandardError => e
-                UI.error("Failed to build for testing: #{e}")   
+                UI.error("Failed to build for testing: #{e}")
                 false
               end
 
