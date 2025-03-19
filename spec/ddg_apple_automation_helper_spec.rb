@@ -518,7 +518,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")
     end
 
-    it "returns true when TDS performance tests fail" do      
+    it "returns true when TDS performance tests fail" do
       allow(Fastlane::Actions).to receive(:sh).with("./scripts/update_embedded.sh").and_return("")
       git_status_output = "On branch main\nmodified: Core/trackerData.json\n"
       allow(Fastlane::Actions).to receive(:sh).with("git", "status").and_return(git_status_output)
@@ -526,15 +526,15 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Actions).to receive(:sh).with("git", "commit", "-m", "Update embedded files").and_return("")
       allow(other_action).to receive(:tds_perf_test).and_return(false)
       allow(other_action).to receive(:ensure_git_status_clean)
-      
+
       result = described_class.update_embedded_files(platform, other_action)
-      
+
       expect(result).to eq(true)
       expect(Fastlane::Actions).to have_received(:sh).with("git", "status")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "Core/trackerData.json")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")
     end
-    
+
     it "returns false when TDS performance tests pass" do
       allow(Fastlane::Actions).to receive(:sh).with("./scripts/update_embedded.sh").and_return("")
       git_status_output = "On branch main\nmodified: Core/trackerData.json\n"
@@ -545,7 +545,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(other_action).to receive(:ensure_git_status_clean)
 
       result = described_class.update_embedded_files(platform, other_action)
-      
+
       expect(result).to eq(false)
       expect(Fastlane::Actions).to have_received(:sh).with("git", "status")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "Core/trackerData.json")

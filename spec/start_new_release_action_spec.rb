@@ -91,7 +91,6 @@ describe Fastlane::Actions::StartNewReleaseAction do
           allow(Fastlane::Actions::AsanaAddCommentAction).to receive(:run)
         end
         it 'warns about TDS performance tests failures' do
-          
           subject
           expect(Fastlane::Actions::AsanaAddCommentAction).to have_received(:run).with(
             hash_including(

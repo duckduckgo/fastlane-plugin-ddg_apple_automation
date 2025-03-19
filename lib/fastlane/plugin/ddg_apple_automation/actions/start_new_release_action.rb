@@ -1,6 +1,7 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "octokit"
+require_relative "asana_add_comment_action"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/git_helper"
@@ -33,10 +34,12 @@ module Fastlane
         options[:release_task_id] = release_task_id
 
         Helper::AsanaHelper.update_asana_tasks_for_internal_release(options) unless params[:is_hotfix]
-        Fastlane::Actions::AsanaAddCommentAction.run(
-          task_id: release_task_id,
-          comment: "TDS performance tests failed. Make sure to validate performance before releasing to public users."
-        ) if update_embedded_warning
+        if update_embedded_warning
+          Fastlane::Actions::AsanaAddCommentAction.run(
+            task_id: release_task_id,
+            comment: "TDS performance tests failed. Make sure to validate performance before releasing to public users."
+          )
+        end
       end
 
       def self.description
