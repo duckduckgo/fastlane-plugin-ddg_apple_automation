@@ -79,6 +79,28 @@ describe Fastlane::Actions::StartNewReleaseAction do
           )
         )
       end
+
+      it 'doesn\'t warn on TDS performance tests success' do
+        subject
+        expect(Fastlane::Actions::AsanaAddCommentAction).not_to receive(:run)
+      end
+
+      context "on TDS performance tests failure" do
+        before do
+          allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:prepare_release_branch).and_return(["release_branch_name", "1.1.0", true])
+          allow(Fastlane::Actions::AsanaAddCommentAction).to receive(:run)
+        end
+        it 'warns about TDS performance tests failures' do
+          
+          subject
+          expect(Fastlane::Actions::AsanaAddCommentAction).to have_received(:run).with(
+            hash_including(
+              task_id: "1234567890",
+              comment: include("TDS performance tests failed")
+            )
+          )
+        end
+      end
     end
 
     context "on macos" do

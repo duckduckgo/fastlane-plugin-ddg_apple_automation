@@ -127,7 +127,7 @@ module Fastlane
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
         create_release_branch(platform, new_version)
-        update_embedded_files(platform, other_action)
+        update_embedded_result = update_embedded_files(platform, other_action)
         if platform == "ios"
           # Any time we prepare a release branch for iOS the the build number should be reset to 0
           update_version_and_build_number_config(new_version, 0, other_action)
@@ -139,7 +139,7 @@ module Fastlane
         release_branch_name = release_branch_name(platform, new_version)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
-        return release_branch_name, new_version
+        return release_branch_name, new_version, update_embedded_result
       end
 
       def self.prepare_hotfix_branch(github_token, platform, other_action, options)
