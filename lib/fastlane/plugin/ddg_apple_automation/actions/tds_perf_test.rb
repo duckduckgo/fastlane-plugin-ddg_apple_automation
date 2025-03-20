@@ -11,7 +11,7 @@ module Fastlane
       # Define platform-specific constants
       IOS_TEST_PARAMS = {
         ut_file_name: "ios-tds.json",
-        ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v5/current/ios-tds.json",
+        ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v5/current/",
         ref_file_name: "trackerData.json",
         ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/iOS/Core/"
       }.freeze
