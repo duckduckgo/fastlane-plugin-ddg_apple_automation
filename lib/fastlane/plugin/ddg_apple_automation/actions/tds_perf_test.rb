@@ -1,6 +1,8 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "octokit"
+require "tmpdir"
+require "fileutils"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/git_helper"
@@ -43,10 +45,10 @@ module Fastlane
         UI.message("  Reference URL: #{ref_url}")
 
         # Create temporary directory
-        tmp_dir = "#{ENV.fetch('TMPDIR', nil)}/tds-perf-testing"
+        tmp_dir = File.join(Dir.tmpdir, "tds-perf-testing")
 
         begin
-          Actions.sh("mkdir -p \"#{tmp_dir}\"")
+          FileUtils.mkdir_p(tmp_dir)
 
           # Navigate to temp directory
           Dir.chdir(tmp_dir) do
@@ -88,7 +90,7 @@ module Fastlane
         ensure
           # Cleanup step - always executed regardless of success or failure
           UI.message("Cleaning up temporary test directory...")
-          Actions.sh("rm -rf \"#{tmp_dir}\"")
+          FileUtils.rm_rf(tmp_dir)
         end
       end
 
@@ -97,7 +99,7 @@ module Fastlane
       end
 
       def self.authors
-        ["Lorenzo Mattei"]
+        ["DuckDuckGo"]
       end
 
       def self.available_options

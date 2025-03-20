@@ -21,11 +21,11 @@ describe Fastlane::Actions::TdsPerfTestAction do
 
     let(:tmp_dir) { '/tmp/tds-perf-testing' }
     let(:test_command_pattern) { /xcodebuild test-without-building/ }
-    let(:cleanup_command) { "rm -rf \"#{tmp_dir}\"" }
 
     it 'creates the temporary directory' do
-      allow(Fastlane::Actions).to receive(:sh).and_return(true)
-      expect(Fastlane::Actions).to receive(:sh).with('mkdir -p "/tmp/tds-perf-testing"')
+      allow(Dir).to receive(:tmpdir).and_return('/tmp/')
+      allow(FileUtils).to receive(:mkdir_p).and_return(true)
+      expect(FileUtils).to receive(:mkdir_p).with('/tmp/tds-perf-testing')
 
       Fastlane::Actions::TdsPerfTestAction.run(test_params)
     end
@@ -58,8 +58,11 @@ describe Fastlane::Actions::TdsPerfTestAction do
     end
 
     it 'cleans up the temporary directory when tests pass' do
-      allow(Fastlane::Actions).to receive(:sh).and_return(true)
-      expect(Fastlane::Actions).to receive(:sh).with(cleanup_command)
+      allow(Dir).to receive(:tmpdir).and_return('/tmp/')
+      allow(FileUtils).to receive(:mkdir_p).and_return(true)
+      expect(FileUtils).to receive(:mkdir_p).with('/tmp/tds-perf-testing')
+      allow(FileUtils).to receive(:rm_rf).and_return(true)
+      expect(FileUtils).to receive(:rm_rf).with(tmp_dir)
 
       Fastlane::Actions::TdsPerfTestAction.run(test_params)
     end
@@ -67,12 +70,16 @@ describe Fastlane::Actions::TdsPerfTestAction do
     it 'cleans up the temporary directory when tests fail' do
       # Set up default success for all commands
       allow(Fastlane::Actions).to receive(:sh).and_return(true)
+      allow(FileUtils).to receive(:rm_rf).and_return(true)
+      allow(Dir).to receive(:tmpdir).and_return('/tmp/')
+      allow(FileUtils).to receive(:mkdir_p).and_return(true)
+      expect(FileUtils).to receive(:mkdir_p).with('/tmp/tds-perf-testing')
 
       # Make only the test command fail
       allow(Fastlane::Actions).to receive(:sh).with(test_command_pattern).and_raise("Test failed")
 
       # Ensure cleanup is still called and succeeds
-      expect(Fastlane::Actions).to receive(:sh).with(cleanup_command).and_return(true)
+      expect(FileUtils).to receive(:rm_rf).with(tmp_dir).and_return(true)
 
       Fastlane::Actions::TdsPerfTestAction.run(test_params)
     end

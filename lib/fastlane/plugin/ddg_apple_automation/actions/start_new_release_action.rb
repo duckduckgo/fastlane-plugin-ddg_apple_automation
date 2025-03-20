@@ -22,7 +22,7 @@ module Fastlane
             params[:github_token], params[:platform], other_action, options
           )
         else
-          release_branch_name, new_version, update_embedded_warning = Helper::DdgAppleAutomationHelper.prepare_release_branch(
+          release_branch_name, new_version, show_update_embedded_warning = Helper::DdgAppleAutomationHelper.prepare_release_branch(
             params[:platform], params[:version], other_action
           )
         end
@@ -34,10 +34,10 @@ module Fastlane
         options[:release_task_id] = release_task_id
 
         Helper::AsanaHelper.update_asana_tasks_for_internal_release(options) unless params[:is_hotfix]
-        if update_embedded_warning
-          Fastlane::Actions::AsanaAddCommentAction.run(
+        if show_update_embedded_warning
+          AsanaAddCommentAction.run(
             task_id: release_task_id,
-            comment: "TDS performance tests failed. Make sure to validate performance before releasing to public users."
+            comment: "TDS performance tests failed. Make sure to validate performance before releasing to public users. See https://app.asana.com/0/1204165176092271/1209729184622270/f"
           )
         end
       end

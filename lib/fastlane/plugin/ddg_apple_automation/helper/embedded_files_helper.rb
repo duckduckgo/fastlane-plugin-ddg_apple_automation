@@ -41,9 +41,6 @@ module Fastlane
           end
         end
 
-        # Run tests (CI will run them separately)
-        # run_tests(scheme: 'DuckDuckGo Privacy Browser') unless Helper.is_ci?
-
         # Everything looks good: commit and push
         unless modified_files.empty?
           modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
