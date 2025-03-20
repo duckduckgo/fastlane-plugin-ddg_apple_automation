@@ -188,6 +188,54 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
     end
 
+    it "prepares the release branch with version updates for macOS and returns update_embedded_warning" do
+      platform = "macos"
+      version = "1.0.0"
+      release_branch_name = "release/#{platform}/#{version}"
+      other_action = double("other_action")
+      options = { some_option: "value" }
+      github_token = "github-token"
+      update_embedded_warning = true
+
+      @client = double("Octokit::Client")
+      allow(Octokit::Client).to receive(:new).and_return(@client)
+      allow(@client).to receive(:latest_release).and_return(double(tag_name: version))
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
+      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("macOS")
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version)
+        .with(version).and_return(version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
+        .with(platform, version).and_return(release_branch_name)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
+        .with(platform, other_action).and_return(update_embedded_warning)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
+        .with(version, other_action)
+
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+
+      expect(other_action).to receive(:push_to_git_remote)
+
+      result_branch, result_version, result_warning = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
+        platform, version, other_action
+      )
+
+      expect(result_branch).to eq(release_branch_name)
+      expect(result_version).to eq(version)
+      expect(result_warning).to eq(update_embedded_warning)
+
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:code_freeze_prechecks)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_release_branch).with(platform, version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(version, other_action)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+    end
+
     it "prepares the release branch with version updates for iOS" do
       platform = "ios"
       version = "1.0.0"
@@ -228,6 +276,58 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
       expect(result_branch).to eq("release/ios/1.0.0")
       expect(result_version).to eq(version)
+
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:code_freeze_prechecks)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_release_branch).with(platform, version)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(version, 0, other_action)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_root_plist_version).with(version, other_action)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+    end
+
+    it "prepares the release branch with version updates for iOS and returns update_embedded_warning" do
+      platform = "ios"
+      version = "1.0.0"
+      release_branch_name = "release/#{platform}/#{version}"
+      other_action = double("other_action")
+      options = { some_option: "value" }
+      github_token = "github-token"
+      update_embedded_warning = true
+
+      @client = double("Octokit::Client")
+      allow(Octokit::Client).to receive(:new).and_return(@client)
+      allow(@client).to receive(:latest_release).and_return(double(tag_name: version))
+      allow(Fastlane::Helper).to receive(:is_ci?).and_return(false)
+      allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:code_freeze_prechecks)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:validate_new_version)
+        .with(version).and_return(version)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:create_release_branch)
+        .with(platform, version).and_return(release_branch_name)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_embedded_files)
+        .with(platform, other_action).and_return(update_embedded_warning)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_and_build_number_config)
+        .with(version, 0, other_action)
+
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_root_plist_version)
+        .with(version, other_action)
+
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+
+      expect(other_action).to receive(:push_to_git_remote)
+
+      result_branch, result_version, result_warning = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
+        platform, version, other_action
+      )
+
+      expect(result_branch).to eq("release/ios/1.0.0")
+      expect(result_version).to eq(version)
+      expect(result_warning).to eq(update_embedded_warning)
 
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:code_freeze_prechecks)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_new_version).with(version)
@@ -410,8 +510,43 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Actions).to receive(:sh).with("git", "status").and_return(git_status_output)
       allow(Fastlane::Actions).to receive(:sh).with("git", "add", "Core/trackerData.json").and_return("")
       allow(Fastlane::Actions).to receive(:sh).with("git", "commit", "-m", "Update embedded files").and_return("")
+      allow(other_action).to receive(:tds_perf_test).and_return(true)
       expect(other_action).to receive(:ensure_git_status_clean)
       described_class.update_embedded_files(platform, other_action)
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "status")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "Core/trackerData.json")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")
+    end
+
+    it "returns true when TDS performance tests fail" do
+      allow(Fastlane::Actions).to receive(:sh).with("./scripts/update_embedded.sh").and_return("")
+      git_status_output = "On branch main\nmodified: Core/trackerData.json\n"
+      allow(Fastlane::Actions).to receive(:sh).with("git", "status").and_return(git_status_output)
+      allow(Fastlane::Actions).to receive(:sh).with("git", "add", "Core/trackerData.json").and_return("")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "commit", "-m", "Update embedded files").and_return("")
+      allow(other_action).to receive(:tds_perf_test).and_return(false)
+      allow(other_action).to receive(:ensure_git_status_clean)
+
+      result = described_class.update_embedded_files(platform, other_action)
+
+      expect(result).to eq(true)
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "status")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "Core/trackerData.json")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")
+    end
+
+    it "returns false when TDS performance tests pass" do
+      allow(Fastlane::Actions).to receive(:sh).with("./scripts/update_embedded.sh").and_return("")
+      git_status_output = "On branch main\nmodified: Core/trackerData.json\n"
+      allow(Fastlane::Actions).to receive(:sh).with("git", "status").and_return(git_status_output)
+      allow(Fastlane::Actions).to receive(:sh).with("git", "add", "Core/trackerData.json").and_return("")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "commit", "-m", "Update embedded files").and_return("")
+      allow(other_action).to receive(:tds_perf_test).and_return(true)
+      allow(other_action).to receive(:ensure_git_status_clean)
+
+      result = described_class.update_embedded_files(platform, other_action)
+
+      expect(result).to eq(false)
       expect(Fastlane::Actions).to have_received(:sh).with("git", "status")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "Core/trackerData.json")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")

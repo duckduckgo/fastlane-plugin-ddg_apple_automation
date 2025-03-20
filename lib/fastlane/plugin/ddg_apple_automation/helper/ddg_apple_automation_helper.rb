@@ -5,6 +5,7 @@ require "rexml/document"
 require "semantic"
 require_relative "github_actions_helper"
 require_relative "git_helper"
+require_relative "embedded_files_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -21,21 +22,6 @@ module Fastlane
       BUILD_NUMBER_CONFIG_PATH = 'Configuration/BuildNumber.xcconfig'
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
       BUILD_NUMBER_CONFIG_DEFINITION = 'CURRENT_PROJECT_VERSION'
-
-      UPGRADABLE_EMBEDDED_FILES = {
-        "ios" => Set.new([
-                           'Core/AppPrivacyConfigurationDataProvider.swift',
-                           'Core/AppTrackerDataSetProvider.swift',
-                           'Core/ios-config.json',
-                           'Core/trackerData.json'
-                         ]),
-        "macos" => Set.new([
-                             'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
-                             'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
-                             'DuckDuckGo/ContentBlocker/trackerData.json',
-                             'DuckDuckGo/ContentBlocker/macos-config.json'
-                           ])
-      }.freeze
 
       def self.release_branch_name(platform, version)
         "#{RELEASE_BRANCH}/#{platform}/#{version}"
@@ -141,7 +127,7 @@ module Fastlane
         code_freeze_prechecks(other_action) unless Helper.is_ci?
         new_version = validate_new_version(version)
         create_release_branch(platform, new_version)
-        update_embedded_files(platform, other_action)
+        update_embedded_result = update_embedded_files(platform, other_action)
         if platform == "ios"
           # Any time we prepare a release branch for iOS the the build number should be reset to 0
           update_version_and_build_number_config(new_version, 0, other_action)
@@ -153,7 +139,7 @@ module Fastlane
         release_branch_name = release_branch_name(platform, new_version)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
 
-        return release_branch_name, new_version
+        return release_branch_name, new_version, update_embedded_result
       end
 
       def self.prepare_hotfix_branch(github_token, platform, other_action, options)
@@ -227,28 +213,7 @@ module Fastlane
       end
 
       def self.update_embedded_files(platform, other_action)
-        Actions.sh("./scripts/update_embedded.sh")
-
-        # Verify no unexpected files were modified
-        git_status = Actions.sh('git', 'status')
-        modified_files = git_status.split("\n").select { |line| line.include?('modified:') }
-        modified_files = modified_files.map { |str| str.split(':')[1].strip.delete_prefix('../') }
-
-        modified_files.each do |modified_file|
-          UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |s|
-            s.include?(modified_file)
-          end
-        end
-
-        # Run tests (CI will run them separately)
-        # run_tests(scheme: 'DuckDuckGo Privacy Browser') unless Helper.is_ci?
-
-        # Everything looks good: commit and push
-        unless modified_files.empty?
-          modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
-          Actions.sh('git', 'commit', '-m', 'Update embedded files')
-          other_action.ensure_git_status_clean
-        end
+        Helper::EmbeddedFilesHelper.update_embedded_files(platform, other_action)
       end
 
       def self.increment_build_number(platform, options, other_action)
