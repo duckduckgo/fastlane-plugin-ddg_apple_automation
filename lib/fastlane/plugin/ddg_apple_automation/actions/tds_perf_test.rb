@@ -53,7 +53,7 @@ module Fastlane
           # Navigate to temp directory
           Dir.chdir(tmp_dir) do
             # Clone repository
-            Actions.sh("git clone --depth=1 git@github.com:duckduckgo/TrackerRadarKit.git")
+            Actions.sh("git clone --depth=1 https://github.com/duckduckgo/TrackerRadarKit.git")
 
             # Navigate to cloned repository
             Dir.chdir("TrackerRadarKit") do

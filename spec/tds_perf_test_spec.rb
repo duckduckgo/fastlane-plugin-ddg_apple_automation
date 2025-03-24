@@ -32,7 +32,7 @@ describe Fastlane::Actions::TdsPerfTestAction do
 
     it 'clones the repository' do
       allow(Fastlane::Actions).to receive(:sh).and_return(true)
-      expect(Fastlane::Actions).to receive(:sh).with('git clone --depth=1 git@github.com:duckduckgo/TrackerRadarKit.git')
+      expect(Fastlane::Actions).to receive(:sh).with('git clone --depth=1 https://github.com/duckduckgo/TrackerRadarKit.git')
 
       Fastlane::Actions::TdsPerfTestAction.run(test_params)
     end
