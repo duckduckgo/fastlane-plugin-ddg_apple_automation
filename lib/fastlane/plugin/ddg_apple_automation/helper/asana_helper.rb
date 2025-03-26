@@ -418,7 +418,7 @@ module Fastlane
       end
 
       def self.get_task_ids_from_git_log(from_ref, to_ref = "HEAD")
-        git_log = `git log #{from_ref}..#{to_ref} -- ./ ../BrowserServicesKit/`
+        git_log = `git log #{from_ref}..#{to_ref} -- ./ ../SharedPackages/`
 
         git_log
           .gsub("\n", " ")
