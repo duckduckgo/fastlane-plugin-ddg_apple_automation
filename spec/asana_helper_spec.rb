@@ -33,6 +33,10 @@ describe Fastlane::Helper::AsanaHelper do
       it "extracts task ID from a URL in focused mode" do
         expect(extract_asana_task_id("https://app.asana.com/0/0/1234/f")).to eq("1234")
       end
+
+      it "extracts task ID from search results" do
+        expect(extract_asana_task_id("https://app.asana.com/0/search/753241/9999")).to eq("9999")
+      end
     end
 
     context "v1 task URL" do
