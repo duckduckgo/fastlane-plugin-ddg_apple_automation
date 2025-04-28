@@ -61,11 +61,11 @@ describe Fastlane::Helper::AsanaHelper do
       end
 
       it "extracts task ID from a URL in focused mode" do
-        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999?focused=true")).to eq("9999")
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/project/5678/task/9999?focus=true")).to eq("9999")
       end
 
       it "extracts item ID from an inbox URL in focused mode" do
-        expect(extract_asana_task_id("https://app.asana.com/1/1234/inbox/1201462763372724/item/1209665761833605/story/1209665761833609?focused=true")).to eq("1209665761833605")
+        expect(extract_asana_task_id("https://app.asana.com/1/1234/inbox/1201462763372724/item/1209665761833605/story/1209665761833609?focus=true")).to eq("1209665761833605")
       end
     end
 
