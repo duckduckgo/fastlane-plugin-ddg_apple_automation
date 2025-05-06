@@ -22,7 +22,8 @@ module Fastlane
                                'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
                                'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
                                'DuckDuckGo/ContentBlocker/trackerData.json',
-                               'DuckDuckGo/ContentBlocker/macos-config.json'
+                               'DuckDuckGo/ContentBlocker/macos-config.json',
+                               'SharedPackages/DataBrokerProtectionCore/Sources/DataBrokerProtectionCore/Resources/JSON/*.json'
                              ])
         }.freeze
 
@@ -36,8 +37,8 @@ module Fastlane
         modified_files = modified_files.map { |str| str.split(':')[1].strip.delete_prefix('../') }
 
         modified_files.each do |modified_file|
-          UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |s|
-            s.include?(modified_file)
+          UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |pattern|
+            File.fnmatch?(pattern, modified_file)
           end
         end
 
