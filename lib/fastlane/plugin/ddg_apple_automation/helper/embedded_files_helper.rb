@@ -28,30 +28,19 @@ module Fastlane
         }.freeze
 
       def self.update_embedded_files(platform, other_action)
-        # TODO: Revert before merging
         perf_test_warning = false # !other_action.tds_perf_test
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
-        git_status = Actions.sh('git', 'status', '-s').split("\n").map { |line| line.split(' ', 2) }
+        git_status = fetch_git_status
         modified_files = git_status.filter_map { |state, file| file if state == 'M' }
         untracked_files = git_status.filter_map { |state, file| file if state == '??' }
 
-        modified_files.each do |modified_file|
-          UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |pattern|
-            File.fnmatch?(pattern, modified_file)
-          end
-        end
-
-        untracked_files.each do |untracked_file|
-          UI.abort_with_message!("Unexpected untracked file: #{untracked_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |pattern|
-            File.fnmatch?(pattern, untracked_file)
-          end
-        end
+        verify_file_updates_allowed(platform, modified_files, "Unexpected modified file")
+        verify_file_updates_allowed(platform, untracked_files, "Unexpected untracked file")
 
         # Everything looks good: commit and push
-        modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
-        untracked_files.each { |untracked_file| Actions.sh('git', 'add', untracked_file.to_s) }
+        modified_files.concat(untracked_files).each { |file| Actions.sh('git', 'add', file.to_s) }
 
         unless system("git diff --cached --quiet")
           Actions.sh('git', 'commit', '-m', 'Update embedded files')
@@ -59,6 +48,20 @@ module Fastlane
         end
 
         perf_test_warning
+      end
+
+      def self.fetch_git_status
+        # Return a list of status + filename pairs.
+        # To achieve this, we're splitting lines by space, allowing for 2 tokens max.
+        Actions.sh('git', 'status', '-s').split("\n").map { |line| line.split(' ', 2) }
+      end
+
+      def self.verify_file_updates_allowed(platform, filenames, message)
+        filenames.each do |filename|
+          UI.abort_with_message!("#{message}: #{filename}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |pattern|
+            File.fnmatch?(pattern, filename)
+          end
+        end
       end
 
       def pre_update_embedded_tests
