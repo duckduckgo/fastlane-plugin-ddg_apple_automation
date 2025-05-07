@@ -33,9 +33,9 @@ module Fastlane
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
-        git_status = Actions.sh('git', 'status')
-        modified_files = git_status.split("\n").select { |line| line.include?('modified:') }
-        modified_files = modified_files.map { |str| str.split(':')[1].strip }
+        git_status = Actions.sh('git', 'status', '--porcelain').split("\n").map { |line| line.split(' ', 2) }
+        modified_files = git_status.filter_map { |state, file| file if state == 'M' }
+        untracked_files = git_status.filter_map { |state, file| file if state == '??' }
 
         modified_files.each do |modified_file|
           UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |pattern|
@@ -43,9 +43,17 @@ module Fastlane
           end
         end
 
+        untracked_files.each do |untracked_file|
+          UI.abort_with_message!("Unexpected untracked file: #{untracked_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |pattern|
+            File.fnmatch?(pattern, untracked_file)
+          end
+        end
+
         # Everything looks good: commit and push
-        unless modified_files.empty?
-          modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
+        modified_files.each { |modified_file| Actions.sh('git', 'add', modified_file.to_s) }
+        untracked_files.each { |untracked_file| Actions.sh('git', 'add', untracked_file.to_s) }
+
+        unless system("git diff --cached --quiet")
           Actions.sh('git', 'commit', '-m', 'Update embedded files')
           other_action.ensure_git_status_clean
         end
