@@ -35,7 +35,7 @@ module Fastlane
         # Verify no unexpected files were modified
         git_status = Actions.sh('git', 'status')
         modified_files = git_status.split("\n").select { |line| line.include?('modified:') }
-        modified_files = modified_files.map { |str| str.split(':')[1].strip.delete_prefix('../') }
+        modified_files = modified_files.map { |str| str.split(':')[1].strip }
 
         modified_files.each do |modified_file|
           UI.abort_with_message!("Unexpected change to #{modified_file}.") unless UPGRADABLE_EMBEDDED_FILES[platform].any? do |pattern|
