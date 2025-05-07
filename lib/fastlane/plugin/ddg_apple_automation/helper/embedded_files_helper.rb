@@ -33,7 +33,7 @@ module Fastlane
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
-        git_status = Actions.sh('git', 'status', '--porcelain').split("\n").map { |line| line.split(' ', 2) }
+        git_status = Actions.sh('git', 'status', '-s').split("\n").map { |line| line.split(' ', 2) }
         modified_files = git_status.filter_map { |state, file| file if state == 'M' }
         untracked_files = git_status.filter_map { |state, file| file if state == '??' }
 
