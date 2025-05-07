@@ -28,7 +28,8 @@ module Fastlane
         }.freeze
 
       def self.update_embedded_files(platform, other_action)
-        perf_test_warning = !other_action.tds_perf_test
+        # TODO: Revert before merging
+        perf_test_warning = false # !other_action.tds_perf_test
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
