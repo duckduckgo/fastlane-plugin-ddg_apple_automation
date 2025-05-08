@@ -503,7 +503,9 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     end
   end
 
-  describe "#update_embedded_files" do
+  describe "#update_embedded_files for ios" do
+    let(:platform) { "ios" }
+
     it "updates embedded files and commits them" do
       allow(Fastlane::Actions).to receive(:sh).with("./scripts/update_embedded.sh").and_return("")
       git_status_output = " M Core/trackerData.json\n"
@@ -553,6 +555,28 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(result).to eq(false)
       expect(Fastlane::Actions).to have_received(:sh).with("git", "status", "-s")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "Core/trackerData.json")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")
+    end
+  end
+
+  describe "#update_embedded_files for macos" do
+    let(:platform) { "macos" }
+
+    it "updates embedded files and commits them" do
+      allow(Fastlane::Actions).to receive(:sh).with("./scripts/update_embedded.sh").and_return("")
+      git_status_output = " M DuckDuckGo/ContentBlocker/trackerData.json\n?? ../SharedPackages/DataBrokerProtectionCore/Sources/DataBrokerProtectionCore/Resources/JSON/backgroundcheck.json\n"
+      allow(Fastlane::Actions).to receive(:sh).with("git", "status", "-s").and_return(git_status_output)
+      allow(Fastlane::Actions).to receive(:sh).with("git", "add", "DuckDuckGo/ContentBlocker/trackerData.json").and_return("")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "add", "../SharedPackages/DataBrokerProtectionCore/Sources/DataBrokerProtectionCore/Resources/JSON/backgroundcheck.json").and_return("")
+      allow(Fastlane::Actions).to receive(:sh).with("git", "commit", "-m", "Update embedded files").and_return("")
+      allow(other_action).to receive(:tds_perf_test).and_return(true)
+      allow(other_action).to receive(:ensure_git_status_clean)
+      allow_any_instance_of(Object).to receive(:system).with("git diff --cached --quiet").and_return(false)
+
+      described_class.update_embedded_files(platform, other_action)
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "status", "-s")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "DuckDuckGo/ContentBlocker/trackerData.json")
+      expect(Fastlane::Actions).to have_received(:sh).with("git", "add", "../SharedPackages/DataBrokerProtectionCore/Sources/DataBrokerProtectionCore/Resources/JSON/backgroundcheck.json")
       expect(Fastlane::Actions).to have_received(:sh).with("git", "commit", "-m", "Update embedded files")
     end
   end
