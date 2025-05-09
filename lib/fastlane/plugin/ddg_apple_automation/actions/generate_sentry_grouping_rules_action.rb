@@ -1,8 +1,5 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
-require "octokit"
-require "tmpdir"
-require "fileutils"
 require_relative "../helper/sentry_helper"
 
 module Fastlane
