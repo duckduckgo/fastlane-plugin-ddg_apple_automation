@@ -23,7 +23,7 @@ module Fastlane
                                'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
                                'DuckDuckGo/ContentBlocker/trackerData.json',
                                'DuckDuckGo/ContentBlocker/macos-config.json',
-                               '../SharedPackages/DataBrokerProtectionCore/Sources/DataBrokerProtectionCore/Resources/JSON/*.json'
+                               '../SharedPackages/DataBrokerProtectionCore/Sources/DataBrokerProtectionCore/BundleResources/JSON/*.json'
                              ])
         }.freeze
 
