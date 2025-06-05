@@ -81,7 +81,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
     describe "when latest release is not a valid semver" do
       it "shows error" do
-        allow(@client).to receive(:releases).and_return([double(tag_name: '1.0+ios', prerelease: false)])
+        allow(@client).to receive(:releases).and_return([double(tag_name: '1.0+ios', prerelease: true)])
         allow(Fastlane::UI).to receive(:user_error!)
 
         find_latest_marketing_version

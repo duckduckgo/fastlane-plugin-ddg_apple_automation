@@ -149,6 +149,7 @@ describe Fastlane::Helper::GitHelper do
         before do
           allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
             [
+              double(tag_name: "2.0.0+ios", prerelease: false),
               double(tag_name: "1.0.0-1+macos", prerelease: true),
               double(tag_name: "2.0.0-1+ios", prerelease: true),
               double(tag_name: "1.0.0-1+ios", prerelease: true)
@@ -167,6 +168,7 @@ describe Fastlane::Helper::GitHelper do
         before do
           allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
             [
+              double(tag_name: "1.1.0-0+ios", prerelease: true),
               double(tag_name: "1.0.0+macos", prerelease: false),
               double(tag_name: "1.0.0+ios", prerelease: false),
               double(tag_name: "1.0.0-1+ios", prerelease: true)

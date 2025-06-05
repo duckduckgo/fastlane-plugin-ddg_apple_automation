@@ -81,10 +81,12 @@ module Fastlane
           releases = client.releases(repo_name, per_page: page_size, page: current_page)
           break if releases.empty?
 
-          # If `prerelease` is true, return the latest release that matches the platform regardless of whether it's public.
+          # If `prerelease` is true, return the latest release that matches the platform and is not public.
           # If `prerelease` is false, then ensure that the release is public.
           matching_release = releases.find do |release|
-            (prerelease || !release.prerelease) && (platform.nil? || release.tag_name.end_with?("+#{platform}"))
+            matches_platform = platform.nil? || release.tag_name.end_with?("+#{platform}")
+            matches_prerelease = prerelease == release.prerelease
+            matches_platform && matches_prerelease
           end
 
           return matching_release if matching_release
