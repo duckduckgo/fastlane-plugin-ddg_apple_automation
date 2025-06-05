@@ -48,6 +48,26 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
       expect(find_latest_marketing_version).to eq("2.0.0")
     end
 
+    it "strips build number and platform suffix from the latest marketing version" do
+      allow(@client).to receive(:releases).and_return(
+        [
+          double(tag_name: '2.0.0-1+ios', prerelease: true)
+        ]
+      )
+
+      expect(find_latest_marketing_version).to eq("2.0.0")
+    end
+
+    it "strips platform suffix from the latest marketing version when it's a public release" do
+      allow(@client).to receive(:releases).and_return(
+        [
+          double(tag_name: '2.0.0+ios', prerelease: true)
+        ]
+      )
+
+      expect(find_latest_marketing_version).to eq("2.0.0")
+    end
+
     describe "when there is no latest release" do
       it "shows error" do
         allow(@client).to receive(:releases).and_return([])
@@ -66,7 +86,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
         find_latest_marketing_version
 
-        expect(Fastlane::UI).to have_received(:user_error!).with("Invalid marketing version: 1.0+ios, expected format: MAJOR.MINOR.PATCH")
+        expect(Fastlane::UI).to have_received(:user_error!).with("Invalid marketing version: 1.0, expected format: MAJOR.MINOR.PATCH")
       end
     end
 

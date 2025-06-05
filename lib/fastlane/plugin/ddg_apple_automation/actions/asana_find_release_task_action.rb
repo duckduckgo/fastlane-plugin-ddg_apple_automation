@@ -74,7 +74,8 @@ module Fastlane
       end
 
       def self.extract_version_from_tag_name(tag_name)
-        tag_name&.split("-")&.first
+        # Remove build number (if present) and platform suffix from the tag name
+        tag_name&.split(/[-+]/)&.first
       end
 
       def self.validate_semver(version)
