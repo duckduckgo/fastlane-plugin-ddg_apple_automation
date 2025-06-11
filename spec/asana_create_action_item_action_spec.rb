@@ -56,6 +56,29 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       )
     end
 
+    it "correctly builds payload if due_date input is given" do
+      test_action(task_url: task_url, task_name: task_name, notes: "notes", due_date: "2024-01-15", is_scheduled_release: true)
+      expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
+        task_gid: automation_subtask_id,
+        name: task_name,
+        notes: "notes",
+        assignee: assignee_id,
+        due_on: "2024-01-15"
+      )
+    end
+
+    it "correctly builds payload if both notes and due_date are given" do
+      test_action(task_url: task_url, task_name: task_name, notes: "notes", html_notes: "html_notes", due_date: "2024-01-15", is_scheduled_release: true)
+      expect(@asana_client_tasks).to have_received(:create_subtask_for_task).with(
+        task_gid: automation_subtask_id,
+        name: task_name,
+        notes: "notes",
+        html_notes: "html_notes",
+        assignee: assignee_id,
+        due_on: "2024-01-15"
+      )
+    end
+
     it "raises an error if adding subtask fails" do
       allow(Fastlane::UI).to receive(:user_error!)
       allow(@asana_client_tasks).to receive(:create_subtask_for_task).and_raise(StandardError, 'API Error')
@@ -69,7 +92,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("asana_new_task_id", "42")
     end
 
-    def test_action(task_url:, task_name: nil, notes: nil, html_notes: nil, template_name: nil, is_scheduled_release: false, github_handle: nil)
+    def test_action(task_url:, task_name: nil, notes: nil, html_notes: nil, template_name: nil, is_scheduled_release: false, github_handle: nil, due_date: nil)
       Fastlane::Actions::AsanaCreateActionItemAction.run(
         task_url: task_url,
         task_name: task_name,
@@ -77,7 +100,8 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
         html_notes: html_notes,
         template_name: template_name,
         is_scheduled_release: is_scheduled_release,
-        github_handle: github_handle
+        github_handle: github_handle,
+        due_date: due_date
       )
     end
   end

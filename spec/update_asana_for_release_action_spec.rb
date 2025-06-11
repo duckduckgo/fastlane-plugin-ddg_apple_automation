@@ -1,3 +1,5 @@
+require "date"
+
 describe Fastlane::Actions::UpdateAsanaForReleaseAction do
   describe ".run" do
     let(:tag) { nil }
@@ -61,7 +63,8 @@ describe Fastlane::Actions::UpdateAsanaForReleaseAction do
           task_name: "Announce the release to the company",
           html_notes: "Announcement task notes",
           github_handle: "github_user",
-          is_scheduled_release: true
+          is_scheduled_release: true,
+          due_date: Date.today.strftime('%Y-%m-%d')
         )
       end
     end
