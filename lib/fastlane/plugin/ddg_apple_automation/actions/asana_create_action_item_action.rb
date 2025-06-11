@@ -51,7 +51,8 @@ module Fastlane
             assignee_id: assignee_id,
             task_name: task_name,
             notes: params[:notes],
-            html_notes: html_notes
+            html_notes: html_notes,
+            due_date: params[:due_date]
           )
           Helper::GitHubActionsHelper.set_output("asana_new_task_id", subtask.gid)
           subtask.gid
@@ -128,6 +129,10 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,
+                                       type: String),
+          FastlaneCore::ConfigItem.new(key: :due_date,
+                                       description: "Due date for the task (YYYY-MM-DD format)",
+                                       optional: true,
                                        type: String)
         ]
       end
@@ -136,7 +141,7 @@ module Fastlane
         true
       end
 
-      def self.create_subtask(token:, task_id:, assignee_id:, task_name:, notes: nil, html_notes: nil)
+      def self.create_subtask(token:, task_id:, assignee_id:, task_name:, notes: nil, html_notes: nil, due_date: nil)
         subtask_options = {
           task_gid: task_id,
           assignee: assignee_id,
@@ -144,6 +149,7 @@ module Fastlane
         }
         subtask_options[:notes] = notes unless notes.nil?
         subtask_options[:html_notes] = html_notes unless html_notes.nil?
+        subtask_options[:due_on] = due_date unless due_date.nil?
 
         asana_client = Helper::AsanaHelper.make_asana_client(token)
         asana_client.tasks.create_subtask_for_task(**subtask_options)

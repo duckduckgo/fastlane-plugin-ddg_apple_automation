@@ -1,6 +1,7 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "octokit"
+require "date"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/git_helper"
@@ -118,7 +119,8 @@ module Fastlane
             template_name: task_template,
             template_args: template_args,
             github_handle: params[:github_handle],
-            is_scheduled_release: params[:is_scheduled_release]
+            is_scheduled_release: params[:is_scheduled_release],
+            due_date: Date.today.strftime('%Y-%m-%d')
           )
         end
 
