@@ -1,6 +1,7 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require "octokit"
+require "date"
 require_relative "asana_create_action_item_action"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
@@ -26,7 +27,8 @@ module Fastlane
             task_name: "Announce the release to the company",
             html_notes: announcement_task_html_notes,
             github_handle: options[:github_handle],
-            is_scheduled_release: options[:is_scheduled_release]
+            is_scheduled_release: options[:is_scheduled_release],
+            due_date: Date.today.strftime('%Y-%m-%d')
           )
         end
       end
