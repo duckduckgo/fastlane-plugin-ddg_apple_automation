@@ -41,7 +41,7 @@ module Fastlane
         else
           task_name = params[:task_name]
           html_notes = params[:html_notes]
-          UI.important("Adding Asana task with title: #{params[:task_name]}")
+          UI.important("Adding Asana task with title: #{task_name}")
         end
 
         begin
