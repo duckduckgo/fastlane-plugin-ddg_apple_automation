@@ -1,7 +1,7 @@
 name: Merge <%= branch %> to <%= base_branch %>
 html_notes: |
   <body>
-    The <code><%= tag %></code> release has been successfully tagged and published in GitHub releases, 
+    The <code><%= tag %></code> release has been successfully tagged and published in GitHub releases, <%= '' %>
     but merging to <code><%= base_branch %></code> failed. Please resolve conflicts and merge <code><%= branch %></code> to <code><%= base_branch %></code> manually.<br>
     <br>
     Issue the following git commands:
@@ -14,7 +14,7 @@ html_notes: |
       <li><code>git merge <%= branch %></code>
         <ul>
           <li>Resolve conflicts as needed</li>
-          <li>Run iOS, macOS and BSK unit and integration tests locally or create a PR and let the CI handle it.</li>
+          <li>Run iOS, macOS and BSK unit and integration tests locally or create a separate branch and open a draft PR to let the CI handle it.</li>
           <li>When merging a hotfix branch into an internal release branch, you will get conflicts in version and build number xcconfig files:
             <ul>
               <li>In the version file: accept the internal version number (higher).</li>

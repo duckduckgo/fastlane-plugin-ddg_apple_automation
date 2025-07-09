@@ -6,10 +6,6 @@ module Fastlane
 
   module Helper
     class SentryHelper
-      COMMON_APP_MODULES = [
-        'GRDB'
-      ].freeze
-
       APP_MODULES = {
         "ios" => [
           'Core'
@@ -20,7 +16,7 @@ module Fastlane
       def self.generate_grouping_rules(platform, output_file)
         UI.message("Starting Sentry Grouping Rules Generation...")
 
-        app_modules = COMMON_APP_MODULES + APP_MODULES[platform]
+        app_modules = APP_MODULES[platform]
         app_modules += find_modules_in_package_files
         app_modules = format_sentry_grouping_rules(app_modules)
 

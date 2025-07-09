@@ -384,6 +384,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
             <li><code>git merge release/1.0.0</code>
               <ul>
                 <li>Resolve conflicts as needed</li>
+                <li>Run iOS, macOS and BSK unit and integration tests locally or create a separate branch and open a draft PR to let the CI handle it.</li>
                 <li>When merging a hotfix branch into an internal release branch, you will get conflicts in version and build number xcconfig files:
                   <ul>
                     <li>In the version file: accept the internal version number (higher).</li>
