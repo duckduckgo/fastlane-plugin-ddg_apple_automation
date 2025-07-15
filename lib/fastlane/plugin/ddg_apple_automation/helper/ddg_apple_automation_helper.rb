@@ -278,7 +278,6 @@ module Fastlane
         # (e.g. SPARKLE_URL_ALPHA for Alpha or SPARKLE_URL_RELEASE for Release)
         url = File.readlines(SPARKLE_CONFIG_PATH)
                   .find { |l| l.downcase.start_with?("sparkle_url_#{config.downcase} = ") }
-                  .first
                   .chomp
                   .split(' = ')
                   .last
@@ -286,7 +285,7 @@ module Fastlane
 
         request = HTTParty.get(url)
         unless request.success?
-          UI.message("Failed to fetch appcast for #{config}: #{request.response.code} #{request.response.message}")
+          UI.message("Failed to fetch appcast for '#{config}' configuration from #{url}: #{request.response.code} #{request.response.message}")
           return 0
         end
 
@@ -302,7 +301,7 @@ module Fastlane
           username: get_username(options),
           platform: platform == "macos" ? "osx" : "ios"
         }
-        args[:bundle_id] = bundle_id if bundle_id
+        args[:app_identifier] = bundle_id if bundle_id
         other_action.latest_testflight_build_number(args)
       end
 
