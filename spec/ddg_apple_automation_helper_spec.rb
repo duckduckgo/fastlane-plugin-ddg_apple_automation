@@ -609,7 +609,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
   describe "#fetch_appcast_build_number" do
     it "fetches the highest appcast build number for macOS" do
-      allow(File).to receive(:readlines).with(Fastlane::Helper::DdgAppleAutomationHelper::SPARKLE_CONFIG_PATH).and_return(["SPARKLE_URL_RELEASE = \"https://dummy-url.com/feed.xml\"\n"])
+      allow(File).to receive(:readlines).with(Fastlane::Helper::DdgAppleAutomationHelper::SPARKLE_CONFIG_PATH).and_return(["SPARKLE_URL_RELEASE = \"https:/$()/dummy-url.com/feed.xml\"\n"])
       allow(HTTParty).to receive(:get)
         .with("https://dummy-url.com/feed.xml")
         .and_return(

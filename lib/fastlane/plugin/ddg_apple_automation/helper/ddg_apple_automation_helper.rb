@@ -283,10 +283,11 @@ module Fastlane
                   .split(' = ')
                   .last
                   .tr('"', '')
+                  .sub('$()', '')
 
         request = HTTParty.get(url)
         unless request.success?
-          UI.message("Failed to fetch appcast for '#{config}' configuration from #{url}: #{request.response.code} #{request.response.message}")
+          UI.important("Failed to fetch appcast for '#{config}' configuration from #{url}: #{request.response.code} #{request.response.message}")
           return 0
         end
 
