@@ -20,6 +20,7 @@ module Fastlane
       ROOT_PLIST = 'DuckDuckGo/Settings.bundle/Root.plist'
       VERSION_CONFIG_PATH = 'Configuration/Version.xcconfig'
       BUILD_NUMBER_CONFIG_PATH = 'Configuration/BuildNumber.xcconfig'
+      SPARKLE_CONFIG_PATH = 'Configuration/App/Sparkle.xcconfig'
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
       BUILD_NUMBER_CONFIG_DEFINITION = 'CURRENT_PROJECT_VERSION'
 
@@ -232,11 +233,11 @@ module Fastlane
         other_action.push_to_git_remote
       end
 
-      def self.calculate_next_build_number(platform, options, other_action)
-        testflight_build_number = fetch_testflight_build_number(platform, options, other_action)
+      def self.calculate_next_build_number(platform, options, config = "release", bundle_id = nil, other_action)
+        testflight_build_number = fetch_testflight_build_number(platform, options, bundle_id, other_action)
         xcodeproj_build_number = current_build_number
         if platform == "macos"
-          appcast_build_number = fetch_appcast_build_number(platform)
+          appcast_build_number = fetch_appcast_build_number(config)
           current_release_build_number = [testflight_build_number, appcast_build_number].max
         else
           current_release_build_number = testflight_build_number
@@ -271,21 +272,37 @@ module Fastlane
         new_build_number + 1
       end
 
-      def self.fetch_appcast_build_number(platform)
-        UI.user_error!("This function is not supported on iOS") if platform == "ios"
-        url = `plutil -extract SUFeedURL raw #{INFO_PLIST}`.chomp
-        xml = HTTParty.get(url).body
+      def self.fetch_appcast_build_number(config)
+        # This logic depends on the Sparkle.xcconfig file to contain the keys in the following format:
+        # SPARKLE_URL_<CONFIG> for appcast URL for a given config
+        # (e.g. SPARKLE_URL_ALPHA for Alpha or SPARKLE_URL_RELEASE for Release)
+        url = File.readlines(SPARKLE_CONFIG_PATH)
+                  .find { |l| l.downcase.start_with?("sparkle_url_#{config.downcase} = ") }
+                  .chomp
+                  .split(' = ')
+                  .last
+                  .tr('"', '')
+
+        request = HTTParty.get(url)
+        unless request.success?
+          UI.message("Failed to fetch appcast for '#{config}' configuration from #{url}: #{request.response.code} #{request.response.message}")
+          return 0
+        end
+
+        xml = request.body
         xml_data = REXML::Document.new(xml)
         versions = xml_data.get_elements('//rss/channel/item/sparkle:version').map { |e| e.text.split('.')[0].to_i }
         versions.max
       end
 
-      def self.fetch_testflight_build_number(platform, options, other_action)
-        other_action.latest_testflight_build_number(
+      def self.fetch_testflight_build_number(platform, options, bundle_id, other_action)
+        args = {
           api_key: get_api_key(other_action),
           username: get_username(options),
           platform: platform == "macos" ? "osx" : "ios"
-        )
+        }
+        args[:app_identifier] = bundle_id if bundle_id
+        other_action.latest_testflight_build_number(args)
       end
 
       def self.get_api_key(other_action)

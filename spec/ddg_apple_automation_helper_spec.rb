@@ -607,28 +607,32 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
 
   describe "#fetch_appcast_build_number" do
     it "fetches the highest appcast build number for macOS" do
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:`).with("plutil -extract SUFeedURL raw #{Fastlane::Helper::DdgAppleAutomationHelper::INFO_PLIST}").and_return("https://dummy-url.com/feed.xml\n")
-      allow(HTTParty).to receive(:get).with("https://dummy-url.com/feed.xml").and_return(
-        double(body: <<-XML
-          <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
-            <channel>
-              <item>
-                <sparkle:version>100</sparkle:version>
-              </item>
-            </channel>
-          </rss>
-        XML
-              )
-      )
+      allow(File).to receive(:readlines).with(Fastlane::Helper::DdgAppleAutomationHelper::SPARKLE_CONFIG_PATH).and_return(["SPARKLE_URL_RELEASE = \"https://dummy-url.com/feed.xml\"\n"])
+      allow(HTTParty).to receive(:get)
+        .with("https://dummy-url.com/feed.xml")
+        .and_return(
+          double(
+            success?: true,
+            body: <<-XML
+              <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+                <channel>
+                  <item>
+                    <sparkle:version>100</sparkle:version>
+                  </item>
+                </channel>
+              </rss>
+            XML
+          )
+        )
 
-      expect(Fastlane::Helper::DdgAppleAutomationHelper.fetch_appcast_build_number("macos")).to eq(100)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper.fetch_appcast_build_number("release")).to eq(100)
     end
   end
 
   describe "#fetch_testflight_build_number" do
     it "fetches the latest testflight build number" do
       expect(other_action).to receive(:latest_testflight_build_number).and_return(125)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper.fetch_testflight_build_number(platform, options, other_action)).to eq(125)
+      expect(Fastlane::Helper::DdgAppleAutomationHelper.fetch_testflight_build_number(platform, options, nil, other_action)).to eq(125)
     end
   end
 
