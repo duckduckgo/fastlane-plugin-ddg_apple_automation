@@ -251,7 +251,7 @@ module Fastlane
         UI.message("Xcode project settings build number: #{xcodeproj_build_number}")
 
         if xcodeproj_build_number <= current_release_build_number
-          new_build_number = current_release_build_number
+          next_build_number = current_release_build_number
         else
           UI.important("Warning: Build number from Xcode project (#{xcodeproj_build_number}) is higher than the current release (#{current_release_build_number}).")
           UI.message(%{This may be an error in the Xcode project settings, or it may mean that there is a hotfix
@@ -262,14 +262,15 @@ module Fastlane
               "Xcode project (#{xcodeproj_build_number})" => xcodeproj_build_number
             }
             choice = UI.select("Please choose which build number to bump:", build_numbers.keys)
-            new_build_number = build_numbers[choice]
+            next_build_number = build_numbers[choice]
           else
             UI.important("Shell is non-interactive, so we'll bump the Xcode project build number.")
-            new_build_number = xcodeproj_build_number
+            next_build_number = xcodeproj_build_number
           end
         end
 
-        new_build_number + 1
+        Helper::GitHubActionsHelper.set_output("next_build_number", next_build_number + 1)
+        next_build_number + 1
       end
 
       def self.fetch_appcast_build_number(config)

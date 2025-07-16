@@ -600,8 +600,10 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
     it "calculates the next build number" do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:fetch_testflight_build_number).and_return(123)
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:current_build_number).and_return(124)
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
       allow(Fastlane::UI).to receive(:interactive?).and_return(false)
       expect(Fastlane::Helper::DdgAppleAutomationHelper.calculate_next_build_number(platform, options, other_action)).to eq(125)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("next_build_number", 125)
     end
   end
 
