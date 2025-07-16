@@ -31,12 +31,14 @@ module Fastlane
       def self.available_options
         [
           FastlaneCore::ConfigItem.platform,
-          FastlaneCore::ConfigItem.string(key: :config,
-                                          description: "The configuration to use for the build number",
-                                          default_value: "release"),
-          FastlaneCore::ConfigItem.string(key: :bundle_id,
-                                          description: "The bundle ID to use for the build number",
-                                          default_value: nil)
+          FastlaneCore::ConfigItem.new(key: :config,
+                                       description: "The configuration to use for the build number",
+                                       type: String,
+                                       default_value: "release"),
+          FastlaneCore::ConfigItem.new(key: :bundle_id,
+                                       description: "The bundle ID to use for the build number",
+                                       type: String,
+                                       default_value: nil)
         ]
       end
 
