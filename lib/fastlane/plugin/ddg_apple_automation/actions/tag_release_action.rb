@@ -34,7 +34,7 @@ module Fastlane
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
         begin
-          merge_or_delete_branch(params)
+          merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
           tag_and_release_output[:merge_or_delete_successful] = true
         rescue StandardError
           tag_and_release_output[:merge_or_delete_successful] = false
@@ -99,10 +99,11 @@ module Fastlane
       end
 
       def self.merge_or_delete_branch(params)
-        branch = other_action.git_branch
         if params[:is_prerelease]
-          Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
+          # we actually merge the tag, not the branch
+          Helper::GitHelper.merge_branch(@constants[:repo_name], params[:tag], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
         else
+          branch = other_action.git_branch
           Helper::GitHelper.delete_branch(@constants[:repo_name], branch, params[:github_elevated_permissions_token] || params[:github_token])
         end
       end
