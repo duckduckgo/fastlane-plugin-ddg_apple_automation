@@ -232,7 +232,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
             <li>📥 DMG is available from <a href='https://cdn.com/bucket/duckduckgo-1.0.0.123.dmg'>https://cdn.com/bucket/duckduckgo-1.0.0.123.dmg</a>.</li>
             <li>🏷️ Repository is tagged with <code>1.0.0-123</code> tag.</li>
             <li>🚢 GitHub <a href='https://github.com/releases/tag/1.0.0-123'>1.0.0-123 pre-release</a> is created.</li>
-            <li><b>❗️ Merging <code>release/1.0.0</code> to <code>main</code> failed.</b>
+            <li><b>❗️ Merging <code>1.0.0-123</code> tag to <code>main</code> failed.</b>
               <ul>
                 <li><a data-asana-gid='12345' />, please proceed with manual merging <a data-asana-gid='67890'
                     data-asana-dynamic='false'>according to instructions</a>.</li>
