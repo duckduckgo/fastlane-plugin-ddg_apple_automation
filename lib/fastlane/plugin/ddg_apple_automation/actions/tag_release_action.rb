@@ -30,6 +30,11 @@ module Fastlane
 
         setup_constants(platform)
 
+        unless assert_branch_tagged_before_public_release(params)
+          UI.user_error!("Skipping release because release branch's HEAD is not tagged.")
+          return
+        end
+
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
@@ -41,6 +46,17 @@ module Fastlane
         end
 
         report_status(params.values.merge(tag_and_release_output))
+      end
+
+      def self.assert_branch_tagged_before_public_release(params)
+        return if params[:is_prerelease] || params[:ignore_untagged_commits]
+
+        untagged_commit_sha = Helper::GitHelper.untagged_commit_sha(other_action.git_branch, platform)
+        if untagged_commit_sha
+          report_untagged_release_branch(params.values.merge(untagged_commit_sha: untagged_commit_sha))
+          return false
+        end
+        true
       end
 
       def self.create_tag_and_github_release(is_prerelease, platform, github_token)
@@ -114,27 +130,48 @@ module Fastlane
         end
       end
 
+      def self.report_untagged_release_branch(params)
+        template_name = "public-release-tag-failed-untagged-commits"
+        tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(params[:is_prerelease], params[:platform])
+        template_args = self.template_arguments(params).merge(
+          untagged_commit_url: "https://github.com/#{@constants[:repo_name]}/commit/#{params[:untagged_commit_sha]}",
+          tag: tag,
+          promoted_tag: promoted_tag
+        )
+
+        create_action_item(params, template_name, template_args)
+        log_message(params, template_name, template_args)
+      end
+
       def self.report_status(params)
         template_args = self.template_arguments(params)
         task_template, comment_template = setup_asana_templates(params)
 
         if task_template
-          UI.important("Adding Asana task for release automation using #{task_template} template")
-          template_args['task_id'] = AsanaCreateActionItemAction.run(
-            asana_access_token: params[:asana_access_token],
-            task_url: params[:asana_task_url],
-            template_name: task_template,
-            template_args: template_args,
-            github_handle: params[:github_handle],
-            is_scheduled_release: params[:is_scheduled_release],
-            due_date: Date.today.strftime('%Y-%m-%d')
-          )
+          create_action_item(params, task_template, template_args)
         end
 
+        log_message(params, comment_template, template_args)
+      end
+
+      def self.create_action_item(params, template_name, template_args)
+        UI.important("Adding Asana task for release automation using #{task_template} template")
+        template_args['task_id'] = AsanaCreateActionItemAction.run(
+          asana_access_token: params[:asana_access_token],
+          task_url: params[:asana_task_url],
+          template_name: template_name,
+          template_args: template_args,
+          github_handle: params[:github_handle],
+          is_scheduled_release: params[:is_scheduled_release],
+          due_date: Date.today.strftime('%Y-%m-%d')
+        )
+      end
+
+      def self.log_message(params, template_name, template_args)
         AsanaLogMessageAction.run(
           asana_access_token: params[:asana_access_token],
           task_url: params[:asana_task_url],
-          template_name: comment_template,
+          template_name: template_name,
           template_args: template_args,
           github_handle: params[:github_handle],
           is_scheduled_release: params[:is_scheduled_release]
@@ -223,6 +260,11 @@ module Fastlane
                                        optional: true,
                                        sensitive: true,
                                        type: String),
+          FastlaneCore::ConfigItem.new(key: :ignore_untagged_commits,
+                                       description: "For public release, ignore untagged commits on the release branch",
+                                       optional: true,
+                                       type: Boolean,
+                                       default_value: false),
           FastlaneCore::ConfigItem.new(key: :is_internal_release_bump,
                                        description: "Is this an internal release bump? (the subsequent internal release of the current week)",
                                        optional: true,
