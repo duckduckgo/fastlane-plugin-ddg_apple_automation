@@ -30,6 +30,8 @@ module Fastlane
 
         setup_constants(platform)
 
+        # assert_branch_tagged_before_public_release(params)
+
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
@@ -43,11 +45,27 @@ module Fastlane
         report_status(params.values.merge(tag_and_release_output))
       end
 
+      def self.assert_branch_tagged_before_public_release(params)
+        return if params[:is_prerelease]
+
+        untagged_commit_sha = Helper::GitHelper.untagged_commit_sha(other_action.git_branch, platform)
+        if untagged_commit_sha
+          report_untagged_release_branch(params.values.merge(untagged_commit_sha: untagged_commit_sha))
+          return
+        end
+      end
+
       def self.create_tag_and_github_release(is_prerelease, platform, github_token)
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
 
         begin
-          other_action.add_git_tag(tag: tag)
+          # For public release, always tag the promoted tag. This is to ensure that if extra commits
+          # were added to the release branch, the tag will still be the same as the promoted tag.
+          if promoted_tag
+            other_action.add_git_tag(tag: tag, commit: Helper::GitHelper.commit_sha_for_tag(promoted_tag))
+          else
+            other_action.add_git_tag(tag: tag)
+          end
           other_action.push_git_tags(tag: tag)
         rescue StandardError => e
           UI.important("Failed to create and push tag: #{e}")
@@ -106,6 +124,28 @@ module Fastlane
           branch = other_action.git_branch
           Helper::GitHelper.delete_branch(@constants[:repo_name], branch, params[:github_elevated_permissions_token] || params[:github_token])
         end
+      end
+
+      def self.report_untagged_release_branch(params)
+        UI.important("Adding Asana task for release automation using #{task_template} template")
+        template_args['task_id'] = AsanaCreateActionItemAction.run(
+          asana_access_token: params[:asana_access_token],
+          task_url: params[:asana_task_url],
+          template_name: task_template,
+          template_args: template_args,
+          github_handle: params[:github_handle],
+          is_scheduled_release: params[:is_scheduled_release],
+          due_date: Date.today.strftime('%Y-%m-%d')
+        )
+
+        AsanaLogMessageAction.run(
+          asana_access_token: params[:asana_access_token],
+          task_url: params[:asana_task_url],
+          template_name: comment_template,
+          template_args: template_args,
+          github_handle: params[:github_handle],
+          is_scheduled_release: params[:is_scheduled_release]
+        )
       end
 
       def self.report_status(params)
