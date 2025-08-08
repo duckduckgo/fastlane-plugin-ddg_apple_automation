@@ -84,7 +84,7 @@ describe Fastlane::Actions::TagReleaseAction do
       allow(Fastlane::Actions::TagReleaseAction).to receive(:report_status)
     end
 
-    it "creates tag and release, merges branch and reports status" do
+    it "creates tag and release, merges tag and reports status" do
       subject
 
       expect(@tag_and_release_output[:merge_or_delete_successful]).to be_truthy
@@ -281,6 +281,7 @@ describe Fastlane::Actions::TagReleaseAction do
 
     before do
       @params[:base_branch] = "base_branch"
+      @params[:tag] = "1.1.0-123+macos"
       allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
       allow(Fastlane::Helper::GitHelper).to receive(:merge_branch)
       allow(Fastlane::Helper::GitHelper).to receive(:delete_branch)
@@ -293,19 +294,17 @@ describe Fastlane::Actions::TagReleaseAction do
         context "for prerelease" do
           include_context "for prerelease"
 
-          it "merges branch" do
+          it "merges tag to base branch" do
             subject
-            expect(other_action).to have_received(:git_branch)
             expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
-              .with(platform_context[:repo_name], branch, @params[:base_branch], @params[:github_token])
+              .with(platform_context[:repo_name], @params[:tag], @params[:base_branch], @params[:github_token])
           end
 
           it "uses elevated permissions GitHub token if provided" do
             @params[:github_elevated_permissions_token] = "elevated-permissions-token"
             subject
-            expect(other_action).to have_received(:git_branch)
             expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
-              .with(platform_context[:repo_name], branch, @params[:base_branch], @params[:github_elevated_permissions_token])
+              .with(platform_context[:repo_name], @params[:tag], @params[:base_branch], @params[:github_elevated_permissions_token])
           end
         end
 

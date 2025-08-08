@@ -368,24 +368,22 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
     end
 
     it "processes merge-failed template" do
-      expected_name = "Merge release/1.0.0 to main"
+      expected_name = "Merge 1.0.0-123 to main"
       expected_notes = <<~EXPECTED
         <body>
           The <code>1.0.0-123</code> release has been successfully tagged and published in GitHub releases,#{' '}
-          but merging to <code>main</code> failed. Please resolve conflicts and merge <code>release/1.0.0</code> to <code>main</code> manually.<br>
+          but merging to <code>main</code> failed. Please resolve conflicts and merge <code>1.0.0-123</code> tag to <code>main</code> manually.<br>
           <br>
           Issue the following git commands:
           <ul>
-            <li><code>git fetch origin</code></li>
-            <li><code>git checkout release/1.0.0</code> switch to the release branch</li>
-            <li><code>git pull origin release/1.0.0</code> pull latest changes</li>
+            <li><code>git fetch origin --tags</code></li>
             <li><code>git checkout main</code> switch to main</li>
             <li><code>git pull origin main</code> pull the latest code</li>
-            <li><code>git merge release/1.0.0</code>
+            <li><code>git merge 1.0.0-123</code>
               <ul>
                 <li>Resolve conflicts as needed</li>
                 <li>Run iOS, macOS and BSK unit and integration tests locally or create a separate branch and open a draft PR to let the CI handle it.</li>
-                <li>When merging a hotfix branch into an internal release branch, you will get conflicts in version and build number xcconfig files:
+                <li>When merging a hotfix tag into an internal release branch, you will get conflicts in version and build number xcconfig files:
                   <ul>
                     <li>In the version file: accept the internal version number (higher).</li>
                     <li>In the build number file: accept the hotfix build number (higher). This step is very important in order to calculate the build number of the next internal release correctly.</li>

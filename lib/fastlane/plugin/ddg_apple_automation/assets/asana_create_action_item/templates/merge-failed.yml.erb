@@ -1,21 +1,19 @@
-name: Merge <%= branch %> to <%= base_branch %>
+name: Merge <%= tag %> to <%= base_branch %>
 html_notes: |
   <body>
     The <code><%= tag %></code> release has been successfully tagged and published in GitHub releases, <%= '' %>
-    but merging to <code><%= base_branch %></code> failed. Please resolve conflicts and merge <code><%= branch %></code> to <code><%= base_branch %></code> manually.<br>
+    but merging to <code><%= base_branch %></code> failed. Please resolve conflicts and merge <code><%= tag %></code> tag to <code><%= base_branch %></code> manually.<br>
     <br>
     Issue the following git commands:
     <ul>
-      <li><code>git fetch origin</code></li>
-      <li><code>git checkout <%= branch %></code> switch to the release branch</li>
-      <li><code>git pull origin <%= branch %></code> pull latest changes</li>
+      <li><code>git fetch origin --tags</code></li>
       <li><code>git checkout <%= base_branch %></code> switch to <%= base_branch %></li>
       <li><code>git pull origin <%= base_branch %></code> pull the latest code</li>
-      <li><code>git merge <%= branch %></code>
+      <li><code>git merge <%= tag %></code>
         <ul>
           <li>Resolve conflicts as needed</li>
           <li>Run iOS, macOS and BSK unit and integration tests locally or create a separate branch and open a draft PR to let the CI handle it.</li>
-          <li>When merging a hotfix branch into an internal release branch, you will get conflicts in version and build number xcconfig files:
+          <li>When merging a hotfix tag into an internal release branch, you will get conflicts in version and build number xcconfig files:
             <ul>
               <li>In the version file: accept the internal version number (higher).</li>
               <li>In the build number file: accept the hotfix build number (higher). This step is very important in order to calculate the build number of the next internal release correctly.</li>
