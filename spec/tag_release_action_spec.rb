@@ -110,6 +110,7 @@ describe Fastlane::Actions::TagReleaseAction do
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
     let (:octokit_client) { double(releases: [latest_public_release]) }
+    let (:commit_sha_for_tag) { "promoted-tag-sha" }
 
     shared_context "local setup" do
       before(:each) do
@@ -118,6 +119,7 @@ describe Fastlane::Actions::TagReleaseAction do
         allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
         allow(Fastlane::UI).to receive(:message)
         allow(Fastlane::UI).to receive(:important)
+        allow(Fastlane::Helper::GitHelper).to receive(:commit_sha_for_tag).and_return(commit_sha_for_tag)
       end
     end
 
@@ -134,7 +136,12 @@ describe Fastlane::Actions::TagReleaseAction do
 
         expect(Fastlane::UI).to have_received(:message).with("Latest public release: #{latest_public_release.tag_name}").ordered
         expect(Fastlane::UI).to have_received(:message).with("Generating #{repo_name} release notes for GitHub release for tag: #{@tag}").ordered
-        expect(other_action).to have_received(:add_git_tag).with(tag: @tag)
+        if @params[:is_prerelease]
+          expect(other_action).to have_received(:add_git_tag).with(tag: @tag)
+        else
+          expect(Fastlane::Helper::GitHelper).to have_received(:commit_sha_for_tag).with(@promoted_tag)
+          expect(other_action).to have_received(:add_git_tag).with(tag: @tag, commit: commit_sha_for_tag)
+        end
         expect(other_action).to have_received(:push_git_tags).with(tag: @tag)
 
         expect(other_action).to have_received(:github_api).with(

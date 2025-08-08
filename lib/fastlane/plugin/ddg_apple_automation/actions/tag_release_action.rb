@@ -47,7 +47,13 @@ module Fastlane
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
 
         begin
-          other_action.add_git_tag(tag: tag)
+          # For public release, always tag the promoted tag. This is to ensure that if extra commits
+          # were added to the release branch, the tag will still be the same as the promoted tag.
+          if promoted_tag
+            other_action.add_git_tag(tag: tag, commit: Helper::GitHelper.commit_sha_for_tag(promoted_tag))
+          else
+            other_action.add_git_tag(tag: tag)
+          end
           other_action.push_git_tags(tag: tag)
         rescue StandardError => e
           UI.important("Failed to create and push tag: #{e}")

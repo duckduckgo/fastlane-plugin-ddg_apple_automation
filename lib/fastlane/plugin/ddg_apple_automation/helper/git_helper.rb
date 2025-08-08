@@ -56,7 +56,7 @@ module Fastlane
 
       def self.assert_branch_has_changes(release_branch, platform)
         latest_tag = `git tag --sort=-v:refname | grep '+#{platform}' | head -n 1`.chomp
-        latest_tag_sha = `git rev-parse "#{latest_tag}"^{}`.chomp
+        latest_tag_sha = commit_sha_for_tag(latest_tag)
         release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
 
         if latest_tag_sha == release_branch_sha
@@ -69,6 +69,10 @@ module Fastlane
                         .filter { |file| !file.match?(/^(:?\.github|scripts|fastlane)/) }
 
         changed_files.any?
+      end
+
+      def self.commit_sha_for_tag(tag)
+        `git rev-parse "#{tag}"^{}`.chomp
       end
 
       def self.latest_release(repo_name, prerelease, platform, github_token)
