@@ -55,20 +55,35 @@ module Fastlane
       end
 
       def self.assert_branch_has_changes(release_branch, platform)
-        latest_tag = `git tag --sort=-v:refname | grep '+#{platform}' | head -n 1`.chomp
-        latest_tag_sha = commit_sha_for_tag(latest_tag)
-        release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
-
-        if latest_tag_sha == release_branch_sha
+        state = release_branch_state(release_branch, platform)
+        if state[:is_tagged]
           UI.important("Release branch's HEAD is already tagged. Skipping automatic release.")
           return false
         end
 
-        changed_files = `git diff --name-only "#{latest_tag}".."origin/#{release_branch}"`
+        changed_files = `git diff --name-only "#{state[:latest_tag]}".."origin/#{release_branch}"`
                         .split("\n")
                         .filter { |file| !file.match?(/^(:?\.github|scripts|fastlane)/) }
 
         changed_files.any?
+      end
+
+      def self.untagged_commit_sha(release_branch, platform)
+        state = release_branch_state(release_branch, platform)
+        state[:release_branch_sha] unless state[:is_tagged]
+      end
+
+      def self.release_branch_state(release_branch, platform)
+        latest_tag = `git tag --sort=-v:refname | grep '+#{platform}' | head -n 1`.chomp
+        latest_tag_sha = commit_sha_for_tag(latest_tag)
+        release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
+
+        {
+          is_tagged: latest_tag_sha == release_branch_sha,
+          latest_tag: latest_tag,
+          latest_tag_sha: latest_tag_sha,
+          release_branch_sha: release_branch_sha
+        }
       end
 
       def self.commit_sha_for_tag(tag)
