@@ -264,7 +264,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
             <li>📥 DMG is available from <a href='https://cdn.com/bucket/duckduckgo-1.0.0.123.dmg'>https://cdn.com/bucket/duckduckgo-1.0.0.123.dmg</a>.</li>
             <li><b>❗️ Tagging repository failed.</b></li>
             <li><b>⚠️ GitHub release creation was skipped.</b></li>
-            <li><b>⚠️ Merging <code>release/1.0.0</code> to <code>main</code> was skipped.</b></li>
+            <li><b>⚠️ Merging <code>1.0.0-123</code> tag to <code>main</code> was skipped.</b></li>
           </ul>
           <a data-asana-gid='12345' />, please proceed with manual tagging and merging <a data-asana-gid='67890'
             data-asana-dynamic='false'>according to instructions</a>.<br>
@@ -297,7 +297,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
             </li>
             <li>🏷️ Repository is tagged with <code>1.0.0-123</code> tag.</li>
             <li>🚢 GitHub <a href='https://github.com/releases/tag/1.0.0-123'>1.0.0-123 pre-release</a> is created.</li>
-            <li>🔱 <code>release/1.0.0</code> branch has been successfully merged to <code>main</code>.</li>
+            <li>🔱 <code>1.0.0-123</code> tag has been successfully merged to <code>main</code>.</li>
           </ul>
           <br>
           🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
