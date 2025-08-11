@@ -636,6 +636,16 @@ commit e83fd007c0bdf054658068a79f5b7ea45d846468
     Description:
     This privacy config update may update a published value so must be received on main thread.
 #{'    '}
+commit 83a87186b21eb03dfbba04252d5ff95da0bd59e6
+
+    [Experimental AI Chat] Hide return button if keyboard is not visible (#1624)
+
+    Task/Issue URL:
+    https://app.asana.com/1/137249556945/project/1204167627774280/task/1210975209610639?\
+
+    ### Description
+    Hide return button if keyboard is not visible
+#{'    '}
 commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
 
     Add expectation when checking email text field value (#3572)
@@ -670,7 +680,8 @@ commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
                                "1208589738777777",
                                "1208589738666666",
                                "1208804405760977",
-                               "1208804405760666"
+                               "1208804405760666",
+                               "1210975209610639"
                              ])
     end
 
