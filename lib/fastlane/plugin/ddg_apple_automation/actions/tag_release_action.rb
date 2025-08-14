@@ -155,6 +155,7 @@ module Fastlane
         template_name = "public-release-tag-failed-untagged-commits"
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(params[:is_prerelease], params[:platform])
         template_args = self.template_arguments(params).merge(
+          untagged_commit_sha: params[:untagged_commit_sha],
           untagged_commit_url: "https://github.com/#{@constants[:repo_name]}/commit/#{params[:untagged_commit_sha]}",
           tag: tag,
           promoted_tag: promoted_tag
