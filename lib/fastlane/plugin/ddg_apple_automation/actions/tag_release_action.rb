@@ -35,6 +35,17 @@ module Fastlane
           return
         end
 
+        if params[:ignore_untagged_commits]
+          begin
+            # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
+            Helper::GitHelper.merge_branch(@constants[:repo_name], params[:branch], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
+          rescue StandardError
+            report_merge_release_branch_before_deleting_failed(params)
+            UI.user_error!("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+            return
+          end
+        end
+
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
@@ -49,10 +60,15 @@ module Fastlane
       end
 
       def self.assert_branch_tagged_before_public_release(params)
-        return if params[:is_prerelease] || params[:ignore_untagged_commits]
+        return true if params[:is_prerelease]
 
         untagged_commit_sha = Helper::GitHelper.untagged_commit_sha(other_action.git_branch, platform)
         if untagged_commit_sha
+          if params[:ignore_untagged_commits]
+            UI.important("Untagged commits found but ignoring them because ignore_untagged_commits is true.")
+            UI.important("Release branch will be merged to base branch and then deleted. Untagged commits will not be included in this release.")
+            return true
+          end
           report_untagged_release_branch(params.values.merge(untagged_commit_sha: untagged_commit_sha))
           return false
         end
@@ -128,6 +144,10 @@ module Fastlane
           branch = other_action.git_branch
           Helper::GitHelper.delete_branch(@constants[:repo_name], branch, params[:github_elevated_permissions_token] || params[:github_token])
         end
+      end
+
+      def self.report_merge_release_branch_before_deleting_failed(params)
+        return
       end
 
       def self.report_untagged_release_branch(params)
