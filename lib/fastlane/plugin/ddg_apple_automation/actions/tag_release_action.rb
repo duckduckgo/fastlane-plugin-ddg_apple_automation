@@ -63,7 +63,7 @@ module Fastlane
       def self.assert_branch_tagged_before_public_release(params)
         return true if params[:is_prerelease]
 
-        untagged_commit_sha = Helper::GitHelper.untagged_commit_sha(other_action.git_branch, platform)
+        untagged_commit_sha = Helper::GitHelper.untagged_commit_sha(other_action.git_branch, params[:platform])
         if untagged_commit_sha
           if params[:ignore_untagged_commits]
             UI.important("Untagged commits found but ignoring them because ignore_untagged_commits is true.")
