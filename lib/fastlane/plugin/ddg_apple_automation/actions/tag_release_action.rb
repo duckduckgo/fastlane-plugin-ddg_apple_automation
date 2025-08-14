@@ -32,6 +32,7 @@ module Fastlane
 
         unless assert_branch_tagged_before_public_release(params)
           UI.user_error!("Skipping release because release branch's HEAD is not tagged.")
+          Helper::GitHubActionsHelper.set_output("stop_workflow", true)
           return
         end
 
