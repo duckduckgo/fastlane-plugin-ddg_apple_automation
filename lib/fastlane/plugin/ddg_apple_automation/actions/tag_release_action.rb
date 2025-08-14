@@ -31,7 +31,7 @@ module Fastlane
         setup_constants(platform)
 
         unless assert_branch_tagged_before_public_release(params)
-          UI.user_error!("Skipping release because release branch's HEAD is not tagged.")
+          UI.important("Skipping release because release branch's HEAD is not tagged.")
           Helper::GitHubActionsHelper.set_output("stop_workflow", true)
           return
         end
@@ -42,7 +42,8 @@ module Fastlane
             Helper::GitHelper.merge_branch(@constants[:repo_name], params[:branch], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
           rescue StandardError
             report_merge_release_branch_before_deleting_failed(params)
-            UI.user_error!("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+            UI.important("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+            Helper::GitHubActionsHelper.set_output("stop_workflow", true)
             return
           end
         end
