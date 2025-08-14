@@ -1,7 +1,7 @@
 <body>
   <h2>[ACTION NEEDED] <%= tag %> public release not tagged – unreleased commits found</h2>
   <ul>
-    <li><b>❗️ Tagging the repository with <%= tag %> public release tag was aborted because untagged commits were found on the <%= branch %> branch.</b>
+    <li><b>❗️ Tagging the repository with <%= tag %> public release tag was aborted because untagged commits were found on the <%= branch %> branch.</b></li>
     <li>Top commit is <a href='<%= untagged_commit_url %>'><code><%= untagged_commit_sha %></code></a>.</li>
     <li><b>⚠️ GitHub release wasn't created.</b></li>
     <li><b>⚠️ <code><%= branch %></code> branch wasn't deleted.</b></li>
