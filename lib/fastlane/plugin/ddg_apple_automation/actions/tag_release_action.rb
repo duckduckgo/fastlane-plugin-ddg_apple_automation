@@ -176,7 +176,7 @@ module Fastlane
       end
 
       def self.create_action_item(params, template_name, template_args)
-        UI.important("Adding Asana task for release automation using #{task_template} template")
+        UI.important("Adding Asana task for release automation using #{template_name} template")
         template_args['task_id'] = AsanaCreateActionItemAction.run(
           asana_access_token: params[:asana_access_token],
           task_url: params[:asana_task_url],
