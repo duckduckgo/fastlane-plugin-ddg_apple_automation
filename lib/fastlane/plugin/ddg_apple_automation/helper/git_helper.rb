@@ -33,10 +33,15 @@ module Fastlane
       end
 
       def self.merge_branch(repo_name, branch, base_branch, github_token)
+        UI.message("1")
         client = Octokit::Client.new(access_token: github_token)
+        UI.message("2")
         begin
+          UI.message("3")
           client.merge(repo_name, base_branch, branch)
+          UI.message("4")
           UI.success("Merged #{branch} branch to #{base_branch}")
+          UI.message("5")
         rescue StandardError => e
           UI.important("Failed to merge #{branch} branch to #{base_branch}: #{e}")
           raise e
