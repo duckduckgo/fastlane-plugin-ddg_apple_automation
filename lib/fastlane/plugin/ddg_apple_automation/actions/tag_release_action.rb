@@ -37,9 +37,9 @@ module Fastlane
         end
 
         if params[:ignore_untagged_commits]
+          UI.important("Merging #{params[:branch]} branch to #{params[:base_branch]} to have untagged commits in the base branch")
           begin
             # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
-            UI.important("Merging #{params[:branch]} branch to #{params[:base_branch]} to have untagged commits in the base branch")
             Helper::GitHelper.merge_branch(@constants[:repo_name], params[:branch], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
             UI.important("Merged #{params[:branch]} branch to #{params[:base_branch]} to have untagged commits in the base branch")
           rescue StandardError
