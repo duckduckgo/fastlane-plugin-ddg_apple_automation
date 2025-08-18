@@ -3,6 +3,7 @@ shared_context "common setup" do
     @params = {
       asana_access_token: "asana-token",
       asana_task_url: "https://app.asana.com/0/0/1/f",
+      ignore_untagged_commits: false,
       is_prerelease: true,
       github_token: "github-token"
     }
@@ -79,15 +80,44 @@ describe Fastlane::Actions::TagReleaseAction do
     before do
       @other_action = double(ensure_git_branch: nil)
       allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:assert_branch_tagged_before_public_release).and_return(true)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:create_tag_and_github_release).and_return(@tag_and_release_output)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:report_status)
     end
 
-    it "creates tag and release, merges tag and reports status" do
-      subject
+    context "when tag is created" do
+      before do
+        @tag_and_release_output[:tag_created] = true
+      end
 
-      expect(@tag_and_release_output[:merge_or_delete_successful]).to be_truthy
+      it "creates tag and release, merges tag and reports status" do
+        subject
+        expect(@tag_and_release_output[:merge_or_delete_successful]).to be_truthy
+      end
+    end
+
+    context "when tag is not created" do
+      before do
+        @tag_and_release_output[:tag_created] = false
+      end
+
+      shared_examples "reporting failure" do
+        it "reports failure" do
+          subject
+          expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_status).with(hash_including(tag_created: false))
+        end
+      end
+
+      context "for prerelease" do
+        include_context "for prerelease"
+        it_behaves_like "reporting failure"
+      end
+
+      context "for public release" do
+        include_context "for public release"
+        it_behaves_like "reporting failure"
+      end
     end
 
     context "when merge or delete failed" do
@@ -106,7 +136,7 @@ describe Fastlane::Actions::TagReleaseAction do
     let(:platform) { @params[:platform] }
     subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], platform, @params[:github_token]) }
 
-    let (:latest_public_release) { double(tag_name: "1.0.0+#{platform}", prerelease: false) }
+    let (:latest_public_release) { double(tag_name: "1.0.0+#{@params[:platform]}", prerelease: false) }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
     let (:octokit_client) { double(releases: [latest_public_release]) }
@@ -119,6 +149,7 @@ describe Fastlane::Actions::TagReleaseAction do
         allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
         allow(Fastlane::UI).to receive(:message)
         allow(Fastlane::UI).to receive(:important)
+        allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:report_error)
         allow(Fastlane::Helper::GitHelper).to receive(:commit_sha_for_tag).and_return(commit_sha_for_tag)
       end
     end
@@ -211,7 +242,8 @@ describe Fastlane::Actions::TagReleaseAction do
               promoted_tag: @promoted_tag,
               tag_created: false
             })
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag: StandardError")
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag")
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
       end
     end
 
@@ -225,7 +257,8 @@ describe Fastlane::Actions::TagReleaseAction do
               tag_created: true,
               latest_public_release_tag: reports_latest_public_release_tag ? latest_public_release.tag_name : nil
             })
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release")
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
       end
     end
 
