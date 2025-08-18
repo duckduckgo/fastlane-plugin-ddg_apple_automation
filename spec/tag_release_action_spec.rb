@@ -192,6 +192,67 @@ describe Fastlane::Actions::TagReleaseAction do
     end
   end
 
+  describe "#assert_branch_tagged_before_public_release" do
+    subject { Fastlane::Actions::TagReleaseAction.assert_branch_tagged_before_public_release(@params) }
+
+    include_context "common setup"
+
+    before do
+      @params[:is_prerelease] = false
+      @params[:platform] = "macos"
+
+      @branch = "release_branch"
+      @other_action = double(git_branch: @branch)
+      allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
+      allow(Fastlane::UI).to receive(:important)
+      allow(Fastlane::Helper::GitHelper).to receive(:untagged_commit_sha).and_return("untagged-commit-sha")
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:report_untagged_release_branch)
+    end
+
+    context "for prerelease" do
+      include_context "when is_prerelease: true"
+
+      it "does nothing and returns true" do
+        expect(subject).to be_truthy
+      end
+    end
+
+    context "when there are no untagged commits" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:untagged_commit_sha).and_return(nil)
+      end
+
+      it "does nothing and returns true" do
+        expect(subject).to be_truthy
+      end
+    end
+
+    context "when there are untagged commits" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:untagged_commit_sha).and_return("untagged-commit-sha")
+        allow(Fastlane::Actions::TagReleaseAction).to receive(:report_untagged_release_branch)
+      end
+
+      it "reports that untagged commits are found and returns false" do
+        expect(subject).to be_falsey
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_untagged_release_branch).with(hash_including(untagged_commit_sha: "untagged-commit-sha"))
+      end
+
+      context "when ignore_untagged_commits is true" do
+        before do
+          @params[:ignore_untagged_commits] = true
+        end
+
+        it "reports that untagged commits are ignored and returns true" do
+          expect(subject).to be_truthy
+          expect(Fastlane::UI).to have_received(:important).with("Untagged commits found but ignoring them because ignore_untagged_commits is true.")
+          expect(Fastlane::UI).to have_received(:important).with("Release branch will be merged to base branch and then deleted. Untagged commits will not be included in this release.")
+          expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_untagged_release_branch)
+        end
+      end
+    end
+  end
+
   describe "#create_tag_and_github_release" do
     let(:platform) { "macos" }
     subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], platform, @params[:github_token]) }

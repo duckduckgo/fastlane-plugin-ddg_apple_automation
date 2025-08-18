@@ -29,7 +29,7 @@ module Fastlane
 
         setup_constants(platform)
 
-        unless assert_branch_tagged_before_public_release(params)
+        unless assert_branch_tagged_before_public_release(params.values)
           UI.important("Skipping release because release branch's HEAD is not tagged.")
           Helper::GitHubActionsHelper.set_output("stop_workflow", true)
           return
@@ -76,7 +76,7 @@ module Fastlane
             UI.important("Release branch will be merged to base branch and then deleted. Untagged commits will not be included in this release.")
             return true
           end
-          report_untagged_release_branch(params.values.merge(untagged_commit_sha: untagged_commit_sha))
+          report_untagged_release_branch(params.merge(untagged_commit_sha: untagged_commit_sha))
           return false
         end
         true
