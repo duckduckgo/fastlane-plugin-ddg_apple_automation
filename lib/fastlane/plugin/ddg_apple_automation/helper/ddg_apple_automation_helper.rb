@@ -404,6 +404,11 @@ module Fastlane
       rescue StandardError
         UI.user_error!("Error: The file '#{file}' does not exist.")
       end
+
+      def self.report_error(error)
+        UI.error("Error: #{error}")
+        UI.error("Backtrace:\n#{error.backtrace.join("\n")}")
+      end
     end
   end
 end

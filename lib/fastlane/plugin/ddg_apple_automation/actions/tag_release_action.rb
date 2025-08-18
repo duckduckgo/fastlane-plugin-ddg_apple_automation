@@ -42,10 +42,11 @@ module Fastlane
             # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
             Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
             UI.important("Merged #{branch} branch to #{params[:base_branch]} to have untagged commits in the base branch")
-          rescue StandardError
+          rescue StandardError => e
             report_merge_release_branch_before_deleting_failed(params.values.merge(branch: branch))
             UI.important("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
             Helper::GitHubActionsHelper.set_output("stop_workflow", true)
+            Helper::DdgAppleAutomationHelper.report_error(e)
             return
           end
         end
