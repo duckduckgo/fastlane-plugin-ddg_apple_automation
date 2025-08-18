@@ -482,6 +482,29 @@ describe Fastlane::Actions::TagReleaseAction do
     end
   end
 
+  describe "#report_merge_release_branch_before_deleting_failed" do
+    subject { Fastlane::Actions::TagReleaseAction.report_merge_release_branch_before_deleting_failed(@params) }
+
+    include_context "common setup"
+
+    before do
+      @params[:is_prerelease] = false
+      @params[:platform] = "macos"
+      @template_args = { "foo" => "bar" }
+      @tag = "1.1.0+macos"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, nil])
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:template_arguments).and_return(@template_args)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:create_action_item)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:log_message)
+    end
+
+    it "creates Asana task and logs message" do
+      subject
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:create_action_item).with(@params, "public-release-merge-failed-untagged-commits", @template_args.merge(tag: @tag))
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:log_message).with(@params, "public-release-merge-failed-untagged-commits", @template_args.merge(tag: @tag))
+    end
+  end
+
   describe "#report_status" do
     subject { Fastlane::Actions::TagReleaseAction.report_status(@params) }
 

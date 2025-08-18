@@ -159,7 +159,7 @@ module Fastlane
       def self.report_merge_release_branch_before_deleting_failed(params)
         template_name = "public-release-merge-failed-untagged-commits"
         tag, = Helper::DdgAppleAutomationHelper.compute_tag(params[:is_prerelease], params[:platform])
-        template_args = self.template_arguments(params).merge(tag: tag)
+        template_args = template_arguments(params).merge(tag: tag)
 
         create_action_item(params, template_name, template_args)
         log_message(params, template_name, template_args)
@@ -168,7 +168,7 @@ module Fastlane
       def self.report_untagged_release_branch(params)
         template_name = "public-release-tag-failed-untagged-commits"
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(params[:is_prerelease], params[:platform])
-        template_args = self.template_arguments(params).merge(
+        template_args = template_arguments(params).merge(
           untagged_commit_sha: params[:untagged_commit_sha],
           untagged_commit_url: "https://github.com/#{@constants[:repo_name]}/commit/#{params[:untagged_commit_sha]}",
           tag: tag,
@@ -180,7 +180,7 @@ module Fastlane
       end
 
       def self.report_status(params)
-        template_args = self.template_arguments(params)
+        template_args = template_arguments(params)
         task_template, comment_template = setup_asana_templates(params)
 
         if task_template
