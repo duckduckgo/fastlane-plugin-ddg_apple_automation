@@ -412,7 +412,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       expected_name = "Tag release/1.1.0 branch, delete it, and create GitHub release"
       expected_notes = <<~EXPECTED
         <body>
-          Failed to tag the release with <code>1.1.0-123</code> tag.<br>
+          Failed to tag the release with <code>1.1.0+macos</code> tag.<br>
           Please follow instructions below to tag the branch, make GitHub release and delete the release branch manually.
           <ul>
             <li>If the tag has already been created, please proceed with creating GitHub release and deleting the branch.</li>
@@ -420,12 +420,10 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           </ul><br>
           Issue the following git commands to tag the release and delete the branch:
           <ul>
-            <li><code>git fetch origin</code></li>
-            <li><code>git checkout release/1.1.0</code> switch to the release branch</li>
-            <li><code>git pull origin release/1.1.0</code> pull latest changes</li>
-            <li><code>git tag 1.1.0-123</code> tag the release</li>
-            <li><code>git push origin 1.1.0-123</code> push the tag</li>
-            <li><code>git checkout main</code> switch to main</li>
+            <li><code>git fetch origin --tags</code></li>
+            <li><code>git checkout 1.1.0-123+macos</code> check out the internal tag</li>
+            <li><code>git tag 1.1.0+macos</code> tag the release with a public tag</li>
+            <li><code>git push origin 1.1.0+macos</code> push the tag</li>
             <li><code>git push origin --delete release/1.1.0</code> delete the release branch</li>
           </ul><br>
           To create GitHub release:
@@ -433,7 +431,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
             <li>Set up GH CLI if you haven't yet: <a data-asana-gid='1203791243007683'/></li>
             <li>Run the following command:
             <ul>
-              <li><code>gh release create 1.1.0-123 --generate-notes --latest --notes-start-tag 1.0.0</code></li>
+              <li><code>gh release create 1.1.0+macos --generate-notes --latest --notes-start-tag 1.0.0+macos</code></li>
             </ul></li>
           </ul><br>
           Complete this task when ready.<br>
@@ -444,9 +442,10 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
 
       name, notes = process_yaml_template("public-release-tag-failed", {
         "branch" => "release/1.1.0",
-        "tag" => "1.1.0-123",
+        "promoted_tag" => "1.1.0-123+macos",
+        "tag" => "1.1.0+macos",
         "base_branch" => "main",
-        "last_release_tag" => "1.0.0",
+        "last_release_tag" => "1.0.0+macos",
         "workflow_url" => "https://workflow.com"
       })
 
