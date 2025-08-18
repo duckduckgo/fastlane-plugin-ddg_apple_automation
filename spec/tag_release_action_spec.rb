@@ -130,6 +130,21 @@ describe Fastlane::Actions::TagReleaseAction do
         expect(@tag_and_release_output[:merge_or_delete_successful]).to be_falsy
       end
     end
+
+    context "when branch is not tagged before public release" do
+      before do
+        allow(Fastlane::Actions::TagReleaseAction).to receive(:assert_branch_tagged_before_public_release).and_return(false)
+        allow(Fastlane::UI).to receive(:important)
+        allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+      end
+
+      it "stops the workflow" do
+        subject
+        expect(Fastlane::UI).to have_received(:important).with("Skipping release because release branch's HEAD is not tagged.")
+        expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
+        expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+      end
+    end
   end
 
   describe "#create_tag_and_github_release" do
