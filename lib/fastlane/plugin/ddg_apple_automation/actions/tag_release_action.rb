@@ -58,8 +58,9 @@ module Fastlane
           begin
             merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
             tag_and_release_output[:merge_or_delete_successful] = true
-          rescue StandardError
+          rescue StandardError => e
             tag_and_release_output[:merge_or_delete_successful] = false
+            Helper::DdgAppleAutomationHelper.report_error(e)
           end
         end
 
@@ -85,6 +86,9 @@ module Fastlane
       def self.create_tag_and_github_release(is_prerelease, platform, github_token)
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
 
+        latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, platform, github_token)
+        UI.message("Latest public release: #{latest_public_release.tag_name}")
+
         begin
           # For public release, always tag the promoted tag. This is to ensure that if extra commits
           # were added to the release branch, the tag will still be the same as the promoted tag.
@@ -95,19 +99,17 @@ module Fastlane
           end
           other_action.push_git_tags(tag: tag)
         rescue StandardError => e
-          UI.important("Failed to create and push tag: #{e}")
+          UI.important("Failed to create and push tag")
           Helper::DdgAppleAutomationHelper.report_error(e)
           return {
             tag: tag,
             promoted_tag: promoted_tag,
-            tag_created: false
+            tag_created: false,
+            latest_public_release_tag: latest_public_release.tag_name
           }
         end
 
         begin
-          latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, platform, github_token)
-
-          UI.message("Latest public release: #{latest_public_release.tag_name}")
           UI.message("Generating #{@constants[:repo_name]} release notes for GitHub release for tag: #{tag}")
 
           # Octokit doesn't provide the API to generate release notes for a specific tag
@@ -133,14 +135,15 @@ module Fastlane
             is_prerelease: is_prerelease
           )
         rescue StandardError => e
-          UI.important("Failed to create GitHub release: #{e}")
+          UI.important("Failed to create GitHub release")
+          Helper::DdgAppleAutomationHelper.report_error(e)
         end
 
         {
           tag: tag,
           promoted_tag: promoted_tag,
           tag_created: true,
-          latest_public_release_tag: latest_public_release&.tag_name
+          latest_public_release_tag: latest_public_release.tag_name
         }
       end
 
