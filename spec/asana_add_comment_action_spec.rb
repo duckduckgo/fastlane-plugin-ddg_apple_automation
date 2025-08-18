@@ -440,6 +440,67 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       })).to eq(expected.chomp)
     end
 
+    it "processes public-release-merge-failed-untagged-commits template" do
+      expected = <<~EXPECTED
+        <body>
+          <h2>[ACTION NEEDED] 1.0.0-123 public release not tagged – automatic merge failed</h2>
+          You've requested proceeding with public release despite untagged commits on the <code>release/1.0.0</code> branch,#{' '}
+          but merging the commits to <code>main</code> failed.
+          <ul>
+            <li><b>❗️ Tagging the repository with 1.0.0-123 public release tag was aborted.</b></li>
+            <li><b>⚠️ GitHub release wasn't created.</b></li>
+            <li><b>⚠️ <code>release/1.0.0</code> branch wasn't deleted.</b></li>
+          </ul>
+          <br>
+          <a data-asana-gid='12345' />, please follow instructions to merge branches manually and proceed with the release <a data-asana-gid='67890'
+            data-asana-dynamic='false'>according to instructions</a>.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      expect(process_template("public-release-merge-failed-untagged-commits", {
+        "tag" => "1.0.0-123",
+        "assignee_id" => "12345",
+        "task_id" => "67890",
+        "untagged_commit_sha" => "123abc",
+        "untagged_commit_url" => "https://github.com/duckduckgo/apple-browsers/commit/123abc",
+        "branch" => "release/1.0.0",
+        "base_branch" => "main",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected.chomp)
+    end
+
+    it "processes public-release-tag-failed-untagged-commits template" do
+      expected = <<~EXPECTED
+        <body>
+          <h2>[ACTION NEEDED] 1.0.0-123 public release not tagged – unreleased commits found</h2>
+          <ul>
+            <li><b>❗️ Tagging the repository with 1.0.0-123 public release tag was aborted because untagged commits were found on the release/1.0.0 branch.</b></li>
+            <li>Top commit is <a href='https://github.com/duckduckgo/apple-browsers/commit/123abc'><code>123abc</code></a>.</li>
+            <li><b>⚠️ GitHub release wasn't created.</b></li>
+            <li><b>⚠️ <code>release/1.0.0</code> branch wasn't deleted.</b></li>
+          </ul>
+          <br>
+          <a data-asana-gid='12345' />, please follow instructions to remove untagged commits and proceed with the release <a data-asana-gid='67890'
+            data-asana-dynamic='false'>according to instructions</a>.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      expect(process_template("public-release-tag-failed-untagged-commits", {
+        "tag" => "1.0.0-123",
+        "assignee_id" => "12345",
+        "task_id" => "67890",
+        "untagged_commit_sha" => "123abc",
+        "untagged_commit_url" => "https://github.com/duckduckgo/apple-browsers/commit/123abc",
+        "branch" => "release/1.0.0",
+        "base_branch" => "main",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected.chomp)
+    end
+
     def process_template(template_name, args)
       Fastlane::Actions::AsanaAddCommentAction.process_template(template_name, args)
     end
