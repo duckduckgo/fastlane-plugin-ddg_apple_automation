@@ -505,6 +505,33 @@ describe Fastlane::Actions::TagReleaseAction do
     end
   end
 
+  describe "#report_untagged_release_branch" do
+    subject { Fastlane::Actions::TagReleaseAction.report_untagged_release_branch(@params) }
+
+    include_context "common setup"
+
+    before do
+      @params[:is_prerelease] = false
+      @params[:platform] = "macos"
+      @params[:untagged_commit_sha] = "123abc"
+      @template_args = { foo: "bar", untagged_commit_sha: "123abc", untagged_commit_url: "https://github.com/duckduckgo/apple-browsers/commit/123abc" }
+      @tag = "1.1.0+macos"
+      @promoted_tag = "1.1.0-123+macos"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, @promoted_tag])
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:template_arguments).and_return(@template_args)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:create_action_item)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:log_message)
+    end
+
+    it "creates Asana task and logs message" do
+      subject
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:create_action_item)
+        .with(@params, "public-release-tag-failed-untagged-commits", @template_args.merge(tag: @tag, promoted_tag: @promoted_tag))
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:log_message)
+        .with(@params, "public-release-tag-failed-untagged-commits", @template_args.merge(tag: @tag, promoted_tag: @promoted_tag))
+    end
+  end
+
   describe "#report_status" do
     subject { Fastlane::Actions::TagReleaseAction.report_status(@params) }
 
