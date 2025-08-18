@@ -139,13 +139,11 @@ describe Fastlane::Actions::TagReleaseAction do
     let (:latest_public_release) { double(tag_name: "1.0.0+macos", prerelease: false) }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
-    let (:octokit_client) { double(releases: [latest_public_release]) }
     let (:commit_sha_for_tag) { "promoted-tag-sha" }
 
     shared_context "local setup" do
       before(:each) do
         allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(latest_public_release)
-        allow(Octokit::Client).to receive(:new).and_return(octokit_client)
         allow(JSON).to receive(:parse).and_return(generated_release_notes[:body])
         allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
         allow(Fastlane::UI).to receive(:message)
@@ -212,12 +210,6 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
 
-    shared_context "when failed to fetch latest GitHub release" do
-      before do
-        allow(octokit_client).to receive(:releases).and_raise(StandardError)
-      end
-    end
-
     shared_context "when failed to generate GitHub release notes" do
       before do
         allow(other_action).to receive(:github_api).and_raise(StandardError)
@@ -249,15 +241,13 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
 
-    shared_examples "gracefully handling GitHub release error" do |reports_latest_public_release_tag|
-      let (:reports_latest_public_release_tag) { reports_latest_public_release_tag }
-
+    shared_examples "gracefully handling GitHub release error" do
       it "handles GitHub release error" do
         expect(subject).to eq({
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: true,
-              latest_public_release_tag: reports_latest_public_release_tag ? latest_public_release.tag_name : nil
+              latest_public_release_tag: latest_public_release.tag_name
             })
         expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release")
         expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
@@ -271,7 +261,6 @@ describe Fastlane::Actions::TagReleaseAction do
     release_type_contexts = ["for prerelease", "for public release"]
     tag_contexts = ["when failed to create tag", "when failed to push tag"]
     github_release_contexts = [
-      { name: "when failed to fetch latest GitHub release", includes_latest_public_release_tag: false },
       { name: "when failed to generate GitHub release notes", includes_latest_public_release_tag: true },
       { name: "when failed to parse GitHub response", includes_latest_public_release_tag: true },
       { name: "when failed to create GitHub release", includes_latest_public_release_tag: true }
@@ -299,7 +288,7 @@ describe Fastlane::Actions::TagReleaseAction do
             github_release_contexts.each do |github_release_context|
               context github_release_context[:name] do
                 include_context github_release_context[:name]
-                it_behaves_like "gracefully handling GitHub release error", github_release_context[:includes_latest_public_release_tag]
+                it_behaves_like "gracefully handling GitHub release error"
               end
             end
           end

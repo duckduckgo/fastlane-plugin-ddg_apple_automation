@@ -1,6 +1,5 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
-require "octokit"
 require "date"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
