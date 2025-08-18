@@ -40,8 +40,8 @@ module Fastlane
           begin
             branch = other_action.git_branch
             # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
+            UI.important("Merging branch before deleting to have untagged commits in the base branch")
             Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
-            UI.important("Merged #{branch} branch to #{params[:base_branch]} to have untagged commits in the base branch")
           rescue StandardError => e
             report_merge_release_branch_before_deleting_failed(params.values.merge(branch: branch))
             UI.important("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
@@ -94,6 +94,7 @@ module Fastlane
           other_action.push_git_tags(tag: tag)
         rescue StandardError => e
           UI.important("Failed to create and push tag: #{e}")
+          Helper::DdgAppleAutomationHelper.report_error(e)
           return {
             tag: tag,
             promoted_tag: promoted_tag,
@@ -222,7 +223,7 @@ module Fastlane
       end
 
       def self.setup_asana_templates(params)
-        if params[:merge_or_delete_successful]
+        if params[:merge_or_delete_successful] && params[:tag_created]
           comment_template = params[:is_prerelease] ? "internal-release-ready" : "public-release-tagged"
         else
           case [params[:tag_created], params[:is_prerelease]]
