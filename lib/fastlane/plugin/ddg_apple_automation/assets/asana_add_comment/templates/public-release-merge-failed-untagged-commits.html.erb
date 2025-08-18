@@ -1,0 +1,15 @@
+<body>
+  <h2>[ACTION NEEDED] <%= tag %> public release not tagged – automatic merge failed</h2>
+  You've requested proceeding with public release despite untagged commits on the <code><%= branch %></code> branch, <%= '' %>
+  but merging the commits to <code><%= base_branch %></code> failed.
+  <ul>
+    <li><b>❗️ Tagging the repository with <%= tag %> public release tag was aborted.</b></li>
+    <li><b>⚠️ GitHub release wasn't created.</b></li>
+    <li><b>⚠️ <code><%= branch %></code> branch wasn't deleted.</b></li>
+  </ul>
+  <br>
+  <a data-asana-gid='<%= assignee_id %>' />, please follow instructions to merge branches manually and proceed with the release <a data-asana-gid='<%= task_id %>'
+    data-asana-dynamic='false'>according to instructions</a>.<br>
+  <br>
+  🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
+</body>

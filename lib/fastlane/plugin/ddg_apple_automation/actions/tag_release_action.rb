@@ -158,7 +158,12 @@ module Fastlane
       end
 
       def self.report_merge_release_branch_before_deleting_failed(params)
-        return
+        template_name = "public-release-merge-failed-untagged-commits"
+        tag, = Helper::DdgAppleAutomationHelper.compute_tag(params[:is_prerelease], params[:platform])
+        template_args = self.template_arguments(params).merge(tag: tag)
+
+        create_action_item(params, template_name, template_args)
+        log_message(params, template_name, template_args)
       end
 
       def self.report_untagged_release_branch(params)
