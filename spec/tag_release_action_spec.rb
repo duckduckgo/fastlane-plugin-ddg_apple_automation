@@ -78,7 +78,8 @@ describe Fastlane::Actions::TagReleaseAction do
     include_context "common setup"
 
     before do
-      @other_action = double(ensure_git_branch: nil)
+      @branch = "release_branch"
+      @other_action = double(ensure_git_branch: nil, git_branch: @branch)
       allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:assert_branch_tagged_before_public_release).and_return(true)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:create_tag_and_github_release).and_return(@tag_and_release_output)
@@ -94,6 +95,19 @@ describe Fastlane::Actions::TagReleaseAction do
       it "creates tag and release, merges tag and reports status" do
         subject
         expect(@tag_and_release_output[:merge_or_delete_successful]).to be_truthy
+      end
+
+      context "when merge or delete fails" do
+        before do
+          allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:report_error)
+          allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch).and_raise(StandardError)
+        end
+
+        it "reports error" do
+          subject
+          expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
+          expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_status).with(hash_including(merge_or_delete_successful: false))
+        end
       end
     end
 
@@ -143,6 +157,37 @@ describe Fastlane::Actions::TagReleaseAction do
         expect(Fastlane::UI).to have_received(:important).with("Skipping release because release branch's HEAD is not tagged.")
         expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
         expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+      end
+    end
+
+    context "when ignore_untagged_commits is true" do
+      before do
+        @params[:ignore_untagged_commits] = true
+        @params[:base_branch] = "base_branch"
+
+        allow(Fastlane::UI).to receive(:important)
+        allow(Fastlane::Helper::GitHelper).to receive(:merge_branch)
+      end
+
+      it "merges branch to base branch" do
+        subject
+        expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
+          .with("duckduckgo/apple-browsers", @branch, "base_branch", @params[:github_token])
+      end
+
+      context "when merge fails" do
+        before do
+          allow(Fastlane::Helper::GitHelper).to receive(:merge_branch).and_raise(StandardError)
+          allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+          allow(Fastlane::Actions::TagReleaseAction).to receive(:report_merge_release_branch_before_deleting_failed)
+        end
+
+        it "reports error" do
+          subject
+          expect(Fastlane::UI).to have_received(:important).with("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+          expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
+          expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+        end
       end
     end
   end
