@@ -133,10 +133,10 @@ describe Fastlane::Actions::TagReleaseAction do
   end
 
   describe "#create_tag_and_github_release" do
-    let(:platform) { @params[:platform] }
+    let(:platform) { "macos" }
     subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], platform, @params[:github_token]) }
 
-    let (:latest_public_release) { double(tag_name: "1.0.0+#{@params[:platform]}", prerelease: false) }
+    let (:latest_public_release) { double(tag_name: "1.0.0+macos", prerelease: false) }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
     let (:octokit_client) { double(releases: [latest_public_release]) }
@@ -144,6 +144,7 @@ describe Fastlane::Actions::TagReleaseAction do
 
     shared_context "local setup" do
       before(:each) do
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(latest_public_release)
         allow(Octokit::Client).to receive(:new).and_return(octokit_client)
         allow(JSON).to receive(:parse).and_return(generated_release_notes[:body])
         allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
@@ -238,6 +239,7 @@ describe Fastlane::Actions::TagReleaseAction do
     shared_examples "gracefully handling tagging error" do
       it "handles tagging error" do
         expect(subject).to eq({
+              latest_public_release_tag: latest_public_release.tag_name,
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: false
