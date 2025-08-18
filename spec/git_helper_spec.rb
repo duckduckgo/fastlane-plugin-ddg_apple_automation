@@ -182,4 +182,75 @@ describe Fastlane::Helper::GitHelper do
       end
     end
   end
+
+  describe "#assert_branch_has_changes" do
+    subject { Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch", platform) }
+
+    let(:platform) { "ios" }
+    let(:version) { "1.0.0+#{platform}" }
+
+    before do
+      allow(Fastlane::UI).to receive(:important)
+    end
+
+    context "when the release branch has no changes since the latest tag" do
+      it "returns false and shows a message" do
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("abc123\n")
+
+        expect(subject).to be_falsey
+        expect(Fastlane::UI).to have_received(:important).with("Release branch's HEAD is already tagged. Skipping automatic release.")
+      end
+    end
+
+    context "when the release branch has changes since the latest tag" do
+      it "returns true" do
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return("app/file1.rb\napp/file2.rb\n")
+        expect(subject).to be_truthy
+      end
+    end
+
+    context "when changes are only in scripts or workflows" do
+      it "returns false" do
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")
+        expect(subject).to be_falsey
+      end
+    end
+  end
+
+  describe "#untagged_commit_sha" do
+    subject { Fastlane::Helper::GitHelper.untagged_commit_sha("release_branch", platform) }
+
+    let (:platform) { "ios" }
+
+    before do
+      allow(Fastlane::Helper::GitHelper).to receive(:release_branch_state).and_return(
+        is_tagged: is_tagged,
+        release_branch_sha: "abc123"
+      )
+    end
+
+    context "when the release branch is tagged" do
+      let (:is_tagged) { true }
+
+      it "returns nil" do
+        expect(subject).to be_nil
+      end
+    end
+
+    context "when the release branch has changes since the latest tag" do
+      let (:is_tagged) { false }
+
+      it "returns the untagged commit sha" do
+        expect(subject).to eq("abc123")
+      end
+    end
+  end
 end
