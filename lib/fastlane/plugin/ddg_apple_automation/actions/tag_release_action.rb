@@ -54,11 +54,13 @@ module Fastlane
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
-        begin
-          merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
-          tag_and_release_output[:merge_or_delete_successful] = true
-        rescue StandardError
-          tag_and_release_output[:merge_or_delete_successful] = false
+        if tag_and_release_output[:tag_created]
+          begin
+            merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
+            tag_and_release_output[:merge_or_delete_successful] = true
+          rescue StandardError
+            tag_and_release_output[:merge_or_delete_successful] = false
+          end
         end
 
         report_status(params.values.merge(tag_and_release_output))
@@ -223,7 +225,7 @@ module Fastlane
       end
 
       def self.setup_asana_templates(params)
-        if params[:merge_or_delete_successful] && params[:tag_created]
+        if params[:merge_or_delete_successful]
           comment_template = params[:is_prerelease] ? "internal-release-ready" : "public-release-tagged"
         else
           case [params[:tag_created], params[:is_prerelease]]
