@@ -261,9 +261,9 @@ describe Fastlane::Actions::TagReleaseAction do
     release_type_contexts = ["for prerelease", "for public release"]
     tag_contexts = ["when failed to create tag", "when failed to push tag"]
     github_release_contexts = [
-      { name: "when failed to generate GitHub release notes", includes_latest_public_release_tag: true },
-      { name: "when failed to parse GitHub response", includes_latest_public_release_tag: true },
-      { name: "when failed to create GitHub release", includes_latest_public_release_tag: true }
+      "when failed to generate GitHub release notes",
+      "when failed to parse GitHub response",
+      "when failed to create GitHub release"
     ]
 
     include_context "common setup"
@@ -286,8 +286,8 @@ describe Fastlane::Actions::TagReleaseAction do
             end
 
             github_release_contexts.each do |github_release_context|
-              context github_release_context[:name] do
-                include_context github_release_context[:name]
+              context github_release_context do
+                include_context github_release_context
                 it_behaves_like "gracefully handling GitHub release error"
               end
             end
