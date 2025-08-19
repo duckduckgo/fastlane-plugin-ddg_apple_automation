@@ -1,16 +1,21 @@
 describe Fastlane::Actions::AsanaFindReleaseTaskAction do
   describe "#run" do
-    describe "when it finds the release task" do
+    subject { Fastlane::Actions::AsanaFindReleaseTaskAction.run(platform: "ios", asana_access_token: "token") }
+
+    before do
+      expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_latest_marketing_version).and_return("1.0.0")
+      allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:report_hotfix_task)
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+      allow(Fastlane::UI).to receive(:success)
+    end
+
+    context "when it finds a release task" do
       before do
-        expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_latest_marketing_version).and_return("1.0.0")
-        expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task).and_return("1234567890")
+        expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task).and_return(["1234567890", nil])
       end
 
       it "returns release task ID, URL and release branch" do
-        allow(Fastlane::UI).to receive(:success)
-        allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
-
-        expect(test_action("ios")).to eq({
+        expect(subject).to eq({
           release_task_id: "1234567890",
           release_task_url: "https://app.asana.com/0/0/1234567890/f",
           release_branch: "release/ios/1.0.0"
@@ -20,11 +25,19 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch", "release/ios/1.0.0")
         expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_task_id", "1234567890")
         expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_task_url", "https://app.asana.com/0/0/1234567890/f")
+        expect(Fastlane::Actions::AsanaFindReleaseTaskAction).not_to have_received(:report_hotfix_task)
       end
     end
 
-    def test_action(platform)
-      Fastlane::Actions::AsanaFindReleaseTaskAction.run(platform: platform)
+    context "when it finds a release and a hotfix task" do
+      before do
+        expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task).and_return(["1234567890", "5555"])
+      end
+
+      it "reports the hotfix task and returns early" do
+        subject
+        expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to have_received(:report_hotfix_task).with("5555", "1234567890", "token")
+      end
     end
   end
 

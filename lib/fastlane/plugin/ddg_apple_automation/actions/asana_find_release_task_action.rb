@@ -48,7 +48,10 @@ module Fastlane
         release_branch = Helper::DdgAppleAutomationHelper.release_branch_name(platform, latest_marketing_version)
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
 
-        report_hotfix_task_if_needed(hotfix_task_id, release_task_id, asana_access_token)
+        if hotfix_task_id
+          report_hotfix_task(hotfix_task_id, release_task_id, asana_access_token)
+          return
+        end
 
         Helper::GitHubActionsHelper.set_output("release_branch", release_branch)
         Helper::GitHubActionsHelper.set_output("release_task_id", release_task_id)
@@ -146,7 +149,7 @@ module Fastlane
         tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
       end
 
-      def self.report_hotfix_task_if_needed(hotfix_task_id, release_task_id, asana_access_token)
+      def self.report_hotfix_task(hotfix_task_id, release_task_id, asana_access_token)
         return unless hotfix_task_id
 
         hotfix_task_url = Helper::AsanaHelper.asana_task_url(hotfix_task_id)
