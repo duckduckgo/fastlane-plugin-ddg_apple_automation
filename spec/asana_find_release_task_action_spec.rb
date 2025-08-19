@@ -279,9 +279,9 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
           @tasks = [double(name: 'iOS App Hotfix Release 1.0.0', gid: '1234567890')]
         end
         it "shows error" do
-          allow(Fastlane::UI).to receive(:user_error!)
+          allow(Fastlane::UI).to receive(:error)
           find_hotfix_task_in_response(@tasks)
-          expect(Fastlane::UI).to have_received(:user_error!).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
+          expect(Fastlane::UI).to have_received(:error).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
         end
       end
 
@@ -315,9 +315,9 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         end
 
         it "shows error" do
-          allow(Fastlane::UI).to receive(:user_error!)
+          allow(Fastlane::UI).to receive(:error)
           find_hotfix_task_in_response(@tasks)
-          expect(Fastlane::UI).to have_received(:user_error!).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
+          expect(Fastlane::UI).to have_received(:error).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
         end
       end
 

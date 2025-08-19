@@ -142,7 +142,7 @@ module Fastlane
         hotfix_task_id = tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
 
         if hotfix_task_id
-          UI.user_error!("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
+          UI.error("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
           return
         end
       end
