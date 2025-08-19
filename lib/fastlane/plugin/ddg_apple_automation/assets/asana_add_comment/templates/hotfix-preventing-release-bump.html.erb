@@ -1,0 +1,9 @@
+<body>
+  <a data-asana-gid='<%= hotfix_task_assignee_id %>' />, this hotfix task is preventing an automated internal release bump for <a data-asana-gid='<%= release_task_id %>' />.
+  <ul>
+    <li>If the hotfix release is still in progress, please ignore this comment.</li>
+    <li>If the hotfix release is complete, please close this task and re-run the internal release workflow.</li>
+  </ul>
+  <br>
+  🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
+</body>

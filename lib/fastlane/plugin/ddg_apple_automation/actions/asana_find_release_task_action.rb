@@ -3,6 +3,7 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require "octokit"
 require "time"
+require_relative "asana_add_comment_action"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/git_helper"
@@ -47,9 +48,7 @@ module Fastlane
         release_branch = Helper::DdgAppleAutomationHelper.release_branch_name(platform, latest_marketing_version)
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
 
-        if hotfix_task_id
-          UI.error("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
-        end
+        report_hotfix_task_if_needed(hotfix_task_id, release_task_id, asana_access_token)
 
         Helper::GitHubActionsHelper.set_output("release_branch", release_branch)
         Helper::GitHubActionsHelper.set_output("release_task_id", release_task_id)
@@ -145,6 +144,24 @@ module Fastlane
 
       def self.find_hotfix_task_in_response(tasks)
         tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
+      end
+
+      def self.report_hotfix_task_if_needed(hotfix_task_id, release_task_id, asana_access_token)
+        return unless hotfix_task_id
+
+        hotfix_task_url = Helper::AsanaHelper.asana_task_url(hotfix_task_id)
+        hotfix_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(hotfix_task_id, asana_access_token)
+        AsanaAddCommentAction.run(
+          task_id: hotfix_task_id,
+          template_name: 'hotfix-preventing-release-bump',
+          template_args: {
+            hotfix_task_assignee_id: hotfix_task_assignee_id,
+            release_task_id: release_task_id
+          },
+          asana_access_token: asana_access_token
+        )
+        UI.user_error!("Found active hotfix task: #{hotfix_task_url}")
+        return
       end
 
       def self.description
