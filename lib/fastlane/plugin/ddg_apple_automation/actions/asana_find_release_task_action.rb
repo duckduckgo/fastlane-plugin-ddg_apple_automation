@@ -177,7 +177,6 @@ module Fastlane
           asana_access_token: asana_access_token
         )
         UI.user_error!("Found active hotfix task: #{hotfix_task_url}")
-        return
       end
 
       def self.description
