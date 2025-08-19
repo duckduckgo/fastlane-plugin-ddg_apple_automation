@@ -191,6 +191,28 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       })).to eq(expected.chomp)
     end
 
+    it "processes hotfix-preventing-release-bump template" do
+      expected = <<~EXPECTED
+        <body>
+          <a data-asana-gid='12345' />, this hotfix task is preventing an automated internal release bump for <a data-asana-gid='1234567890' />.
+          <ul>
+            <li>If the hotfix release is still in progress, please ignore this comment.</li>
+            <li>If the hotfix release is complete, please close this task and re-run the <a href='https://workflow.com'>internal release workflow</a>.</li>
+          </ul>
+          cc <a data-asana-gid='67890' /><br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      expect(process_template("hotfix-preventing-release-bump", {
+        "hotfix_task_assignee_id" => "12345",
+        "release_task_assignee_id" => "67890",
+        "release_task_id" => "1234567890",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected.chomp)
+    end
+
     it "processes internal-release-complete-with-tasks template" do
       expected = <<~EXPECTED
         <body>
