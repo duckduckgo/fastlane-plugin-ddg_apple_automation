@@ -153,16 +153,16 @@ module Fastlane
         return unless hotfix_task_id
 
         hotfix_task_url = Helper::AsanaHelper.asana_task_url(hotfix_task_id)
-        hotfix_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(hotfix_task_id, asana_access_token)
-        release_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(release_task_id, asana_access_token)
 
         begin
+          hotfix_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(hotfix_task_id, asana_access_token)
+          release_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(release_task_id, asana_access_token)
           asana_client = Helper::AsanaHelper.make_asana_client(asana_access_token)
           UI.important("Adding user #{release_task_assignee_id} as collaborator on hotfix release task #{hotfix_task_id}")
           asana_client.tasks.add_followers_for_task(task_gid: hotfix_task_id, followers: [release_task_assignee_id])
         rescue StandardError => e
           Helper::DdgAppleAutomationHelper.log_error(e)
-          UI.user_error!("Failed to add user #{release_task_assignee_id} as collaborator on task #{hotfix_task_id}")
+          UI.user_error!("Failed to add release task assignee as collaborator on task #{hotfix_task_id}")
           return
         end
 

@@ -335,4 +335,86 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
       end
     end
   end
+
+  describe "#report_hotfix_task" do
+    subject { Fastlane::Actions::AsanaFindReleaseTaskAction.report_hotfix_task(hotfix_task_id, release_task_id, "token") }
+    let(:hotfix_task_id) { "12" }
+    let(:release_task_id) { "56" }
+    let(:asana_client_tasks) { double(add_followers_for_task: nil) }
+    let(:asana_client) { double(tasks: asana_client_tasks) }
+
+    before do
+      allow(Fastlane::Helper::AsanaHelper).to receive(:asana_task_url).and_return("https://app.asana.com/0/0/#{hotfix_task_id}/f")
+      allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_assignee).with(hotfix_task_id, "token").and_return("34")
+      allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_assignee).with(release_task_id, "token").and_return("78")
+      allow(Fastlane::Helper::AsanaHelper).to receive(:make_asana_client).with("token").and_return(asana_client)
+      allow(Fastlane::Actions::AsanaAddCommentAction).to receive(:run)
+      allow(Fastlane::UI).to receive(:important)
+      allow(Fastlane::UI).to receive(:user_error!)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:log_error)
+    end
+
+    context "when hotfix task is not found" do
+      let(:hotfix_task_id) { nil }
+
+      it "returns early" do
+        subject
+        expect(Fastlane::Helper::AsanaHelper).not_to have_received(:make_asana_client)
+        expect(Fastlane::Helper::AsanaHelper).not_to have_received(:extract_asana_task_assignee)
+        expect(Fastlane::Actions::AsanaAddCommentAction).not_to have_received(:run)
+      end
+    end
+
+    it "adds the release task assignee as a follower to the hotfix task" do
+      subject
+      expect(Fastlane::Helper::AsanaHelper).to have_received(:make_asana_client).with("token")
+      expect(Fastlane::Helper::AsanaHelper).to have_received(:extract_asana_task_assignee).with(hotfix_task_id, "token")
+      expect(Fastlane::Helper::AsanaHelper).to have_received(:extract_asana_task_assignee).with(release_task_id, "token")
+      expect(Fastlane::UI).to have_received(:important).with("Adding user 78 as collaborator on hotfix release task 12")
+      expect(Fastlane::Actions::AsanaAddCommentAction).to have_received(:run).with(
+        task_id: hotfix_task_id,
+        template_name: 'hotfix-preventing-release-bump',
+        template_args: {
+          hotfix_task_assignee_id: "34",
+          release_task_assignee_id: "78",
+          release_task_id: "56"
+        },
+        asana_access_token: "token"
+      )
+      expect(Fastlane::UI).to have_received(:user_error!).with("Found active hotfix task: https://app.asana.com/0/0/12/f")
+    end
+
+    shared_examples "showing error" do
+      it "shows error" do
+        subject
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:log_error).with(StandardError)
+        expect(Fastlane::UI).to have_received(:user_error!).with("Failed to add release task assignee as collaborator on task 12")
+        expect(Fastlane::Actions::AsanaAddCommentAction).not_to have_received(:run)
+      end
+    end
+
+    context "when extract_asana_task_assignee fails" do
+      before do
+        allow(Fastlane::Helper::AsanaHelper).to receive(:extract_asana_task_assignee).and_raise(StandardError)
+      end
+
+      it_behaves_like "showing error"
+    end
+
+    context "when make_asana_client fails" do
+      before do
+        allow(Fastlane::Helper::AsanaHelper).to receive(:make_asana_client).and_raise(StandardError)
+      end
+
+      it_behaves_like "showing error"
+    end
+
+    context "when add_followers_for_task fails" do
+      before do
+        allow(asana_client_tasks).to receive(:add_followers_for_task).and_raise(StandardError)
+      end
+
+      it_behaves_like "showing error"
+    end
+  end
 end
