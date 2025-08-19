@@ -151,11 +151,13 @@ module Fastlane
 
         hotfix_task_url = Helper::AsanaHelper.asana_task_url(hotfix_task_id)
         hotfix_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(hotfix_task_id, asana_access_token)
+        release_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(release_task_id, asana_access_token)
         AsanaAddCommentAction.run(
           task_id: hotfix_task_id,
           template_name: 'hotfix-preventing-release-bump',
           template_args: {
             hotfix_task_assignee_id: hotfix_task_assignee_id,
+            release_task_assignee_id: release_task_assignee_id,
             release_task_id: release_task_id
           },
           asana_access_token: asana_access_token
