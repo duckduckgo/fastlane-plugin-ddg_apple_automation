@@ -143,7 +143,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
           expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
           expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task_in_response).and_return("1234567890")
 
-          expect(find_release_task("1.0.0")).to eq("1234567890")
+          expect(find_release_task("1.0.0")).to eq(["1234567890", nil])
         end
       end
 
@@ -157,7 +157,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
 
         it "returns the release task ID" do
           allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
-          expect(find_release_task("1.0.0")).to eq("1234567890")
+          expect(find_release_task("1.0.0")).to eq(["1234567890", nil])
           expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to have_received(:find_hotfix_task_in_response).twice
         end
       end
@@ -269,6 +269,8 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
   end
 
   describe "#find_hotfix_task_in_response" do
+    subject { Fastlane::Actions::AsanaFindReleaseTaskAction.find_hotfix_task_in_response(@tasks) }
+
     describe "on iOS" do
       before do
         Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("ios")
@@ -278,28 +280,18 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         before do
           @tasks = [double(name: 'iOS App Hotfix Release 1.0.0', gid: '1234567890')]
         end
-        it "shows error" do
-          allow(Fastlane::UI).to receive(:error)
-          find_hotfix_task_in_response(@tasks)
-          expect(Fastlane::UI).to have_received(:error).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
+        it "returns the hotfix task ID" do
+          expect(subject).to eq("1234567890")
         end
       end
 
       describe "when hotfix task is not present" do
         before do
-          @tasks_lists = [
-            [double(name: 'iOS App Release 1.0.0', gid: '1234567890')],
-            [double(name: 'iOS App Hotfix 1.0.0', gid: '123456789')],
-            [double(name: 'macOS App Hotfix 1.0.0', gid: '12345678')]
-          ]
+          @tasks = [double(name: 'iOS App Release 1.0.0', gid: '1234567890')]
         end
-        it "does not show error" do
-          allow(Fastlane::UI).to receive(:user_error!)
 
-          @tasks_lists.each do |tasks|
-            find_hotfix_task_in_response(tasks)
-          end
-          expect(Fastlane::UI).not_to have_received(:user_error!)
+        it "returns nil" do
+          expect(subject).to be_nil
         end
       end
     end
@@ -314,34 +306,20 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
           @tasks = [double(name: 'macOS App Hotfix Release 1.0.0', gid: '1234567890')]
         end
 
-        it "shows error" do
-          allow(Fastlane::UI).to receive(:error)
-          find_hotfix_task_in_response(@tasks)
-          expect(Fastlane::UI).to have_received(:error).with("Found active hotfix task: https://app.asana.com/0/0/1234567890/f")
+        it "returns the hotfix task ID" do
+          expect(subject).to eq("1234567890")
         end
       end
 
       describe "when hotfix task is not present" do
         before do
-          @tasks_lists = [
-            [double(name: 'macOS App Release 1.0.0', gid: '1234567890')],
-            [double(name: 'macOS App Hotfix 1.0.0', gid: '123456789')],
-            [double(name: 'iOS App Hotfix 1.0.0', gid: '12345678')]
-          ]
+          @tasks = [double(name: 'macOS App Release 1.0.0', gid: '1234567890')]
         end
-        it "does not show error" do
-          allow(Fastlane::UI).to receive(:user_error!)
 
-          @tasks_lists.each do |tasks|
-            find_hotfix_task_in_response(tasks)
-          end
-          expect(Fastlane::UI).not_to have_received(:user_error!)
+        it "returns nil" do
+          expect(subject).to be_nil
         end
       end
-    end
-
-    def find_hotfix_task_in_response(response)
-      Fastlane::Actions::AsanaFindReleaseTaskAction.find_hotfix_task_in_response(response)
     end
   end
 end

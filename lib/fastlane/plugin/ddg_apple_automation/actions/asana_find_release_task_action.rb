@@ -40,12 +40,16 @@ module Fastlane
         latest_marketing_version = find_latest_marketing_version(github_token, params[:platform])
         UI.success("Latest marketing version: #{latest_marketing_version}")
         UI.message("Searching for release task for version #{latest_marketing_version}")
-        release_task_id = find_release_task(latest_marketing_version, asana_access_token)
+        release_task_id, hotfix_task_id = find_release_task(latest_marketing_version, asana_access_token)
         UI.user_error!("No release task found for version #{latest_marketing_version}") unless release_task_id
 
         release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
         release_branch = Helper::DdgAppleAutomationHelper.release_branch_name(platform, latest_marketing_version)
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
+
+        if hotfix_task_id
+          UI.error("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
+        end
 
         Helper::GitHubActionsHelper.set_output("release_branch", release_branch)
         Helper::GitHubActionsHelper.set_output("release_task_id", release_task_id)
@@ -86,6 +90,7 @@ module Fastlane
       def self.find_release_task(version, asana_access_token)
         asana_client = Helper::AsanaHelper.make_asana_client(asana_access_token)
         release_task_id = nil
+        hotfix_task_id = nil
 
         begin
           tasks = asana_client.tasks.find_all(
@@ -99,7 +104,7 @@ module Fastlane
           # there are more than 100 tasks in the section).
           # Repeat until no more pages are left (next_page.uri is null).
           loop do
-            find_hotfix_task_in_response(tasks)
+            hotfix_task_id ||= find_hotfix_task_in_response(tasks)
             release_task_id ||= find_release_task_in_response(tasks, version)
 
             tasks = tasks.next_page
@@ -110,7 +115,7 @@ module Fastlane
           UI.user_error!("Failed to fetch release task: #{e}")
         end
 
-        release_task_id
+        [release_task_id, hotfix_task_id]
       end
 
       def self.find_release_task_in_response(tasks, version)
@@ -139,12 +144,7 @@ module Fastlane
       end
 
       def self.find_hotfix_task_in_response(tasks)
-        hotfix_task_id = tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
-
-        if hotfix_task_id
-          UI.error("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
-          return
-        end
+        tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
       end
 
       def self.description
