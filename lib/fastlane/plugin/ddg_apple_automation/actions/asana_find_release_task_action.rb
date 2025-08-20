@@ -3,6 +3,7 @@ require "fastlane_core/configuration/config_item"
 require "asana"
 require "octokit"
 require "time"
+require_relative "asana_add_comment_action"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
 require_relative "../helper/git_helper"
@@ -40,12 +41,17 @@ module Fastlane
         latest_marketing_version = find_latest_marketing_version(github_token, params[:platform])
         UI.success("Latest marketing version: #{latest_marketing_version}")
         UI.message("Searching for release task for version #{latest_marketing_version}")
-        release_task_id = find_release_task(latest_marketing_version, asana_access_token)
+        release_task_id, hotfix_task_id = find_release_task(latest_marketing_version, asana_access_token)
         UI.user_error!("No release task found for version #{latest_marketing_version}") unless release_task_id
 
         release_task_url = Helper::AsanaHelper.asana_task_url(release_task_id)
         release_branch = Helper::DdgAppleAutomationHelper.release_branch_name(platform, latest_marketing_version)
         UI.success("Found #{latest_marketing_version} release task: #{release_task_url}")
+
+        if hotfix_task_id
+          report_hotfix_task(hotfix_task_id, release_task_id, asana_access_token)
+          return
+        end
 
         Helper::GitHubActionsHelper.set_output("release_branch", release_branch)
         Helper::GitHubActionsHelper.set_output("release_task_id", release_task_id)
@@ -86,6 +92,7 @@ module Fastlane
       def self.find_release_task(version, asana_access_token)
         asana_client = Helper::AsanaHelper.make_asana_client(asana_access_token)
         release_task_id = nil
+        hotfix_task_id = nil
 
         begin
           tasks = asana_client.tasks.find_all(
@@ -99,7 +106,7 @@ module Fastlane
           # there are more than 100 tasks in the section).
           # Repeat until no more pages are left (next_page.uri is null).
           loop do
-            find_hotfix_task_in_response(tasks)
+            hotfix_task_id ||= find_hotfix_task_in_response(tasks)
             release_task_id ||= find_release_task_in_response(tasks, version)
 
             tasks = tasks.next_page
@@ -110,7 +117,7 @@ module Fastlane
           UI.user_error!("Failed to fetch release task: #{e}")
         end
 
-        release_task_id
+        [release_task_id, hotfix_task_id]
       end
 
       def self.find_release_task_in_response(tasks, version)
@@ -139,12 +146,37 @@ module Fastlane
       end
 
       def self.find_hotfix_task_in_response(tasks)
-        hotfix_task_id = tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
+        tasks.find { |task| task.name.start_with?(@constants[:hotfix_task_prefix]) }&.gid
+      end
 
-        if hotfix_task_id
-          UI.user_error!("Found active hotfix task: #{Helper::AsanaHelper.asana_task_url(hotfix_task_id)}")
+      def self.report_hotfix_task(hotfix_task_id, release_task_id, asana_access_token)
+        return unless hotfix_task_id
+
+        hotfix_task_url = Helper::AsanaHelper.asana_task_url(hotfix_task_id)
+
+        begin
+          hotfix_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(hotfix_task_id, asana_access_token)
+          release_task_assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(release_task_id, asana_access_token)
+          asana_client = Helper::AsanaHelper.make_asana_client(asana_access_token)
+          UI.important("Adding user #{release_task_assignee_id} as collaborator on hotfix release task #{hotfix_task_id}")
+          asana_client.tasks.add_followers_for_task(task_gid: hotfix_task_id, followers: [release_task_assignee_id])
+        rescue StandardError => e
+          Helper::DdgAppleAutomationHelper.log_error(e)
+          UI.user_error!("Failed to add release task assignee as collaborator on task #{hotfix_task_id}")
           return
         end
+
+        AsanaAddCommentAction.run(
+          task_id: hotfix_task_id,
+          template_name: 'hotfix-preventing-release-bump',
+          template_args: {
+            hotfix_task_assignee_id: hotfix_task_assignee_id,
+            release_task_assignee_id: release_task_assignee_id,
+            release_task_id: release_task_id
+          },
+          asana_access_token: asana_access_token
+        )
+        UI.user_error!("Found active hotfix task: #{hotfix_task_url}")
       end
 
       def self.description
