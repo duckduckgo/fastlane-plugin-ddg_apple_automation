@@ -40,6 +40,8 @@ module Fastlane
             comment: "TDS performance tests failed. Make sure to validate performance before releasing to public users. See https://app.asana.com/0/1204165176092271/1209729184622270/f"
           )
         end
+        commit_sha = other_action.last_git_commit[:commit_hash]
+        Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
       end
 
       def self.description
