@@ -12,8 +12,8 @@ module Fastlane
       end
 
       def self.setup_git_user(name: "Dax the Duck", email: "dax@duckduckgo.com")
-        Actions.sh("echo \"git config --global user.name '#{name}'\"")
-        Actions.sh("echo \"git config --global user.email '#{email}'\"")
+        Actions.sh("git config --global user.name '#{name}'")
+        Actions.sh("git config --global user.email '#{email}'")
       end
 
       def self.assert_main_branch(branch)
