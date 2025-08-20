@@ -35,7 +35,7 @@ module Fastlane
           return
         end
 
-        if params[:ignore_untagged_commits]
+        if should_merge_before_deleting(params)
           begin
             branch = other_action.git_branch
             # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
@@ -64,6 +64,11 @@ module Fastlane
         end
 
         report_status(params.values.merge(tag_and_release_output))
+      end
+
+      def self.should_merge_before_deleting(params)
+        # Only merge before deleting for public releases and if ignore_untagged_commits is true
+        !params[:is_prerelease] && params[:ignore_untagged_commits]
       end
 
       def self.assert_branch_tagged_before_public_release(params)
