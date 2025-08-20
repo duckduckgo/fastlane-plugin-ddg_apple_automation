@@ -14,6 +14,8 @@ module Fastlane
         params[:platform] ||= Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         options = params.values
         Helper::DdgAppleAutomationHelper.increment_build_number(options[:platform], options, other_action)
+        commit_sha = other_action.last_git_commit[:commit_hash]
+        Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
       end
 
       def self.description
