@@ -1,6 +1,5 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
-require "octokit"
 require "date"
 require_relative "../helper/asana_helper"
 require_relative "../helper/ddg_apple_automation_helper"
@@ -30,38 +29,86 @@ module Fastlane
 
         setup_constants(platform)
 
+        unless assert_branch_tagged_before_public_release(params.values)
+          UI.important("Skipping release because release branch's HEAD is not tagged.")
+          Helper::GitHubActionsHelper.set_output("stop_workflow", true)
+          return
+        end
+
+        if params[:ignore_untagged_commits]
+          begin
+            branch = other_action.git_branch
+            # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
+            UI.important("Merging branch before deleting to have untagged commits in the base branch")
+            Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
+          rescue StandardError => e
+            report_merge_release_branch_before_deleting_failed(params.values.merge(branch: branch))
+            UI.important("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+            Helper::GitHubActionsHelper.set_output("stop_workflow", true)
+            Helper::DdgAppleAutomationHelper.report_error(e)
+            return
+          end
+        end
+
         tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
         Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
-        begin
-          merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
-          tag_and_release_output[:merge_or_delete_successful] = true
-        rescue StandardError
-          tag_and_release_output[:merge_or_delete_successful] = false
+        if tag_and_release_output[:tag_created]
+          begin
+            merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
+            tag_and_release_output[:merge_or_delete_successful] = true
+          rescue StandardError => e
+            tag_and_release_output[:merge_or_delete_successful] = false
+            Helper::DdgAppleAutomationHelper.report_error(e)
+          end
         end
 
         report_status(params.values.merge(tag_and_release_output))
       end
 
+      def self.assert_branch_tagged_before_public_release(params)
+        return true if params[:is_prerelease]
+
+        untagged_commit_sha = Helper::GitHelper.untagged_commit_sha(other_action.git_branch, params[:platform])
+        if untagged_commit_sha
+          if params[:ignore_untagged_commits]
+            UI.important("Untagged commits found but ignoring them because ignore_untagged_commits is true.")
+            UI.important("Release branch will be merged to base branch and then deleted. Untagged commits will not be included in this release.")
+            return true
+          end
+          report_untagged_release_branch(params.merge(untagged_commit_sha: untagged_commit_sha))
+          return false
+        end
+        true
+      end
+
       def self.create_tag_and_github_release(is_prerelease, platform, github_token)
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
 
+        latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, platform, github_token)
+        UI.message("Latest public release: #{latest_public_release.tag_name}")
+
         begin
-          other_action.add_git_tag(tag: tag)
+          # For public release, always tag the promoted tag. This is to ensure that if extra commits
+          # were added to the release branch, the tag will still be the same as the promoted tag.
+          if promoted_tag
+            other_action.add_git_tag(tag: tag, commit: Helper::GitHelper.commit_sha_for_tag(promoted_tag))
+          else
+            other_action.add_git_tag(tag: tag)
+          end
           other_action.push_git_tags(tag: tag)
         rescue StandardError => e
-          UI.important("Failed to create and push tag: #{e}")
+          UI.important("Failed to create and push tag")
+          Helper::DdgAppleAutomationHelper.report_error(e)
           return {
             tag: tag,
             promoted_tag: promoted_tag,
-            tag_created: false
+            tag_created: false,
+            latest_public_release_tag: latest_public_release.tag_name
           }
         end
 
         begin
-          latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, platform, github_token)
-
-          UI.message("Latest public release: #{latest_public_release.tag_name}")
           UI.message("Generating #{@constants[:repo_name]} release notes for GitHub release for tag: #{tag}")
 
           # Octokit doesn't provide the API to generate release notes for a specific tag
@@ -87,14 +134,15 @@ module Fastlane
             is_prerelease: is_prerelease
           )
         rescue StandardError => e
-          UI.important("Failed to create GitHub release: #{e}")
+          UI.important("Failed to create GitHub release")
+          Helper::DdgAppleAutomationHelper.report_error(e)
         end
 
         {
           tag: tag,
           promoted_tag: promoted_tag,
           tag_created: true,
-          latest_public_release_tag: latest_public_release&.tag_name
+          latest_public_release_tag: latest_public_release.tag_name
         }
       end
 
@@ -108,27 +156,58 @@ module Fastlane
         end
       end
 
+      def self.report_merge_release_branch_before_deleting_failed(params)
+        template_name = "public-release-merge-failed-untagged-commits"
+        tag, = Helper::DdgAppleAutomationHelper.compute_tag(params[:is_prerelease], params[:platform])
+        template_args = template_arguments(params).merge(tag: tag)
+
+        create_action_item(params, template_name, template_args)
+        log_message(params, template_name, template_args)
+      end
+
+      def self.report_untagged_release_branch(params)
+        template_name = "public-release-tag-failed-untagged-commits"
+        tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(params[:is_prerelease], params[:platform])
+        template_args = template_arguments(params).merge(
+          untagged_commit_sha: params[:untagged_commit_sha],
+          untagged_commit_url: "https://github.com/#{@constants[:repo_name]}/commit/#{params[:untagged_commit_sha]}",
+          tag: tag,
+          promoted_tag: promoted_tag
+        )
+
+        create_action_item(params, template_name, template_args)
+        log_message(params, template_name, template_args)
+      end
+
       def self.report_status(params)
-        template_args = self.template_arguments(params)
+        template_args = template_arguments(params)
         task_template, comment_template = setup_asana_templates(params)
 
         if task_template
-          UI.important("Adding Asana task for release automation using #{task_template} template")
-          template_args['task_id'] = AsanaCreateActionItemAction.run(
-            asana_access_token: params[:asana_access_token],
-            task_url: params[:asana_task_url],
-            template_name: task_template,
-            template_args: template_args,
-            github_handle: params[:github_handle],
-            is_scheduled_release: params[:is_scheduled_release],
-            due_date: Date.today.strftime('%Y-%m-%d')
-          )
+          create_action_item(params, task_template, template_args)
         end
 
+        log_message(params, comment_template, template_args)
+      end
+
+      def self.create_action_item(params, template_name, template_args)
+        UI.important("Adding Asana task for release automation using #{template_name} template")
+        template_args['task_id'] = AsanaCreateActionItemAction.run(
+          asana_access_token: params[:asana_access_token],
+          task_url: params[:asana_task_url],
+          template_name: template_name,
+          template_args: template_args,
+          github_handle: params[:github_handle],
+          is_scheduled_release: params[:is_scheduled_release],
+          due_date: Date.today.strftime('%Y-%m-%d')
+        )
+      end
+
+      def self.log_message(params, template_name, template_args)
         AsanaLogMessageAction.run(
           asana_access_token: params[:asana_access_token],
           task_url: params[:asana_task_url],
-          template_name: comment_template,
+          template_name: template_name,
           template_args: template_args,
           github_handle: params[:github_handle],
           is_scheduled_release: params[:is_scheduled_release]
@@ -217,6 +296,11 @@ module Fastlane
                                        optional: true,
                                        sensitive: true,
                                        type: String),
+          FastlaneCore::ConfigItem.new(key: :ignore_untagged_commits,
+                                       description: "For public release, ignore untagged commits on the release branch",
+                                       optional: true,
+                                       type: Boolean,
+                                       default_value: false),
           FastlaneCore::ConfigItem.new(key: :is_internal_release_bump,
                                        description: "Is this an internal release bump? (the subsequent internal release of the current week)",
                                        optional: true,

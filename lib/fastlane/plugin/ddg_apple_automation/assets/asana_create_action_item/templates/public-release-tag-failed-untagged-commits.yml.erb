@@ -1,0 +1,17 @@
+name: Handle unreleased commits on <%= branch %> branch
+html_notes: |
+  <body>
+    Failed to tag the release with <code><%= tag %></code> tag.<br>
+    The latest tag is <code><%= promoted_tag %></code>, but the <code><%= branch %></code> branch HEAD is <a href='<%= untagged_commit_url %>'><code><%= untagged_commit_sha %></code></a> which is not tagged.<br>
+    <br>
+    Check out the <code><%= branch %></code> branch locally and decide whether unreleased commit(s) is/are crucial for the release. If so:
+    <ul>
+      <li>Reject the app in App Store Connect.</li>
+      <li>Make a new internal build.</li>
+      <li>Resubmit the app to App Store Connect.</li>
+      <li>After the review is complete, re-run the public release workflow.</li>
+    </ul><br>
+    If the oustanding commits aren't crucial for the release, re-run the public release workflow setting <i>Ignore unreleased changes when making a public release?</i> option to <code>true</code>. The workflow will then merge the release branch to <%= base_branch %> before deleting it, ensuring that the unreleased commits will be included in the next internal release.<br>
+    <br>
+    🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
+  </body>

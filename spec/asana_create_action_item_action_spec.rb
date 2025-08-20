@@ -412,7 +412,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
       expected_name = "Tag release/1.1.0 branch, delete it, and create GitHub release"
       expected_notes = <<~EXPECTED
         <body>
-          Failed to tag the release with <code>1.1.0-123</code> tag.<br>
+          Failed to tag the release with <code>1.1.0+macos</code> tag.<br>
           Please follow instructions below to tag the branch, make GitHub release and delete the release branch manually.
           <ul>
             <li>If the tag has already been created, please proceed with creating GitHub release and deleting the branch.</li>
@@ -420,12 +420,10 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           </ul><br>
           Issue the following git commands to tag the release and delete the branch:
           <ul>
-            <li><code>git fetch origin</code></li>
-            <li><code>git checkout release/1.1.0</code> switch to the release branch</li>
-            <li><code>git pull origin release/1.1.0</code> pull latest changes</li>
-            <li><code>git tag 1.1.0-123</code> tag the release</li>
-            <li><code>git push origin 1.1.0-123</code> push the tag</li>
-            <li><code>git checkout main</code> switch to main</li>
+            <li><code>git fetch origin --tags</code></li>
+            <li><code>git checkout 1.1.0-123+macos</code> check out the internal tag</li>
+            <li><code>git tag 1.1.0+macos</code> tag the release with a public tag</li>
+            <li><code>git push origin 1.1.0+macos</code> push the tag</li>
             <li><code>git push origin --delete release/1.1.0</code> delete the release branch</li>
           </ul><br>
           To create GitHub release:
@@ -433,7 +431,7 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
             <li>Set up GH CLI if you haven't yet: <a data-asana-gid='1203791243007683'/></li>
             <li>Run the following command:
             <ul>
-              <li><code>gh release create 1.1.0-123 --generate-notes --latest --notes-start-tag 1.0.0</code></li>
+              <li><code>gh release create 1.1.0+macos --generate-notes --latest --notes-start-tag 1.0.0+macos</code></li>
             </ul></li>
           </ul><br>
           Complete this task when ready.<br>
@@ -444,9 +442,10 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
 
       name, notes = process_yaml_template("public-release-tag-failed", {
         "branch" => "release/1.1.0",
-        "tag" => "1.1.0-123",
+        "promoted_tag" => "1.1.0-123+macos",
+        "tag" => "1.1.0+macos",
         "base_branch" => "main",
-        "last_release_tag" => "1.0.0",
+        "last_release_tag" => "1.0.0+macos",
         "workflow_url" => "https://workflow.com"
       })
 
@@ -632,6 +631,89 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
         "release_notes_file" => "release-notes.txt",
         "release_task_id" => "12345",
         "files_uploaded" => "<li>appcast-1.1.0-123.xml</li><li>duckduckgo-1.1.0-123.dmg</li><li>duckduckgo-1.1.0-123.delta</li>",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes public-release-merge-failed-untagged-commits template" do
+      expected_name = "Merge release/1.0.0 to main to include untagged commits"
+      expected_notes = <<~EXPECTED
+        <body>
+          You've requested proceeding with public release despite untagged commits on the <code>release/1.0.0</code> branch,#{' '}
+          but merging to <code>main</code> failed. Please resolve conflicts and merge <code>release/1.0.0</code> to <code>main</code> manually.<br>
+          <br>
+          Issue the following git commands:
+          <ul>
+            <li><code>git fetch origin --tags</code></li>
+            <li><code>git checkout release/1.0.0</code> switch to the release branch</li>
+            <li><code>git pull origin release/1.0.0</code> pull the latest code</li>
+            <li><code>git checkout main</code> switch to main</li>
+            <li><code>git pull origin main</code> pull the latest code</li>
+            <li><code>git merge release/1.0.0</code>
+              <ul>
+                <li>Resolve conflicts as needed</li>
+                <li>Run iOS, macOS and BSK unit and integration tests locally or create a separate branch and open a draft PR to let the CI handle it.</li>
+              </ul></li>
+            <li><code>git push origin main</code> push merged branch</li>
+          </ul>
+          Complete this task when done with merging, and re-run the public release workflow, still setting <i>Ignore unreleased changes when making a public release?</i> option to <code>true</code>.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("public-release-merge-failed-untagged-commits", {
+        "tag" => "1.0.0-123",
+        "branch" => "release/1.0.0",
+        "base_branch" => "main",
+        "workflow_url" => "https://workflow.com"
+      })
+
+      expect(name).to eq(expected_name)
+      expect(notes).to eq(expected_notes)
+    end
+
+    it "processes public-release-tag-failed template" do
+      expected_name = "Tag release/1.1.0 branch, delete it, and create GitHub release"
+      expected_notes = <<~EXPECTED
+        <body>
+          Failed to tag the release with <code>1.1.0+macos</code> tag.<br>
+          Please follow instructions below to tag the branch, make GitHub release and delete the release branch manually.
+          <ul>
+            <li>If the tag has already been created, please proceed with creating GitHub release and deleting the branch.</li>
+            <li>If both tag and GitHub release have already been created, please close this task already.</li>
+          </ul><br>
+          Issue the following git commands to tag the release and delete the branch:
+          <ul>
+            <li><code>git fetch origin --tags</code></li>
+            <li><code>git checkout 1.1.0-123+macos</code> check out the internal tag</li>
+            <li><code>git tag 1.1.0+macos</code> tag the release with a public tag</li>
+            <li><code>git push origin 1.1.0+macos</code> push the tag</li>
+            <li><code>git push origin --delete release/1.1.0</code> delete the release branch</li>
+          </ul><br>
+          To create GitHub release:
+          <ul>
+            <li>Set up GH CLI if you haven't yet: <a data-asana-gid='1203791243007683'/></li>
+            <li>Run the following command:
+            <ul>
+              <li><code>gh release create 1.1.0+macos --generate-notes --latest --notes-start-tag 1.0.0+macos</code></li>
+            </ul></li>
+          </ul><br>
+          Complete this task when ready.<br>
+          <br>
+          🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
+        </body>
+      EXPECTED
+
+      name, notes = process_yaml_template("public-release-tag-failed", {
+        "branch" => "release/1.1.0",
+        "tag" => "1.1.0+macos",
+        "promoted_tag" => "1.1.0-123+macos",
+        "base_branch" => "main",
+        "last_release_tag" => "1.0.0+macos",
         "workflow_url" => "https://workflow.com"
       })
 

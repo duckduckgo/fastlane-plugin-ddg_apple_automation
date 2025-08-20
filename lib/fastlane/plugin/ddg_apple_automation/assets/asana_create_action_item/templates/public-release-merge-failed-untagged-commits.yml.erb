@@ -1,0 +1,24 @@
+name: Merge <%= branch %> to <%= base_branch %> to include untagged commits
+html_notes: |
+  <body>
+    You've requested proceeding with public release despite untagged commits on the <code><%= branch %></code> branch, <%= '' %>
+    but merging to <code><%= base_branch %></code> failed. Please resolve conflicts and merge <code><%= branch %></code> to <code><%= base_branch %></code> manually.<br>
+    <br>
+    Issue the following git commands:
+    <ul>
+      <li><code>git fetch origin --tags</code></li>
+      <li><code>git checkout <%= branch %></code> switch to the release branch</li>
+      <li><code>git pull origin <%= branch %></code> pull the latest code</li>
+      <li><code>git checkout <%= base_branch %></code> switch to <%= base_branch %></li>
+      <li><code>git pull origin <%= base_branch %></code> pull the latest code</li>
+      <li><code>git merge <%= branch %></code>
+        <ul>
+          <li>Resolve conflicts as needed</li>
+          <li>Run iOS, macOS and BSK unit and integration tests locally or create a separate branch and open a draft PR to let the CI handle it.</li>
+        </ul></li>
+      <li><code>git push origin <%= base_branch %></code> push merged branch</li>
+    </ul>
+    Complete this task when done with merging, and re-run the public release workflow, still setting <i>Ignore unreleased changes when making a public release?</i> option to <code>true</code>.<br>
+    <br>
+    🔗 Workflow URL: <a href='<%= workflow_url %>'><%= workflow_url %></a>.
+  </body>

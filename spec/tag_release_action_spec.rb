@@ -3,6 +3,7 @@ shared_context "common setup" do
     @params = {
       asana_access_token: "asana-token",
       asana_task_url: "https://app.asana.com/0/0/1/f",
+      ignore_untagged_commits: false,
       is_prerelease: true,
       github_token: "github-token"
     }
@@ -77,17 +78,60 @@ describe Fastlane::Actions::TagReleaseAction do
     include_context "common setup"
 
     before do
-      @other_action = double(ensure_git_branch: nil)
+      @branch = "release_branch"
+      @other_action = double(ensure_git_branch: nil, git_branch: @branch)
       allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:assert_branch_tagged_before_public_release).and_return(true)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:create_tag_and_github_release).and_return(@tag_and_release_output)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:report_status)
     end
 
-    it "creates tag and release, merges tag and reports status" do
-      subject
+    context "when tag is created" do
+      before do
+        @tag_and_release_output[:tag_created] = true
+      end
 
-      expect(@tag_and_release_output[:merge_or_delete_successful]).to be_truthy
+      it "creates tag and release, merges tag and reports status" do
+        subject
+        expect(@tag_and_release_output[:merge_or_delete_successful]).to be_truthy
+      end
+
+      context "when merge or delete fails" do
+        before do
+          allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:report_error)
+          allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch).and_raise(StandardError)
+        end
+
+        it "reports error" do
+          subject
+          expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
+          expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_status).with(hash_including(merge_or_delete_successful: false))
+        end
+      end
+    end
+
+    context "when tag is not created" do
+      before do
+        @tag_and_release_output[:tag_created] = false
+      end
+
+      shared_examples "reporting failure" do
+        it "reports failure" do
+          subject
+          expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_status).with(hash_including(tag_created: false))
+        end
+      end
+
+      context "for prerelease" do
+        include_context "for prerelease"
+        it_behaves_like "reporting failure"
+      end
+
+      context "for public release" do
+        include_context "for public release"
+        it_behaves_like "reporting failure"
+      end
     end
 
     context "when merge or delete failed" do
@@ -100,24 +144,133 @@ describe Fastlane::Actions::TagReleaseAction do
         expect(@tag_and_release_output[:merge_or_delete_successful]).to be_falsy
       end
     end
+
+    context "when branch is not tagged before public release" do
+      before do
+        allow(Fastlane::Actions::TagReleaseAction).to receive(:assert_branch_tagged_before_public_release).and_return(false)
+        allow(Fastlane::UI).to receive(:important)
+        allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+      end
+
+      it "stops the workflow" do
+        subject
+        expect(Fastlane::UI).to have_received(:important).with("Skipping release because release branch's HEAD is not tagged.")
+        expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
+        expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+      end
+    end
+
+    context "when ignore_untagged_commits is true" do
+      before do
+        @params[:ignore_untagged_commits] = true
+        @params[:base_branch] = "base_branch"
+
+        allow(Fastlane::UI).to receive(:important)
+        allow(Fastlane::Helper::GitHelper).to receive(:merge_branch)
+      end
+
+      it "merges branch to base branch" do
+        subject
+        expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
+          .with("duckduckgo/apple-browsers", @branch, "base_branch", @params[:github_token])
+      end
+
+      context "when merge fails" do
+        before do
+          allow(Fastlane::Helper::GitHelper).to receive(:merge_branch).and_raise(StandardError)
+          allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+          allow(Fastlane::Actions::TagReleaseAction).to receive(:report_merge_release_branch_before_deleting_failed)
+        end
+
+        it "reports error" do
+          subject
+          expect(Fastlane::UI).to have_received(:important).with("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+          expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
+          expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+        end
+      end
+    end
+  end
+
+  describe "#assert_branch_tagged_before_public_release" do
+    subject { Fastlane::Actions::TagReleaseAction.assert_branch_tagged_before_public_release(@params) }
+
+    include_context "common setup"
+
+    before do
+      @params[:is_prerelease] = false
+      @params[:platform] = "macos"
+
+      @branch = "release_branch"
+      @other_action = double(git_branch: @branch)
+      allow(Fastlane::Action).to receive(:other_action).and_return(@other_action)
+      allow(Fastlane::UI).to receive(:important)
+      allow(Fastlane::Helper::GitHelper).to receive(:untagged_commit_sha).and_return("untagged-commit-sha")
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:report_untagged_release_branch)
+    end
+
+    context "for prerelease" do
+      include_context "when is_prerelease: true"
+
+      it "does nothing and returns true" do
+        expect(subject).to be_truthy
+      end
+    end
+
+    context "when there are no untagged commits" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:untagged_commit_sha).and_return(nil)
+      end
+
+      it "does nothing and returns true" do
+        expect(subject).to be_truthy
+      end
+    end
+
+    context "when there are untagged commits" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:untagged_commit_sha).and_return("untagged-commit-sha")
+        allow(Fastlane::Actions::TagReleaseAction).to receive(:report_untagged_release_branch)
+      end
+
+      it "reports that untagged commits are found and returns false" do
+        expect(subject).to be_falsey
+        expect(Fastlane::Actions::TagReleaseAction).to have_received(:report_untagged_release_branch).with(hash_including(untagged_commit_sha: "untagged-commit-sha"))
+      end
+
+      context "when ignore_untagged_commits is true" do
+        before do
+          @params[:ignore_untagged_commits] = true
+        end
+
+        it "reports that untagged commits are ignored and returns true" do
+          expect(subject).to be_truthy
+          expect(Fastlane::UI).to have_received(:important).with("Untagged commits found but ignoring them because ignore_untagged_commits is true.")
+          expect(Fastlane::UI).to have_received(:important).with("Release branch will be merged to base branch and then deleted. Untagged commits will not be included in this release.")
+          expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_untagged_release_branch)
+        end
+      end
+    end
   end
 
   describe "#create_tag_and_github_release" do
-    let(:platform) { @params[:platform] }
+    let(:platform) { "macos" }
     subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], platform, @params[:github_token]) }
 
-    let (:latest_public_release) { double(tag_name: "1.0.0+#{platform}", prerelease: false) }
+    let (:latest_public_release) { double(tag_name: "1.0.0+macos", prerelease: false) }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
-    let (:octokit_client) { double(releases: [latest_public_release]) }
+    let (:commit_sha_for_tag) { "promoted-tag-sha" }
 
     shared_context "local setup" do
       before(:each) do
-        allow(Octokit::Client).to receive(:new).and_return(octokit_client)
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(latest_public_release)
         allow(JSON).to receive(:parse).and_return(generated_release_notes[:body])
         allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
         allow(Fastlane::UI).to receive(:message)
         allow(Fastlane::UI).to receive(:important)
+        allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:report_error)
+        allow(Fastlane::Helper::GitHelper).to receive(:commit_sha_for_tag).and_return(commit_sha_for_tag)
       end
     end
 
@@ -134,7 +287,12 @@ describe Fastlane::Actions::TagReleaseAction do
 
         expect(Fastlane::UI).to have_received(:message).with("Latest public release: #{latest_public_release.tag_name}").ordered
         expect(Fastlane::UI).to have_received(:message).with("Generating #{repo_name} release notes for GitHub release for tag: #{@tag}").ordered
-        expect(other_action).to have_received(:add_git_tag).with(tag: @tag)
+        if @params[:is_prerelease]
+          expect(other_action).to have_received(:add_git_tag).with(tag: @tag)
+        else
+          expect(Fastlane::Helper::GitHelper).to have_received(:commit_sha_for_tag).with(@promoted_tag)
+          expect(other_action).to have_received(:add_git_tag).with(tag: @tag, commit: commit_sha_for_tag)
+        end
         expect(other_action).to have_received(:push_git_tags).with(tag: @tag)
 
         expect(other_action).to have_received(:github_api).with(
@@ -173,12 +331,6 @@ describe Fastlane::Actions::TagReleaseAction do
       end
     end
 
-    shared_context "when failed to fetch latest GitHub release" do
-      before do
-        allow(octokit_client).to receive(:releases).and_raise(StandardError)
-      end
-    end
-
     shared_context "when failed to generate GitHub release notes" do
       before do
         allow(other_action).to receive(:github_api).and_raise(StandardError)
@@ -200,25 +352,26 @@ describe Fastlane::Actions::TagReleaseAction do
     shared_examples "gracefully handling tagging error" do
       it "handles tagging error" do
         expect(subject).to eq({
+              latest_public_release_tag: latest_public_release.tag_name,
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: false
             })
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag: StandardError")
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create and push tag")
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
       end
     end
 
-    shared_examples "gracefully handling GitHub release error" do |reports_latest_public_release_tag|
-      let (:reports_latest_public_release_tag) { reports_latest_public_release_tag }
-
+    shared_examples "gracefully handling GitHub release error" do
       it "handles GitHub release error" do
         expect(subject).to eq({
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: true,
-              latest_public_release_tag: reports_latest_public_release_tag ? latest_public_release.tag_name : nil
+              latest_public_release_tag: latest_public_release.tag_name
             })
-        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release: StandardError")
+        expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release")
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
       end
     end
 
@@ -229,10 +382,9 @@ describe Fastlane::Actions::TagReleaseAction do
     release_type_contexts = ["for prerelease", "for public release"]
     tag_contexts = ["when failed to create tag", "when failed to push tag"]
     github_release_contexts = [
-      { name: "when failed to fetch latest GitHub release", includes_latest_public_release_tag: false },
-      { name: "when failed to generate GitHub release notes", includes_latest_public_release_tag: true },
-      { name: "when failed to parse GitHub response", includes_latest_public_release_tag: true },
-      { name: "when failed to create GitHub release", includes_latest_public_release_tag: true }
+      "when failed to generate GitHub release notes",
+      "when failed to parse GitHub response",
+      "when failed to create GitHub release"
     ]
 
     include_context "common setup"
@@ -255,9 +407,9 @@ describe Fastlane::Actions::TagReleaseAction do
             end
 
             github_release_contexts.each do |github_release_context|
-              context github_release_context[:name] do
-                include_context github_release_context[:name]
-                it_behaves_like "gracefully handling GitHub release error", github_release_context[:includes_latest_public_release_tag]
+              context github_release_context do
+                include_context github_release_context
+                it_behaves_like "gracefully handling GitHub release error"
               end
             end
           end
@@ -327,6 +479,56 @@ describe Fastlane::Actions::TagReleaseAction do
           end
         end
       end
+    end
+  end
+
+  describe "#report_merge_release_branch_before_deleting_failed" do
+    subject { Fastlane::Actions::TagReleaseAction.report_merge_release_branch_before_deleting_failed(@params) }
+
+    include_context "common setup"
+
+    before do
+      @params[:is_prerelease] = false
+      @params[:platform] = "macos"
+      @template_args = { "foo" => "bar" }
+      @tag = "1.1.0+macos"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, nil])
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:template_arguments).and_return(@template_args)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:create_action_item)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:log_message)
+    end
+
+    it "creates Asana task and logs message" do
+      subject
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:create_action_item).with(@params, "public-release-merge-failed-untagged-commits", @template_args.merge(tag: @tag))
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:log_message).with(@params, "public-release-merge-failed-untagged-commits", @template_args.merge(tag: @tag))
+    end
+  end
+
+  describe "#report_untagged_release_branch" do
+    subject { Fastlane::Actions::TagReleaseAction.report_untagged_release_branch(@params) }
+
+    include_context "common setup"
+
+    before do
+      @params[:is_prerelease] = false
+      @params[:platform] = "macos"
+      @params[:untagged_commit_sha] = "123abc"
+      @template_args = { foo: "bar", untagged_commit_sha: "123abc", untagged_commit_url: "https://github.com/duckduckgo/apple-browsers/commit/123abc" }
+      @tag = "1.1.0+macos"
+      @promoted_tag = "1.1.0-123+macos"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:compute_tag).and_return([@tag, @promoted_tag])
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:template_arguments).and_return(@template_args)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:create_action_item)
+      allow(Fastlane::Actions::TagReleaseAction).to receive(:log_message)
+    end
+
+    it "creates Asana task and logs message" do
+      subject
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:create_action_item)
+        .with(@params, "public-release-tag-failed-untagged-commits", @template_args.merge(tag: @tag, promoted_tag: @promoted_tag))
+      expect(Fastlane::Actions::TagReleaseAction).to have_received(:log_message)
+        .with(@params, "public-release-tag-failed-untagged-commits", @template_args.merge(tag: @tag, promoted_tag: @promoted_tag))
     end
   end
 
