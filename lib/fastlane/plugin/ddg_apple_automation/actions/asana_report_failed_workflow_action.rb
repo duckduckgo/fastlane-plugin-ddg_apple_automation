@@ -20,7 +20,6 @@ module Fastlane
         extra_collaborators = []
 
         if params[:commit_sha]
-          args[:last_commit_sha] = params[:commit_sha]
           args[:last_commit_url] = "https://github.com/#{Helper::GitHelper.repo_name}/commit/#{params[:commit_sha]}"
           commit_author = Helper::GitHelper.commit_author(Helper::GitHelper.repo_name, params[:commit_sha], params[:github_token])
           args[:last_commit_author_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(commit_author)
@@ -41,14 +40,8 @@ module Fastlane
           args[:assignee_id] = assignee_id
         end
 
-        asana_client = Helper::AsanaHelper.make_asana_client(token)
-
-        begin
-          UI.important("Adding users #{extra_collaborators.join(', ')} as collaborators on release task's 'Automation' subtask")
-          asana_client.tasks.add_followers_for_task(task_gid: params[:task_id], followers: extra_collaborators)
-        rescue StandardError => e
-          UI.user_error!("Failed to add users #{extra_collaborators.join(', ')} as collaborators on task #{params[:task_id]}")
-          Helper::DdgAppleAutomationHelper.report_error(e)
+        if extra_collaborators.any?
+          add_collaborators(asana_client, params[:task_id], extra_collaborators)
         end
 
         UI.important("Adding comment to the release task about a failed workflow run")
@@ -58,6 +51,15 @@ module Fastlane
           template_args: args,
           asana_access_token: token
         )
+      end
+
+      def self.add_collaborators(collaborators, task_id, asana_access_token)
+        asana_client = Helper::AsanaHelper.make_asana_client(asana_access_token)
+        UI.important("Adding users #{collaborators.join(', ')} as collaborators on release task's 'Automation' subtask")
+        asana_client.tasks.add_followers_for_task(task_gid: task_id, followers: collaborators)
+      rescue StandardError => e
+        UI.user_error!("Failed to add users #{collaborators.join(', ')} as collaborators on task #{task_id}")
+        Helper::DdgAppleAutomationHelper.report_error(e)
       end
 
       def self.description
