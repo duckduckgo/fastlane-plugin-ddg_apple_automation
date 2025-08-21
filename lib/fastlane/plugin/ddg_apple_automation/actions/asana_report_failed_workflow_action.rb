@@ -39,9 +39,7 @@ module Fastlane
           args[:assignee_id] = assignee_id
         end
 
-        if extra_collaborators.any?
-          add_collaborators(extra_collaborators, params[:task_id], params[:asana_access_token])
-        end
+        add_collaborators(extra_collaborators, params[:task_id], params[:asana_access_token])
 
         UI.important("Adding comment to the release task about a failed workflow run")
         AsanaAddCommentAction.run(
@@ -53,6 +51,8 @@ module Fastlane
       end
 
       def self.add_collaborators(collaborators, task_id, asana_access_token)
+        return if collaborators.empty?
+
         asana_client = Helper::AsanaHelper.make_asana_client(asana_access_token)
         UI.important("Adding users #{collaborators.join(', ')} as collaborators on release task's 'Automation' subtask")
         asana_client.tasks.add_followers_for_task(task_gid: task_id, followers: collaborators)

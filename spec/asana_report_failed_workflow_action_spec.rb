@@ -97,6 +97,56 @@ describe Fastlane::Actions::AsanaReportFailedWorkflowAction do
 
       it_behaves_like "skipping cc assignee"
     end
+  end
 
+  describe "#add_collaborators" do
+    subject { Fastlane::Actions::AsanaReportFailedWorkflowAction.add_collaborators(collaborators, task_id, asana_access_token) }
+
+    let (:collaborators) { ["123", "456"] }
+    let (:task_id) { "1234567890" }
+    let (:asana_access_token) { "asana-token" }
+    let (:asana_client) { double(tasks: double(add_followers_for_task: nil)) }
+
+    before do
+      allow(Fastlane::Helper::AsanaHelper).to receive(:make_asana_client).with(asana_access_token).and_return(asana_client)
+      allow(Fastlane::UI).to receive(:important)
+      allow(asana_client).to receive(:tasks).with(task_gid: task_id, followers: collaborators)
+      allow(Fastlane::UI).to receive(:user_error!)
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:report_error)
+    end
+
+    it "adds collaborators to the task" do
+      subject
+      expect(Fastlane::Helper::AsanaHelper).to have_received(:make_asana_client).with("asana-token")
+      expect(asana_client.tasks).to have_received(:add_followers_for_task).with(task_gid: "1234567890", followers: ["123", "456"])
+    end
+
+    context "when there are no collaborators" do
+      let (:collaborators) { [] }
+
+      it "does nothing if there are no collaborators" do
+        subject
+        expect(Fastlane::Helper::AsanaHelper).not_to have_received(:make_asana_client)
+        expect(asana_client).not_to have_received(:tasks)
+        expect(Fastlane::UI).not_to have_received(:important)
+        expect(Fastlane::UI).not_to have_received(:user_error!)
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).not_to have_received(:report_error)
+      end
+    end
+
+    context "when adding collaborators fails" do
+      before do
+        allow(asana_client.tasks).to receive(:add_followers_for_task).and_raise(StandardError)
+      end
+
+      it "reports an error" do
+        subject
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:make_asana_client).with("asana-token")
+        expect(asana_client.tasks).to have_received(:add_followers_for_task).with(task_gid: "1234567890", followers: ["123", "456"])
+
+        expect(Fastlane::UI).to have_received(:user_error!)
+        expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
+      end
+    end
   end
 end
