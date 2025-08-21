@@ -147,8 +147,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       version = "1.0.0"
       release_branch_name = "release/#{platform}/#{version}"
       other_action = double("other_action")
-      options = { some_option: "value" }
-      github_token = "github-token"
 
       @client = double("Octokit::Client")
       allow(Octokit::Client).to receive(:new).and_return(@client)
@@ -172,6 +170,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(other_action).to receive(:push_to_git_remote)
+      expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
         platform, version, other_action
@@ -186,6 +185,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(version, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
     end
 
     it "prepares the release branch with version updates for macOS and returns update_embedded_warning" do
@@ -219,6 +219,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(other_action).to receive(:push_to_git_remote)
+      expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version, result_warning = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
         platform, version, other_action
@@ -234,6 +235,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_embedded_files).with(platform, other_action)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(version, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
     end
 
     it "prepares the release branch with version updates for iOS" do
@@ -269,6 +271,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(other_action).to receive(:push_to_git_remote)
+      expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
         platform, version, other_action
@@ -284,6 +287,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(version, 0, other_action)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_root_plist_version).with(version, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
     end
 
     it "prepares the release branch with version updates for iOS and returns update_embedded_warning" do
@@ -320,6 +324,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(other_action).to receive(:push_to_git_remote)
+      expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version, result_warning = Fastlane::Helper::DdgAppleAutomationHelper.prepare_release_branch(
         platform, version, other_action
@@ -336,6 +341,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(version, 0, other_action)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_root_plist_version).with(version, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
     end
   end
 
@@ -426,6 +432,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(other_action).to receive(:push_to_git_remote)
+      expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
         github_token, platform, other_action, options
@@ -441,6 +448,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:increment_build_number).with(platform, options, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("last_release", source_version)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
     end
 
     it "prepares the hotfix branch for ios" do
@@ -475,6 +483,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(other_action).to receive(:push_to_git_remote)
+      expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
         github_token, platform, other_action, options
@@ -489,6 +498,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_and_build_number_config).with(new_version, 0, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("last_release", source_version)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
     end
   end
 
@@ -590,9 +600,12 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::UI).to receive(:interactive?).and_return(false)
       allow(Fastlane::UI).to receive(:confirm).and_return(true)
       allow(Fastlane::UI).to receive(:select).and_return("Current release (123)")
+      allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_and_build_number_config)
       expect(other_action).to receive(:push_to_git_remote)
+      expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
       Fastlane::Helper::DdgAppleAutomationHelper.increment_build_number(platform, options, other_action)
+      expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
     end
   end
 
