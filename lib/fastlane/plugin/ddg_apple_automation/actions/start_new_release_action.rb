@@ -33,13 +33,13 @@ module Fastlane
         release_task_id = Helper::AsanaHelper.create_release_task(options[:platform], options[:version], options[:asana_user_id], options[:asana_access_token], is_hotfix: options[:is_hotfix])
         options[:release_task_id] = release_task_id
 
-        # Helper::AsanaHelper.update_asana_tasks_for_internal_release(options) unless params[:is_hotfix]
-        # if show_update_embedded_warning
-        #   AsanaAddCommentAction.run(
-        #     task_id: release_task_id,
-        #     comment: "TDS performance tests failed. Make sure to validate performance before releasing to public users. See https://app.asana.com/0/1204165176092271/1209729184622270/f"
-        #   )
-        # end
+        Helper::AsanaHelper.update_asana_tasks_for_internal_release(options) unless params[:is_hotfix]
+        if show_update_embedded_warning
+          AsanaAddCommentAction.run(
+            task_id: release_task_id,
+            comment: "TDS performance tests failed. Make sure to validate performance before releasing to public users. See https://app.asana.com/0/1204165176092271/1209729184622270/f"
+          )
+        end
         commit_sha = other_action.last_git_commit[:commit_hash]
         Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
       end
