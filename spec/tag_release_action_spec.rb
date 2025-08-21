@@ -169,24 +169,37 @@ describe Fastlane::Actions::TagReleaseAction do
         allow(Fastlane::Helper::GitHelper).to receive(:merge_branch)
       end
 
-      it "merges branch to base branch" do
-        subject
-        expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
-          .with("duckduckgo/apple-browsers", @branch, "base_branch", @params[:github_token])
-      end
+      context "for public release" do
+        include_context "when is_prerelease: false"
 
-      context "when merge fails" do
-        before do
-          allow(Fastlane::Helper::GitHelper).to receive(:merge_branch).and_raise(StandardError)
-          allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
-          allow(Fastlane::Actions::TagReleaseAction).to receive(:report_merge_release_branch_before_deleting_failed)
+        it "merges branch to base branch" do
+          subject
+          expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
+            .with("duckduckgo/apple-browsers", @branch, "base_branch", @params[:github_token])
         end
 
-        it "reports error" do
+        context "when merge fails" do
+          before do
+            allow(Fastlane::Helper::GitHelper).to receive(:merge_branch).and_raise(StandardError)
+            allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+            allow(Fastlane::Actions::TagReleaseAction).to receive(:report_merge_release_branch_before_deleting_failed)
+          end
+
+          it "reports error" do
+            subject
+            expect(Fastlane::UI).to have_received(:important).with("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+            expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
+            expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+          end
+        end
+      end
+
+      context "for internal release" do
+        include_context "when is_prerelease: true"
+
+        it "does not merge branch to base branch" do
           subject
-          expect(Fastlane::UI).to have_received(:important).with("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
-          expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
-          expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+          expect(Fastlane::Helper::GitHelper).not_to have_received(:merge_branch)
         end
       end
     end

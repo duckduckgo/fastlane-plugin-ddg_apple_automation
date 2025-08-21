@@ -139,6 +139,8 @@ module Fastlane
         other_action.push_to_git_remote
         release_branch_name = release_branch_name(platform, new_version)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
+        commit_sha = other_action.last_git_commit[:commit_hash]
+        Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
 
         return release_branch_name, new_version, update_embedded_result
       end
@@ -160,6 +162,8 @@ module Fastlane
         other_action.push_to_git_remote
         increment_build_number(platform, options, other_action) if platform == "macos"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
+        commit_sha = other_action.last_git_commit[:commit_hash]
+        Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
 
         return release_branch_name, new_version
       end
@@ -231,6 +235,8 @@ module Fastlane
 
         update_version_and_build_number_config(current_version, build_number, other_action)
         other_action.push_to_git_remote
+        commit_sha = other_action.last_git_commit[:commit_hash]
+        Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
       end
 
       def self.calculate_next_build_number(platform, options, config = "release", bundle_id = nil, other_action)
