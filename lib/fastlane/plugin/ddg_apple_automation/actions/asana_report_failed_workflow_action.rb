@@ -32,7 +32,14 @@ module Fastlane
           extra_collaborators << args[:workflow_actor_id]
         end
 
-        args[:assignee_id] = Helper::AsanaHelper.extract_asana_task_assignee(params[:task_id], token)
+        extra_collaborators.uniq!
+
+        assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(params[:task_id], token)
+        if extra_collaborators.include?(assignee_id)
+          extra_collaborators.delete(assignee_id)
+        else
+          args[:assignee_id] = assignee_id
+        end
 
         asana_client = Helper::AsanaHelper.make_asana_client(token)
 
