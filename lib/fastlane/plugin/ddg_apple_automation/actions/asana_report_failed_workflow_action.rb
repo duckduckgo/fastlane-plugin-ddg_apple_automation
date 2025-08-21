@@ -11,7 +11,6 @@ module Fastlane
   module Actions
     class AsanaReportFailedWorkflowAction < Action
       def self.run(params)
-        token = params[:asana_access_token]
         args = {
           workflow_name: params[:workflow_name],
           workflow_url: params[:workflow_url]
@@ -33,7 +32,7 @@ module Fastlane
 
         extra_collaborators.uniq!
 
-        assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(params[:task_id], token)
+        assignee_id = Helper::AsanaHelper.extract_asana_task_assignee(params[:task_id], params[:asana_access_token])
         if extra_collaborators.include?(assignee_id)
           extra_collaborators.delete(assignee_id)
         else
@@ -41,7 +40,7 @@ module Fastlane
         end
 
         if extra_collaborators.any?
-          add_collaborators(asana_client, params[:task_id], extra_collaborators)
+          add_collaborators(extra_collaborators, params[:task_id], params[:asana_access_token])
         end
 
         UI.important("Adding comment to the release task about a failed workflow run")
@@ -49,7 +48,7 @@ module Fastlane
           task_id: params[:task_id],
           template_name: 'workflow-failed',
           template_args: args,
-          asana_access_token: token
+          asana_access_token: params[:asana_access_token]
         )
       end
 
