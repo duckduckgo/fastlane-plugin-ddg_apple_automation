@@ -116,6 +116,13 @@ module Fastlane
 
         return nil
       end
+
+      def self.commit_author(repo_name, commit_sha, github_token)
+        client = Octokit::Client.new(access_token: github_token)
+
+        commit = client.commit(repo_name, commit_sha)
+        commit.author&.login
+      end
     end
   end
 end
