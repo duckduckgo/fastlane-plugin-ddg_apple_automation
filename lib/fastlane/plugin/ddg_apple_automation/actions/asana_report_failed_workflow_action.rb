@@ -13,7 +13,8 @@ module Fastlane
       def self.run(params)
         token = params[:asana_access_token]
         args = {
-          workflow_name: params[:workflow_name]
+          workflow_name: params[:workflow_name],
+          workflow_url: params[:workflow_url]
         }
 
         extra_collaborators = []
@@ -92,6 +93,10 @@ module Fastlane
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :workflow_name,
                                        description: "Name of the workflow that failed",
+                                       optional: true,
+                                       type: String),
+          FastlaneCore::ConfigItem.new(key: :workflow_url,
+                                       description: "URL of the workflow that failed",
                                        optional: true,
                                        type: String)
         ]
