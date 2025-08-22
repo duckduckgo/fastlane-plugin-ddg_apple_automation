@@ -90,7 +90,8 @@ module Fastlane
         `git rev-parse "#{tag}"^{}`.chomp
       end
 
-      def self.latest_release(repo_name, prerelease, platform, github_token)
+      # rubocop:disable Metrics/PerceivedComplexity
+      def self.latest_release(repo_name, prerelease, platform, github_token, allow_drafts: false)
         client = Octokit::Client.new(access_token: github_token)
 
         current_page = 1
@@ -104,6 +105,9 @@ module Fastlane
           # If `prerelease` is false, then ensure that the release is public.
           matching_release = releases.find do |release|
             matches_platform = platform.nil? || release.tag_name.end_with?("+#{platform}")
+            if allow_drafts
+              matches_platform ||= release.name.end_with?("+#{platform}")
+            end
             matches_prerelease = prerelease == release.prerelease
             matches_platform && matches_prerelease
           end
@@ -116,6 +120,7 @@ module Fastlane
 
         return nil
       end
+      # rubocop:enable Metrics/PerceivedComplexity
 
       def self.commit_author(repo_name, commit_sha, github_token)
         client = Octokit::Client.new(access_token: github_token)
