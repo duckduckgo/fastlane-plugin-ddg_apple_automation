@@ -172,7 +172,8 @@ describe Fastlane::Helper::GitHelper do
   end
 
   describe "#latest_release" do
-    subject { Fastlane::Helper::GitHelper.latest_release(repo_name, prerelease, platform, github_token) }
+    subject { Fastlane::Helper::GitHelper.latest_release(repo_name, prerelease, platform, github_token, allow_drafts: allow_drafts) }
+    let(:allow_drafts) { false }
 
     include_context "common setup"
 
@@ -272,6 +273,30 @@ describe Fastlane::Helper::GitHelper do
 
         it "returns the latest full release with the platform suffix" do
           expect(subject.tag_name).to eq("1.0.0+ios")
+        end
+      end
+    end
+
+    context "when allow_drafts is true" do
+      let(:allow_drafts) { true }
+      let(:platform) { "ios" }
+
+      context "and prerelease is false" do
+        let(:prerelease) { false }
+
+        before do
+          allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
+            [
+              double(tag_name: "2.0.0+ios", prerelease: false, draft: true),
+              double(tag_name: "2.0.0-1+ios", prerelease: true),
+              double(tag_name: "2.0.0-1+ios", prerelease: true),
+              double(tag_name: "1.0.0+ios", prerelease: false)
+            ]
+          )
+        end
+
+        it "returns the latest public release that is a draft" do
+          expect(subject.tag_name).to eq("2.0.0+ios")
         end
       end
     end
