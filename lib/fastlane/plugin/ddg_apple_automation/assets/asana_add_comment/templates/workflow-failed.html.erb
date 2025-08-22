@@ -1,0 +1,8 @@
+<body>
+  <h2>🚨 <%= workflow_name.split.map(&:capitalize).join(" ") %> workflow failed</h2>
+  <a href='<%= workflow_url %>'>🔗 Workflow URL</a>
+  <% if defined?(workflow_actor_id) && !workflow_actor_id.to_s.strip.empty? %> (triggered by <a data-asana-gid='<%= workflow_actor_id %>' />)<% end %><br>
+  <% if defined?(last_commit_url) && !last_commit_url.to_s.strip.empty? %><a href='<%= last_commit_url %>'>📦 Last commit</a><% end %>
+  <% if defined?(last_commit_author_id) && !last_commit_author_id.to_s.strip.empty? %> (by <a data-asana-gid='<%= last_commit_author_id %>' />)<% end %><br>
+  <% if defined?(assignee_id) && !assignee_id.to_s.strip.empty? %>cc <a data-asana-gid='<%= assignee_id %>' /><% end %>
+</body>
