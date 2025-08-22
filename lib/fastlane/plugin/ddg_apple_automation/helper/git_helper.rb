@@ -90,6 +90,31 @@ module Fastlane
         `git rev-parse "#{tag}"^{}`.chomp
       end
 
+      def self.find_latest_marketing_version(github_token, platform)
+        latest_internal_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name, true, platform, github_token)
+
+        version = extract_version_from_tag_name(latest_internal_release&.tag_name)
+        if version.to_s.empty?
+          UI.user_error!("Failed to find latest marketing version")
+          return
+        end
+        unless self.validate_semver(version)
+          UI.user_error!("Invalid marketing version: #{version}, expected format: MAJOR.MINOR.PATCH")
+          return
+        end
+        version
+      end
+
+      def self.extract_version_from_tag_name(tag_name)
+        # Remove build number (if present) and platform suffix from the tag name
+        tag_name&.split(/[-+]/)&.first
+      end
+
+      def self.validate_semver(version)
+        # we only need basic "x.y.z" validation here
+        version.match?(/\A\d+\.\d+\.\d+\z/)
+      end
+
       # rubocop:disable Metrics/PerceivedComplexity
       def self.latest_release(repo_name, prerelease, platform, github_token, allow_drafts: false)
         client = Octokit::Client.new(access_token: github_token)

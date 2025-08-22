@@ -3,7 +3,7 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
     subject { Fastlane::Actions::AsanaFindReleaseTaskAction.run(platform: "ios", asana_access_token: "token") }
 
     before do
-      expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_latest_marketing_version).and_return("1.0.0")
+      expect(Fastlane::Helper::GitHelper).to receive(:find_latest_marketing_version).and_return("1.0.0")
       allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:report_hotfix_task)
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
       allow(Fastlane::UI).to receive(:success)
@@ -38,102 +38,6 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
         subject
         expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to have_received(:report_hotfix_task).with("5555", "1234567890", "token")
       end
-    end
-  end
-
-  describe "#find_latest_marketing_version" do
-    before do
-      @client = double
-      allow(Octokit::Client).to receive(:new).and_return(@client)
-    end
-
-    it "returns the latest marketing version" do
-      allow(@client).to receive(:releases).and_return(
-        [
-          double(tag_name: '2.0.0-1', prerelease: true),
-          double(tag_name: '2.0.0-0+ios', prerelease: true),
-          double(tag_name: '1.0.0', prerelease: false),
-          double(tag_name: '1.0.0-1', prerelease: true),
-          double(tag_name: '1.0.0-0', prerelease: true)
-        ]
-      )
-
-      expect(find_latest_marketing_version).to eq("2.0.0")
-    end
-
-    it "strips build number and platform suffix from the latest marketing version" do
-      allow(@client).to receive(:releases).and_return(
-        [
-          double(tag_name: '2.0.0-1+ios', prerelease: true)
-        ]
-      )
-
-      expect(find_latest_marketing_version).to eq("2.0.0")
-    end
-
-    it "strips platform suffix from the latest marketing version when it's a public release" do
-      allow(@client).to receive(:releases).and_return(
-        [
-          double(tag_name: '2.0.0+ios', prerelease: true)
-        ]
-      )
-
-      expect(find_latest_marketing_version).to eq("2.0.0")
-    end
-
-    describe "when there is no latest release" do
-      it "shows error" do
-        allow(@client).to receive(:releases).and_return([])
-        allow(Fastlane::UI).to receive(:user_error!)
-
-        find_latest_marketing_version
-
-        expect(Fastlane::UI).to have_received(:user_error!).with("Failed to find latest marketing version")
-      end
-    end
-
-    describe "when latest release is not a valid semver" do
-      it "shows error" do
-        allow(@client).to receive(:releases).and_return([double(tag_name: '1.0+ios', prerelease: true)])
-        allow(Fastlane::UI).to receive(:user_error!)
-
-        find_latest_marketing_version
-
-        expect(Fastlane::UI).to have_received(:user_error!).with("Invalid marketing version: 1.0, expected format: MAJOR.MINOR.PATCH")
-      end
-    end
-
-    def find_latest_marketing_version
-      Fastlane::Actions::AsanaFindReleaseTaskAction.find_latest_marketing_version("token", "ios")
-    end
-  end
-
-  describe "#extract_version_from_tag_name" do
-    it "returns the version" do
-      expect(extract_version_from_tag_name("1.0.0")).to eq("1.0.0")
-      expect(extract_version_from_tag_name("v1.0.0")).to eq("v1.0.0")
-      expect(extract_version_from_tag_name("1.105.0-251")).to eq("1.105.0")
-    end
-
-    def extract_version_from_tag_name(tag_name)
-      Fastlane::Actions::AsanaFindReleaseTaskAction.extract_version_from_tag_name(tag_name)
-    end
-  end
-
-  describe "#validate_semver" do
-    it "validates semantic version" do
-      expect(validate_semver("1.0.0")).to be_truthy
-      expect(validate_semver("0.0.0")).to be_truthy
-      expect(validate_semver("7.136.1")).to be_truthy
-
-      expect(validate_semver("v1.0.0")).to be_falsy
-      expect(validate_semver("7.1")).to be_falsy
-      expect(validate_semver("1.105.0-251")).to be_falsy
-      expect(validate_semver("1005")).to be_falsy
-    end
-
-    def validate_semver(version)
-      Fastlane::Actions::AsanaFindReleaseTaskAction.validate_semver(version)
     end
   end
 
