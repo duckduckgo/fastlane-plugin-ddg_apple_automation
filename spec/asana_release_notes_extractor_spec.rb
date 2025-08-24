@@ -10,7 +10,7 @@ Release notes
 
   <-- Add release notes here -->
 
-For Privacy Pro subscribers
+For DuckDuckGo subscribers
 
   <-- Add release notes here -->
 
@@ -54,7 +54,7 @@ Release notes
   When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.
   The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.
 
-For Privacy Pro subscribers
+For DuckDuckGo subscribers
 
   VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.
   Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently available to U.S. residents only.
@@ -71,7 +71,7 @@ You can now find browser windows listed in the "Window" app menu and in the Dock
 We also added "Duplicate Tab" to the app menu so you can use it as an action in Apple Shortcuts.
 When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.
 The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.
-For Privacy Pro subscribers
+For DuckDuckGo subscribers
 VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.
 Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently available to U.S. residents only.
       RAW
@@ -84,7 +84,7 @@ Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently 
 <li>When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.</li>
 <li>The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.</li>
 </ul>
-<h3 style="font-size:14px">For Privacy Pro subscribers</h3>
+<h3 style="font-size:14px">For DuckDuckGo subscribers</h3>
 <ul>
 <li>VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.</li>
 <li>Visit <a href="https://duckduckgo.com/pro">https://duckduckgo.com/pro</a> for more information. Privacy Pro is currently available to U.S. residents only.</li>
@@ -92,7 +92,7 @@ Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently 
       HTML
 
       asana = <<-ASANA
-<ul><li>You can now find browser windows listed in the &quot;Window&quot; app menu and in the Dock menu.</li><li>We also added &quot;Duplicate Tab&quot; to the app menu so you can use it as an action in Apple Shortcuts.</li><li>When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.</li><li>The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.</li></ul><h2>For Privacy Pro subscribers</h2><ul><li>VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.</li><li>Visit <a href="https://duckduckgo.com/pro">https://duckduckgo.com/pro</a> for more information. Privacy Pro is currently available to U.S. residents only.</li></ul>
+<ul><li>You can now find browser windows listed in the &quot;Window&quot; app menu and in the Dock menu.</li><li>We also added &quot;Duplicate Tab&quot; to the app menu so you can use it as an action in Apple Shortcuts.</li><li>When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.</li><li>The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.</li></ul><h2>For DuckDuckGo subscribers</h2><ul><li>VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.</li><li>Visit <a href="https://duckduckgo.com/pro">https://duckduckgo.com/pro</a> for more information. Privacy Pro is currently available to U.S. residents only.</li></ul>
       ASANA
 
       @output = {
@@ -167,7 +167,7 @@ Release notes
   When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.
   The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.
 
-For Privacy Pro subscribers
+For DuckDuckGo subscribers
 
   <-- Add release notes here -->
 
@@ -220,7 +220,7 @@ Release notes
   We also added "Duplicate Tab" to the app menu so you can use it as an action in Apple Shortcuts.
   When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.
   The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.
-  For Privacy Pro subscribers
+  For DuckDuckGo subscribers
   VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.
   Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently available to U.S. residents only.
 
@@ -236,7 +236,7 @@ You can now find browser windows listed in the "Window" app menu and in the Dock
 We also added "Duplicate Tab" to the app menu so you can use it as an action in Apple Shortcuts.
 When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.
 The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.
-For Privacy Pro subscribers
+For DuckDuckGo subscribers
 VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.
 Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently available to U.S. residents only.
       RAW
@@ -249,7 +249,7 @@ Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently 
 <li>When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.</li>
 <li>The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.</li>
 </ul>
-<h3 style="font-size:14px">For Privacy Pro subscribers</h3>
+<h3 style="font-size:14px">For DuckDuckGo subscribers</h3>
 <ul>
 <li>VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.</li>
 <li>Visit <a href="https://duckduckgo.com/pro">https://duckduckgo.com/pro</a> for more information. Privacy Pro is currently available to U.S. residents only.</li>
@@ -257,7 +257,7 @@ Visit https://duckduckgo.com/pro for more information. Privacy Pro is currently 
       HTML
 
       asana = <<-ASANA
-<ul><li>You can now find browser windows listed in the &quot;Window&quot; app menu and in the Dock menu.</li><li>We also added &quot;Duplicate Tab&quot; to the app menu so you can use it as an action in Apple Shortcuts.</li><li>When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.</li><li>The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.</li></ul><h2>For Privacy Pro subscribers</h2><ul><li>VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.</li><li>Visit <a href="https://duckduckgo.com/pro">https://duckduckgo.com/pro</a> for more information. Privacy Pro is currently available to U.S. residents only.</li></ul>
+<ul><li>You can now find browser windows listed in the &quot;Window&quot; app menu and in the Dock menu.</li><li>We also added &quot;Duplicate Tab&quot; to the app menu so you can use it as an action in Apple Shortcuts.</li><li>When watching videos in Duck Player, clicking endscreen recommendations will now open those videos in the same tab.</li><li>The bug that duplicated sites in your browsing history has been fixed, and the visual glitching that sometimes occurred during session restore and app launch has been addressed.</li></ul><h2>For DuckDuckGo subscribers</h2><ul><li>VPN updates! More detailed connection info in the VPN dashboard, plus animations and usability improvements.</li><li>Visit <a href="https://duckduckgo.com/pro">https://duckduckgo.com/pro</a> for more information. Privacy Pro is currently available to U.S. residents only.</li></ul>
       ASANA
 
       @output = {
