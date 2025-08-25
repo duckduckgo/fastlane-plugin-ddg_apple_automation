@@ -34,8 +34,12 @@ module Fastlane
           begin
             Helper::GitHelper.unfreeze_release_branch(branch, platform, params[:github_token])
           rescue StandardError => e
+            Helper::GitHubActionsHelper.set_output("stop_workflow", true)
             task_id = AsanaExtractTaskIdAction.run(task_url: params[:asana_task_url])
             AsanaReportFailedWorkflowAction.run(
+              asana_access_token: params[:asana_access_token],
+              github_token: params[:github_token],
+              platform: platform,
               task_id: task_id,
               branch: branch,
               github_handle: params[:github_handle],
@@ -43,7 +47,6 @@ module Fastlane
               workflow_url: ENV.fetch("WORKFLOW_URL", nil)
             )
             UI.important("Failed to unfreeze release branch. Cannot proceed with the public release. Please unfreeze manually and run the workflow again.")
-            Helper::GitHubActionsHelper.set_output("stop_workflow", true)
             Helper::DdgAppleAutomationHelper.report_error(e)
             return
           end
