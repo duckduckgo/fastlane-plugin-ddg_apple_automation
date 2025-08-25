@@ -23,6 +23,7 @@ module Fastlane
         end
       end
 
+      # rubocop:disable Metrics/PerceivedComplexity
       def self.run(params)
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         Helper::GitHelper.setup_git_user
@@ -35,6 +36,8 @@ module Fastlane
             Helper::GitHelper.unfreeze_release_branch(branch, platform, params[:github_token])
           rescue StandardError => e
             Helper::GitHubActionsHelper.set_output("stop_workflow", true)
+            Helper::DdgAppleAutomationHelper.report_error(e)
+            UI.important("Failed to unfreeze release branch. Cannot proceed with the public release. Please unfreeze manually and run the workflow again.")
             task_id = AsanaExtractTaskIdAction.run(task_url: params[:asana_task_url])
             AsanaReportFailedWorkflowAction.run(
               asana_access_token: params[:asana_access_token],
@@ -46,8 +49,6 @@ module Fastlane
               workflow_name: "Tag Release",
               workflow_url: ENV.fetch("WORKFLOW_URL", nil)
             )
-            UI.important("Failed to unfreeze release branch. Cannot proceed with the public release. Please unfreeze manually and run the workflow again.")
-            Helper::DdgAppleAutomationHelper.report_error(e)
             return
           end
         end
@@ -58,35 +59,35 @@ module Fastlane
           return
         end
 
-        # if should_merge_before_deleting(params)
-        #   begin
-        #     branch = other_action.git_branch
-        #     # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
-        #     UI.important("Merging branch before deleting to have untagged commits in the base branch")
-        #     Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
-        #   rescue StandardError => e
-        #     report_merge_release_branch_before_deleting_failed(params.values.merge(branch: branch))
-        #     UI.important("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
-        #     Helper::GitHubActionsHelper.set_output("stop_workflow", true)
-        #     Helper::DdgAppleAutomationHelper.report_error(e)
-        #     return
-        #   end
-        # end
+        if should_merge_before_deleting(params)
+          begin
+            branch = other_action.git_branch
+            # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
+            UI.important("Merging branch before deleting to have untagged commits in the base branch")
+            Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
+          rescue StandardError => e
+            report_merge_release_branch_before_deleting_failed(params.values.merge(branch: branch))
+            UI.important("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
+            Helper::GitHubActionsHelper.set_output("stop_workflow", true)
+            Helper::DdgAppleAutomationHelper.report_error(e)
+            return
+          end
+        end
 
-        # tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
-        # Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
+        tag_and_release_output = create_tag_and_github_release(params[:is_prerelease], platform, params[:github_token])
+        Helper::GitHubActionsHelper.set_output("tag", tag_and_release_output[:tag])
 
-        # if tag_and_release_output[:tag_created]
-        #   begin
-        #     merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
-        #     tag_and_release_output[:merge_or_delete_successful] = true
-        #   rescue StandardError => e
-        #     tag_and_release_output[:merge_or_delete_successful] = false
-        #     Helper::DdgAppleAutomationHelper.report_error(e)
-        #   end
-        # end
+        if tag_and_release_output[:tag_created]
+          begin
+            merge_or_delete_branch(params.values.merge(tag: tag_and_release_output[:tag]))
+            tag_and_release_output[:merge_or_delete_successful] = true
+          rescue StandardError => e
+            tag_and_release_output[:merge_or_delete_successful] = false
+            Helper::DdgAppleAutomationHelper.report_error(e)
+          end
+        end
 
-        # report_status(params.values.merge(tag_and_release_output))
+        report_status(params.values.merge(tag_and_release_output))
       end
 
       def self.should_merge_before_deleting(params)
@@ -109,6 +110,7 @@ module Fastlane
         end
         true
       end
+      # rubocop:enable Metrics/PerceivedComplexity
 
       def self.create_tag_and_github_release(is_prerelease, platform, github_token)
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
