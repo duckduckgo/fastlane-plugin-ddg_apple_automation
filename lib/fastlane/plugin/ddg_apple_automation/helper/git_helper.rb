@@ -244,7 +244,7 @@ module Fastlane
 
         UI.message("Release version matches and it's a draft release.")
         UI.important("Deleting draft public release #{draft_public_release_name}")
-        delete_release(latest_public_release.url)
+        delete_release(latest_public_release.url, github_token)
         UI.success("Draft public release #{draft_public_release_name} deleted")
       end
 

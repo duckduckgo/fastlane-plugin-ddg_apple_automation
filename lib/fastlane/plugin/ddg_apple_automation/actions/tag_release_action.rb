@@ -7,6 +7,7 @@ require_relative "../helper/git_helper"
 require_relative "asana_extract_task_id_action"
 require_relative "asana_log_message_action"
 require_relative "asana_create_action_item_action"
+require_relative "asana_report_failed_workflow_action"
 
 module Fastlane
   module Actions
@@ -22,6 +23,7 @@ module Fastlane
         end
       end
 
+      # rubocop:disable Metrics/PerceivedComplexity
       def self.run(params)
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         Helper::GitHelper.setup_git_user
@@ -29,10 +31,21 @@ module Fastlane
         setup_constants(platform)
 
         unless params[:is_prerelease]
+          branch = other_action.git_branch
           begin
-            Helper::GitHelper.unfreeze_release_branch(other_action.git_branch, platform, params[:github_token])
+            Helper::GitHelper.unfreeze_release_branch(branch, platform, params[:github_token])
           rescue StandardError => e
-            report_unfreeze_release_branch_failed(params.values)
+            task_id = AsanaExtractTaskIdAction.run(
+              asana_access_token: params[:asana_access_token],
+              asana_task_url: params[:asana_task_url]
+            )[:task_id]
+            AsanaReportFailedWorkflowAction.run(
+              task_id: task_id,
+              branch: branch,
+              github_handle: params[:github_handle],
+              workflow_name: "Tag Release",
+              workflow_url: ENV.fetch("WORKFLOW_URL", nil)
+            )
             UI.important("Failed to unfreeze release branch. Cannot proceed with the public release. Please unfreeze manually and run the workflow again.")
             Helper::GitHubActionsHelper.set_output("stop_workflow", true)
             Helper::DdgAppleAutomationHelper.report_error(e)
@@ -76,6 +89,7 @@ module Fastlane
 
         report_status(params.values.merge(tag_and_release_output))
       end
+      # rubocop:enable Metrics/PerceivedComplexity
 
       def self.should_merge_before_deleting(params)
         # Only merge before deleting for public releases and if ignore_untagged_commits is true
@@ -179,13 +193,6 @@ module Fastlane
 
         create_action_item(params, template_name, template_args)
         log_message(params, template_name, template_args)
-      end
-
-      def self.report_unfreeze_release_branch_failed(params)
-        # template_name = "public-release-unfreeze-failed"
-        # template_args = template_arguments(params)
-        # create_action_item(params, template_name, template_args)
-        # log_message(params, template_name, template_args)
       end
 
       def self.report_untagged_release_branch(params)
