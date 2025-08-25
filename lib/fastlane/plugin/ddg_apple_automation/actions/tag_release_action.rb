@@ -34,10 +34,7 @@ module Fastlane
           begin
             Helper::GitHelper.unfreeze_release_branch(branch, platform, params[:github_token])
           rescue StandardError => e
-            task_id = AsanaExtractTaskIdAction.run(
-              asana_access_token: params[:asana_access_token],
-              asana_task_url: params[:asana_task_url]
-            )[:task_id]
+            task_id = AsanaExtractTaskIdAction.run(task_url: params[:asana_task_url])
             AsanaReportFailedWorkflowAction.run(
               task_id: task_id,
               branch: branch,
