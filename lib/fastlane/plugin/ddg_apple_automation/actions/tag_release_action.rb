@@ -52,13 +52,11 @@ module Fastlane
           end
         end
 
-        UI.success("Success ✅💪")
-
-        # unless assert_branch_tagged_before_public_release(params.values)
-        #   UI.important("Skipping release because release branch's HEAD is not tagged.")
-        #   Helper::GitHubActionsHelper.set_output("stop_workflow", true)
-        #   return
-        # end
+        unless assert_branch_tagged_before_public_release(params.values)
+          UI.important("Skipping release because release branch's HEAD is not tagged.")
+          Helper::GitHubActionsHelper.set_output("stop_workflow", true)
+          return
+        end
 
         # if should_merge_before_deleting(params)
         #   begin
