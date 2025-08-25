@@ -18,9 +18,11 @@ module Fastlane
 
         extra_collaborators = []
 
-        if params[:commit_sha]
-          args[:last_commit_url] = "https://github.com/#{Helper::GitHelper.repo_name}/commit/#{params[:commit_sha]}"
-          commit_author = Helper::GitHelper.commit_author(Helper::GitHelper.repo_name, params[:commit_sha], params[:github_token])
+        commit_sha = params[:commit_sha].to_s.strip
+
+        unless commit_sha.empty?
+          args[:last_commit_url] = "https://github.com/#{Helper::GitHelper.repo_name}/commit/#{commit_sha}"
+          commit_author = Helper::GitHelper.commit_author(Helper::GitHelper.repo_name, commit_sha, params[:github_token])
           args[:last_commit_author_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(commit_author)
           extra_collaborators << args[:last_commit_author_id]
         end
