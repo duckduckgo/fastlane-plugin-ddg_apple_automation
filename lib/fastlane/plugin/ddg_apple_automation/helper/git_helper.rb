@@ -207,8 +207,9 @@ module Fastlane
         if latest_public_release.name == draft_public_release_name && latest_public_release.draft
           UI.important("Draft public release #{draft_public_release_name} exists, which means the release branch is frozen.")
           UI.error("🚨 If you need to bump the release:")
-          UI.error(" - delete the draft public release at #{latest_public_release.html_url} to unfreeze the branch")
-          UI.error(" - restart the workflow.")
+          UI.error(" - Delete the draft public release to unfreeze the branch")
+          UI.error("    - Release URL: ➡️ #{latest_public_release.html_url} ⬅️")
+          UI.error(" - Restart the workflow")
           UI.user_error!("Release branch is frozen.")
           return
         end
