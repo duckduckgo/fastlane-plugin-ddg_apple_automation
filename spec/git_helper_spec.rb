@@ -154,6 +154,22 @@ describe Fastlane::Helper::GitHelper do
     end
   end
 
+  describe "#extract_version_from_branch_name" do
+    it "returns the version" do
+      expect(extract_version_from_branch_name("main")).to be_nil
+      expect(extract_version_from_branch_name("feature/test")).to be_nil
+      expect(extract_version_from_branch_name("release/1.2.3")).to eq("1.2.3")
+      expect(extract_version_from_branch_name("release/ios/1.2.3")).to eq("1.2.3")
+      expect(extract_version_from_branch_name("release/macos/1.2.3")).to eq("1.2.3")
+      expect(extract_version_from_branch_name("release/macos/some-text")).to be_nil
+      expect(extract_version_from_branch_name("release/macos/1.2")).to be_nil
+    end
+
+    def extract_version_from_branch_name(branch_name)
+      Fastlane::Helper::GitHelper.extract_version_from_branch_name(branch_name)
+    end
+  end
+
   describe "#validate_semver" do
     it "validates semantic version" do
       expect(validate_semver("1.0.0")).to be_truthy
