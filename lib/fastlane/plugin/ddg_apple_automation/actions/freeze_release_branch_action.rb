@@ -35,6 +35,9 @@ module Fastlane
           other_action.set_github_release(
             repository_name: Helper::GitHelper.repo_name,
             api_bearer: github_token,
+            description: "This draft release is here to indicate that the release branch is frozen.
+            New internal releases on `release/#{platform}/#{latest_marketing_version}` branch cannot be created.
+            If you need to bump the internal release, please manually delete this draft release.",
             name: draft_public_release_name,
             tag_name: "",
             is_draft: true,
