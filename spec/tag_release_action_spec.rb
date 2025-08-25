@@ -85,6 +85,7 @@ describe Fastlane::Actions::TagReleaseAction do
       allow(Fastlane::Actions::TagReleaseAction).to receive(:create_tag_and_github_release).and_return(@tag_and_release_output)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:merge_or_delete_branch)
       allow(Fastlane::Actions::TagReleaseAction).to receive(:report_status)
+      allow(Fastlane::Helper::GitHelper).to receive(:unfreeze_release_branch)
     end
 
     context "when tag is created" do
