@@ -28,6 +28,18 @@ module Fastlane
 
         setup_constants(platform)
 
+        unless params[:is_prerelease]
+          begin
+            Helper::GitHelper.unfreeze_release_branch(other_action.git_branch, platform, params[:github_token])
+          rescue StandardError => e
+            report_unfreeze_release_branch_failed(params.values)
+            UI.important("Failed to unfreeze release branch. Cannot proceed with the public release. Please unfreeze manually and run the workflow again.")
+            Helper::GitHubActionsHelper.set_output("stop_workflow", true)
+            Helper::DdgAppleAutomationHelper.report_error(e)
+            return
+          end
+        end
+
         unless assert_branch_tagged_before_public_release(params.values)
           UI.important("Skipping release because release branch's HEAD is not tagged.")
           Helper::GitHubActionsHelper.set_output("stop_workflow", true)
@@ -167,6 +179,13 @@ module Fastlane
 
         create_action_item(params, template_name, template_args)
         log_message(params, template_name, template_args)
+      end
+
+      def self.report_unfreeze_release_branch_failed(params)
+        # template_name = "public-release-unfreeze-failed"
+        # template_args = template_arguments(params)
+        # create_action_item(params, template_name, template_args)
+        # log_message(params, template_name, template_args)
       end
 
       def self.report_untagged_release_branch(params)

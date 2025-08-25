@@ -152,6 +152,11 @@ module Fastlane
       end
       # rubocop:enable Metrics/PerceivedComplexity
 
+      def self.delete_release(release_url, github_token)
+        client = Octokit::Client.new(access_token: github_token)
+        client.delete_release(release_url)
+      end
+
       def self.freeze_release_branch(platform, github_token, other_action)
         UI.message("Checking latest marketing version")
         latest_marketing_version = find_latest_marketing_version(github_token, platform)
@@ -215,6 +220,32 @@ module Fastlane
         end
 
         UI.success("No draft public release #{draft_public_release_name} found - the release isn't frozen.")
+      end
+
+      def self.unfreeze_release_branch(release_branch, platform, github_token)
+        marketing_version = extract_version_from_branch_name(release_branch)
+        if marketing_version.to_s.empty?
+          UI.user_error!("Unable to extract version from '#{release_branch}' branch name.")
+          return
+        end
+
+        UI.message("Unfreezing release branch #{release_branch} if needed")
+
+        draft_public_release_name = "#{marketing_version}+#{platform}"
+        UI.message("Checking if draft public release #{draft_public_release_name} exists.")
+
+        latest_public_release = latest_release(repo_name, false, platform, github_token, allow_drafts: true)
+        UI.success("Latest public release (including drafts): #{latest_public_release.name}")
+
+        unless latest_public_release.name == draft_public_release_name && latest_public_release.draft
+          UI.important("Latest public release is not a draft. No need to delete it.")
+          return
+        end
+
+        UI.message("Release version matches and it's a draft release.")
+        UI.important("Deleting draft public release #{draft_public_release_name}")
+        delete_release(latest_public_release.url)
+        UI.success("Draft public release #{draft_public_release_name} deleted")
       end
 
       def self.commit_author(repo_name, commit_sha, github_token)
