@@ -15,7 +15,7 @@ module Fastlane
         options = params.values
         find_release_task_if_needed(options)
 
-        Helper::GitHelper.assert_release_branch_is_not_frozen!(options[:release_branch], params[:platform], options[:github_token])
+        Helper::GitHelper.assert_release_branch_is_not_frozen(options[:release_branch], params[:platform], options[:github_token])
 
         if params[:is_scheduled_release] && !Helper::GitHelper.assert_branch_has_changes(options[:release_branch], params[:platform])
           UI.important("No changes to the release branch (or only changes to scripts and workflows). Skipping automatic release.")

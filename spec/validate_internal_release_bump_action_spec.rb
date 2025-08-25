@@ -9,6 +9,7 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
       }
 
       allow(Fastlane::Helper::GitHelper).to receive(:setup_git_user)
+      allow(Fastlane::Helper::GitHelper).to receive(:assert_release_branch_is_not_frozen)
       allow(Fastlane::Helper::GitHelper).to receive(:assert_branch_has_changes).and_return(true)
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
       allow(Fastlane::Helper::AsanaHelper).to receive(:fetch_release_notes).and_return("Valid release notes")

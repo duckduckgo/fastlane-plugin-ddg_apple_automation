@@ -192,7 +192,7 @@ module Fastlane
         UI.success("Draft public release #{draft_public_release_name} created")
       end
 
-      def self.assert_release_branch_is_not_frozen!(release_branch, platform, github_token)
+      def self.assert_release_branch_is_not_frozen(release_branch, platform, github_token)
         UI.message("Checking if release on #{release_branch} branch can be bumped.")
 
         marketing_version = extract_version_from_branch_name(release_branch)
