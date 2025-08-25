@@ -204,9 +204,12 @@ module Fastlane
         latest_public_release = latest_release(repo_name, false, platform, github_token, allow_drafts: true)
         UI.success("Latest public release (including drafts): #{latest_public_release.name}")
 
-        if latest_public_release.name == draft_public_release_name
-          UI.error("Draft public release #{draft_public_release_name} exists, which means the release branch is frozen.")
-          UI.user_error!("Delete the draft public release at #{latest_public_release.html_url} to unfreeze the branch and restart the workflow.")
+        if latest_public_release.name == draft_public_release_name && latest_public_release.draft
+          UI.important("Draft public release #{draft_public_release_name} exists, which means the release branch is frozen.")
+          UI.error("🚨 If you need to bump the release:")
+          UI.error(" - delete the draft public release at #{latest_public_release.html_url} to unfreeze the branch")
+          UI.error(" - restart the workflow.")
+          UI.user_error!("Release branch is frozen.")
           return
         end
 
