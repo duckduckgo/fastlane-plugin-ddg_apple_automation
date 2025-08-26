@@ -1,7 +1,6 @@
 require "fastlane/action"
 require "fastlane_core/configuration/config_item"
 require_relative "asana_find_release_task_action"
-require_relative "asana_add_comment_action"
 require_relative "../helper/asana_helper"
 require_relative "../helper/git_helper"
 
