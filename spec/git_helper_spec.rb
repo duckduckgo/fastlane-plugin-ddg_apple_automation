@@ -8,6 +8,7 @@ describe Fastlane::Helper::GitHelper do
   shared_context "common setup" do
     before do
       allow(Octokit::Client).to receive(:new).and_return(client)
+      allow(Fastlane::UI).to receive(:message)
       allow(Fastlane::UI).to receive(:success)
       allow(Fastlane::UI).to receive(:important)
     end
@@ -331,6 +332,53 @@ describe Fastlane::Helper::GitHelper do
     it "deletes the release" do
       subject
       expect(client).to have_received(:delete_release).with(release_url)
+    end
+  end
+
+  describe "#freeze_release_branch" do
+    subject { Fastlane::Helper::GitHelper.freeze_release_branch(platform, github_token, other_action) }
+    let(:other_action) { double(set_github_release: nil) }
+    let(:platform) { "ios" }
+    let(:latest_release_name) { "1.0.0+ios" }
+    let(:latest_marketing_version) { "1.0.1" }
+
+    include_context "common setup"
+
+    before do
+      allow(Fastlane::Helper::GitHelper).to receive(:find_latest_marketing_version).and_return(latest_marketing_version)
+      allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(double(name: latest_release_name))
+      allow(other_action).to receive(:set_github_release)
+    end
+
+    context "when the release branch is already frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+
+      it "does not create a draft public release" do
+        subject
+        expect(other_action).not_to have_received(:set_github_release)
+      end
+    end
+
+    context "when the release branch is not frozen" do
+      it "creates a draft public release" do
+        subject
+
+        description = <<~DESCRIPTION
+        This draft release is here to indicate that the release branch is frozen.
+        New internal releases on `release/ios/1.0.1` branch cannot be created.
+        If you need to bump the internal release, please manually delete this draft release.
+        DESCRIPTION
+
+        expect(other_action).to have_received(:set_github_release).with(
+          api_bearer: github_token,
+          description: description,
+          is_draft: true,
+          is_prerelease: false,
+          name: "1.0.1+ios",
+          repository_name: Fastlane::Helper::GitHelper.repo_name,
+          tag_name: ""
+        )
+      end
     end
   end
 
