@@ -5,7 +5,8 @@ shared_context "common setup" do
       asana_task_url: "https://app.asana.com/0/0/1/f",
       ignore_untagged_commits: false,
       is_prerelease: true,
-      github_token: "github-token"
+      github_token: "github-token",
+      platform: "macos"
     }
     @tag_and_release_output = {}
     allow(Fastlane::Helper).to receive(:setup_git_user)
@@ -191,6 +192,33 @@ describe Fastlane::Actions::TagReleaseAction do
             expect(Fastlane::UI).to have_received(:important).with("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
             expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
             expect(Fastlane::Actions::TagReleaseAction).not_to have_received(:report_status)
+          end
+        end
+
+        it "unfreezes release branch if needed" do
+          subject
+          expect(Fastlane::Helper::GitHelper).to have_received(:unfreeze_release_branch)
+            .with("release_branch", "macos", @params[:github_token])
+        end
+
+        context "when unfreezing release branch fails" do
+          let(:task_id) { "1234567890" }
+
+          before do
+            allow(Fastlane::Helper::GitHelper).to receive(:unfreeze_release_branch).and_raise(StandardError)
+            allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
+            allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:report_error)
+            allow(Fastlane::Actions::AsanaExtractTaskIdAction).to receive(:run).and_return(task_id)
+            allow(Fastlane::Actions::AsanaReportFailedWorkflowAction).to receive(:run)
+          end
+
+          it "reports error" do
+            subject
+            expect(Fastlane::UI).to have_received(:important).with("Failed to unfreeze release branch. Cannot proceed with the public release. Please unfreeze manually and run the workflow again.")
+            expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("stop_workflow", true)
+            expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)
+            expect(Fastlane::Actions::AsanaExtractTaskIdAction).to have_received(:run)
+            expect(Fastlane::Actions::AsanaReportFailedWorkflowAction).to have_received(:run).with(hash_including(task_id: task_id))
           end
         end
       end
