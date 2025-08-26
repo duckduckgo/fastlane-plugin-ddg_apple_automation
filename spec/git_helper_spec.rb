@@ -363,21 +363,116 @@ describe Fastlane::Helper::GitHelper do
       it "creates a draft public release" do
         subject
 
-        description = <<~DESCRIPTION
-        This draft release is here to indicate that the release branch is frozen.
-        New internal releases on `release/ios/1.0.1` branch cannot be created.
-        If you need to bump the internal release, please manually delete this draft release.
-        DESCRIPTION
-
         expect(other_action).to have_received(:set_github_release).with(
           api_bearer: github_token,
-          description: description,
+          description: a_string_including("This draft release is here to indicate that the release branch is frozen."),
           is_draft: true,
           is_prerelease: false,
           name: "1.0.1+ios",
           repository_name: Fastlane::Helper::GitHelper.repo_name,
           tag_name: ""
         )
+      end
+    end
+  end
+
+  describe "#assert_release_branch_is_not_frozen" do
+    subject { Fastlane::Helper::GitHelper.assert_release_branch_is_not_frozen(release_branch, platform, "github_token") }
+    let(:release_branch) { "release/ios/1.0.1" }
+    let(:platform) { "ios" }
+
+    include_context "common setup"
+
+    before do
+      allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(double(name: latest_release_name, html_url: "https://example.com", draft: draft))
+      allow(Fastlane::UI).to receive(:error)
+      allow(Fastlane::UI).to receive(:user_error!)
+    end
+
+    context "when the release branch is frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+      let(:draft) { true }
+
+      it "raises an error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with("Release branch is frozen.")
+      end
+    end
+
+    context "when the release branch is not frozen" do
+      let(:latest_release_name) { "1.0.0+ios" }
+      let(:draft) { false }
+
+      it "does not raise an error" do
+        subject
+        expect(Fastlane::UI).not_to have_received(:user_error!)
+      end
+    end
+
+    context "when unable to extract the latest marketing version" do
+      let(:latest_release_name) { "1.0.0+ios" }
+      let(:draft) { false }
+
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:extract_version_from_branch_name).and_return(nil)
+        allow(Fastlane::UI).to receive(:user_error!)
+      end
+
+      it "raises an error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with(a_string_including("Unable to extract version"))
+      end
+    end
+  end
+
+  describe "#unfreeze_release_branch" do
+    subject { Fastlane::Helper::GitHelper.unfreeze_release_branch(release_branch, platform, "github_token") }
+    let(:release_branch) { "release/ios/1.0.1" }
+    let(:platform) { "ios" }
+
+    include_context "common setup"
+
+    before do
+      allow(Fastlane::Helper::GitHelper).to receive(:delete_release)
+      allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(double(name: latest_release_name, url: "https://example.com", draft: draft))
+      allow(Fastlane::UI).to receive(:user_error!)
+    end
+
+    context "when the release branch is frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+      let(:draft) { true }
+
+      it "deletes the release" do
+        subject
+        expect(Fastlane::Helper::GitHelper).to have_received(:delete_release)
+        expect(Fastlane::UI).not_to have_received(:user_error!)
+      end
+    end
+
+    context "when the release branch is not frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+      let(:draft) { false }
+
+      it "doesn't delete the release" do
+        subject
+        expect(Fastlane::Helper::GitHelper).not_to have_received(:delete_release)
+        expect(Fastlane::UI).not_to have_received(:user_error!)
+      end
+    end
+
+    context "when unable to extract the latest marketing version" do
+      let(:latest_release_name) { "1.0.0+ios" }
+      let(:draft) { false }
+
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:extract_version_from_branch_name).and_return(nil)
+        allow(Fastlane::UI).to receive(:user_error!)
+      end
+
+      it "raises an error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with(a_string_including("Unable to extract version"))
+        expect(Fastlane::Helper::GitHelper).not_to have_received(:delete_release)
       end
     end
   end
