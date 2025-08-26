@@ -8,11 +8,10 @@ module Fastlane
   module Actions
     class FreezeReleaseBranchAction < Action
       def self.run(params)
-        github_token = params[:github_token]
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
 
         begin
-          Helper::GitHelper.freeze_release_branch(platform, github_token, other_action)
+          Helper::GitHelper.freeze_release_branch(platform, params[:github_token], other_action)
         rescue StandardError => e
           UI.important("Failed to create GitHub release")
           Helper::DdgAppleAutomationHelper.report_error(e)
