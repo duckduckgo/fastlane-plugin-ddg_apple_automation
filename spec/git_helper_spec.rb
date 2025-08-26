@@ -318,6 +318,22 @@ describe Fastlane::Helper::GitHelper do
     end
   end
 
+  describe "#delete_release" do
+    subject { Fastlane::Helper::GitHelper.delete_release(release_url, github_token) }
+    let(:release_url) { "https://api.github.com/repos/duckduckgo/apple-browsers/releases/1234567890" }
+
+    include_context "common setup"
+
+    before do
+      allow(client).to receive(:delete_release)
+    end
+
+    it "deletes the release" do
+      subject
+      expect(client).to have_received(:delete_release).with(release_url)
+    end
+  end
+
   describe "#assert_branch_has_changes" do
     subject { Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch", platform) }
 
