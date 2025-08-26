@@ -8,7 +8,7 @@ module Fastlane
   module Helper
     class AsanaReleaseNotesExtractor
       START_MARKER = "release notes"
-      PP_MARKER = /^for privacy pro subscribers:?$/
+      PP_MARKER = /^for duckduckgo subscribers:?$/
       END_MARKER = "this release includes:"
       PLACEHOLDER = "add release notes here"
 
@@ -93,10 +93,10 @@ module Fastlane
         @is_capturing_pp = true
         case @output_type
         when "asana"
-          add_to_pp_notes("</ul><h2>For Privacy Pro subscribers</h2><ul>")
+          add_to_pp_notes("</ul><h2>For DuckDuckGo subscribers</h2><ul>")
         when "html"
           add_to_pp_notes("</ul>")
-          add_to_pp_notes("<h3 style=\"font-size:14px\">For Privacy Pro subscribers</h3>")
+          add_to_pp_notes("<h3 style=\"font-size:14px\">For DuckDuckGo subscribers</h3>")
           add_to_pp_notes("<ul>")
         else
           add_to_pp_notes(line.strip)
