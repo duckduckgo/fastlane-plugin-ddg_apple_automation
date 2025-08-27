@@ -38,7 +38,7 @@ module Fastlane
         setup_constants(platform)
 
         UI.message("Checking latest marketing version")
-        latest_marketing_version = find_latest_marketing_version(github_token, params[:platform])
+        latest_marketing_version = Helper::GitHelper.find_latest_marketing_version(github_token, params[:platform])
         UI.success("Latest marketing version: #{latest_marketing_version}")
         UI.message("Searching for release task for version #{latest_marketing_version}")
         release_task_id, hotfix_task_id = find_release_task(latest_marketing_version, asana_access_token)
@@ -62,31 +62,6 @@ module Fastlane
           release_task_url: release_task_url,
           release_branch: release_branch
         }
-      end
-
-      def self.find_latest_marketing_version(github_token, platform)
-        latest_internal_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name, true, platform, github_token)
-
-        version = extract_version_from_tag_name(latest_internal_release&.tag_name)
-        if version.to_s.empty?
-          Fastlane::UI.user_error!("Failed to find latest marketing version")
-          return
-        end
-        unless self.validate_semver(version)
-          Fastlane::UI.user_error!("Invalid marketing version: #{version}, expected format: MAJOR.MINOR.PATCH")
-          return
-        end
-        version
-      end
-
-      def self.extract_version_from_tag_name(tag_name)
-        # Remove build number (if present) and platform suffix from the tag name
-        tag_name&.split(/[-+]/)&.first
-      end
-
-      def self.validate_semver(version)
-        # we only need basic "x.y.z" validation here
-        version.match?(/\A\d+\.\d+\.\d+\z/)
       end
 
       def self.find_release_task(version, asana_access_token)

@@ -8,6 +8,7 @@ describe Fastlane::Helper::GitHelper do
   shared_context "common setup" do
     before do
       allow(Octokit::Client).to receive(:new).and_return(client)
+      allow(Fastlane::UI).to receive(:message)
       allow(Fastlane::UI).to receive(:success)
       allow(Fastlane::UI).to receive(:important)
     end
@@ -77,8 +78,119 @@ describe Fastlane::Helper::GitHelper do
     end
   end
 
+  describe "#find_latest_marketing_version" do
+    subject { Fastlane::Helper::GitHelper.find_latest_marketing_version("token", "ios") }
+
+    before do
+      @client = double
+      allow(Octokit::Client).to receive(:new).and_return(@client)
+    end
+
+    it "returns the latest marketing version" do
+      allow(@client).to receive(:releases).and_return(
+        [
+          double(tag_name: '2.0.0-1', prerelease: true),
+          double(tag_name: '2.0.0-0+ios', prerelease: true),
+          double(tag_name: '1.0.0', prerelease: false),
+          double(tag_name: '1.0.0-1', prerelease: true),
+          double(tag_name: '1.0.0-0', prerelease: true)
+        ]
+      )
+
+      expect(subject).to eq("2.0.0")
+    end
+
+    it "strips build number and platform suffix from the latest marketing version" do
+      allow(@client).to receive(:releases).and_return(
+        [
+          double(tag_name: '2.0.0-1+ios', prerelease: true)
+        ]
+      )
+
+      expect(subject).to eq("2.0.0")
+    end
+
+    it "strips platform suffix from the latest marketing version when it's a public release" do
+      allow(@client).to receive(:releases).and_return(
+        [
+          double(tag_name: '2.0.0+ios', prerelease: true)
+        ]
+      )
+
+      expect(subject).to eq("2.0.0")
+    end
+
+    describe "when there is no latest release" do
+      it "shows error" do
+        allow(@client).to receive(:releases).and_return([])
+        allow(Fastlane::UI).to receive(:user_error!)
+
+        subject
+
+        expect(Fastlane::UI).to have_received(:user_error!).with("Failed to find latest marketing version")
+      end
+    end
+
+    describe "when latest release is not a valid semver" do
+      it "shows error" do
+        allow(@client).to receive(:releases).and_return([double(tag_name: '1.0+ios', prerelease: true)])
+        allow(Fastlane::UI).to receive(:user_error!)
+
+        subject
+
+        expect(Fastlane::UI).to have_received(:user_error!).with("Invalid marketing version: 1.0, expected format: MAJOR.MINOR.PATCH")
+      end
+    end
+  end
+
+  describe "#extract_version_from_tag_name" do
+    it "returns the version" do
+      expect(extract_version_from_tag_name("1.0.0")).to eq("1.0.0")
+      expect(extract_version_from_tag_name("v1.0.0")).to eq("v1.0.0")
+      expect(extract_version_from_tag_name("1.105.0-251")).to eq("1.105.0")
+    end
+
+    def extract_version_from_tag_name(tag_name)
+      Fastlane::Helper::GitHelper.extract_version_from_tag_name(tag_name)
+    end
+  end
+
+  describe "#extract_version_from_branch_name" do
+    it "returns the version" do
+      expect(extract_version_from_branch_name("main")).to be_nil
+      expect(extract_version_from_branch_name("feature/test")).to be_nil
+      expect(extract_version_from_branch_name("release/1.2.3")).to eq("1.2.3")
+      expect(extract_version_from_branch_name("release/ios/1.2.3")).to eq("1.2.3")
+      expect(extract_version_from_branch_name("release/macos/1.2.3")).to eq("1.2.3")
+      expect(extract_version_from_branch_name("release/macos/some-text")).to be_nil
+      expect(extract_version_from_branch_name("release/macos/1.2")).to be_nil
+    end
+
+    def extract_version_from_branch_name(branch_name)
+      Fastlane::Helper::GitHelper.extract_version_from_branch_name(branch_name)
+    end
+  end
+
+  describe "#validate_semver" do
+    it "validates semantic version" do
+      expect(validate_semver("1.0.0")).to be_truthy
+      expect(validate_semver("0.0.0")).to be_truthy
+      expect(validate_semver("7.136.1")).to be_truthy
+
+      expect(validate_semver("v1.0.0")).to be_falsy
+      expect(validate_semver("7.1")).to be_falsy
+      expect(validate_semver("1.105.0-251")).to be_falsy
+      expect(validate_semver("1005")).to be_falsy
+    end
+
+    def validate_semver(version)
+      Fastlane::Helper::GitHelper.validate_semver(version)
+    end
+  end
+
   describe "#latest_release" do
-    subject { Fastlane::Helper::GitHelper.latest_release(repo_name, prerelease, platform, github_token) }
+    subject { Fastlane::Helper::GitHelper.latest_release(repo_name, prerelease, platform, github_token, allow_drafts: allow_drafts) }
+    let(:allow_drafts) { false }
 
     include_context "common setup"
 
@@ -179,6 +291,188 @@ describe Fastlane::Helper::GitHelper do
         it "returns the latest full release with the platform suffix" do
           expect(subject.tag_name).to eq("1.0.0+ios")
         end
+      end
+    end
+
+    context "when allow_drafts is true" do
+      let(:allow_drafts) { true }
+      let(:platform) { "ios" }
+
+      context "and prerelease is false" do
+        let(:prerelease) { false }
+
+        before do
+          allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(
+            [
+              double(tag_name: "2.0.0+ios", prerelease: false, draft: true),
+              double(tag_name: "2.0.0-1+ios", prerelease: true),
+              double(tag_name: "2.0.0-1+ios", prerelease: true),
+              double(tag_name: "1.0.0+ios", prerelease: false)
+            ]
+          )
+        end
+
+        it "returns the latest public release that is a draft" do
+          expect(subject.tag_name).to eq("2.0.0+ios")
+        end
+      end
+    end
+  end
+
+  describe "#delete_release" do
+    subject { Fastlane::Helper::GitHelper.delete_release(release_url, github_token) }
+    let(:release_url) { "https://api.github.com/repos/duckduckgo/apple-browsers/releases/1234567890" }
+
+    include_context "common setup"
+
+    before do
+      allow(client).to receive(:delete_release)
+    end
+
+    it "deletes the release" do
+      subject
+      expect(client).to have_received(:delete_release).with(release_url)
+    end
+  end
+
+  describe "#freeze_release_branch" do
+    subject { Fastlane::Helper::GitHelper.freeze_release_branch(platform, github_token, other_action) }
+    let(:other_action) { double(set_github_release: nil) }
+    let(:platform) { "ios" }
+    let(:latest_release_name) { "1.0.0+ios" }
+    let(:latest_marketing_version) { "1.0.1" }
+
+    include_context "common setup"
+
+    before do
+      allow(Fastlane::Helper::GitHelper).to receive(:find_latest_marketing_version).and_return(latest_marketing_version)
+      allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(double(name: latest_release_name))
+      allow(other_action).to receive(:set_github_release)
+    end
+
+    context "when the release branch is already frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+
+      it "does not create a draft public release" do
+        subject
+        expect(other_action).not_to have_received(:set_github_release)
+      end
+    end
+
+    context "when the release branch is not frozen" do
+      it "creates a draft public release" do
+        subject
+
+        expect(other_action).to have_received(:set_github_release).with(
+          api_bearer: github_token,
+          description: a_string_including("This draft release is here to indicate that the release branch is frozen."),
+          is_draft: true,
+          is_prerelease: false,
+          name: "1.0.1+ios",
+          repository_name: Fastlane::Helper::GitHelper.repo_name,
+          tag_name: ""
+        )
+      end
+    end
+  end
+
+  describe "#assert_release_branch_is_not_frozen" do
+    subject { Fastlane::Helper::GitHelper.assert_release_branch_is_not_frozen(release_branch, platform, "github_token") }
+    let(:release_branch) { "release/ios/1.0.1" }
+    let(:platform) { "ios" }
+
+    include_context "common setup"
+
+    before do
+      allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(double(name: latest_release_name, html_url: "https://example.com", draft: draft))
+      allow(Fastlane::UI).to receive(:error)
+      allow(Fastlane::UI).to receive(:user_error!)
+    end
+
+    context "when the release branch is frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+      let(:draft) { true }
+
+      it "raises an error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with("Release branch is frozen.")
+      end
+    end
+
+    context "when the release branch is not frozen" do
+      let(:latest_release_name) { "1.0.0+ios" }
+      let(:draft) { false }
+
+      it "does not raise an error" do
+        subject
+        expect(Fastlane::UI).not_to have_received(:user_error!)
+      end
+    end
+
+    context "when unable to extract the latest marketing version" do
+      let(:latest_release_name) { "1.0.0+ios" }
+      let(:draft) { false }
+
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:extract_version_from_branch_name).and_return(nil)
+        allow(Fastlane::UI).to receive(:user_error!)
+      end
+
+      it "raises an error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with(a_string_including("Unable to extract version"))
+      end
+    end
+  end
+
+  describe "#unfreeze_release_branch" do
+    subject { Fastlane::Helper::GitHelper.unfreeze_release_branch(release_branch, platform, "github_token") }
+    let(:release_branch) { "release/ios/1.0.1" }
+    let(:platform) { "ios" }
+
+    include_context "common setup"
+
+    before do
+      allow(Fastlane::Helper::GitHelper).to receive(:delete_release)
+      allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(double(name: latest_release_name, url: "https://example.com", draft: draft))
+      allow(Fastlane::UI).to receive(:user_error!)
+    end
+
+    context "when the release branch is frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+      let(:draft) { true }
+
+      it "deletes the release" do
+        subject
+        expect(Fastlane::Helper::GitHelper).to have_received(:delete_release)
+        expect(Fastlane::UI).not_to have_received(:user_error!)
+      end
+    end
+
+    context "when the release branch is not frozen" do
+      let(:latest_release_name) { "1.0.1+ios" }
+      let(:draft) { false }
+
+      it "doesn't delete the release" do
+        subject
+        expect(Fastlane::Helper::GitHelper).not_to have_received(:delete_release)
+        expect(Fastlane::UI).not_to have_received(:user_error!)
+      end
+    end
+
+    context "when unable to extract the latest marketing version" do
+      let(:latest_release_name) { "1.0.0+ios" }
+      let(:draft) { false }
+
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:extract_version_from_branch_name).and_return(nil)
+        allow(Fastlane::UI).to receive(:user_error!)
+      end
+
+      it "raises an error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with(a_string_including("Unable to extract version"))
+        expect(Fastlane::Helper::GitHelper).not_to have_received(:delete_release)
       end
     end
   end
