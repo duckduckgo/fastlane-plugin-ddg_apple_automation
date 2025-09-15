@@ -301,6 +301,7 @@ describe Fastlane::Helper::AsanaHelper do
       expect(@client).to receive(:releases).with("iOS", { page: 1, per_page: 25 })
 
       expect(Fastlane::Helper::AsanaHelper).to receive(:fetch_release_notes).with("1234567890", "secret-token")
+      expect(Fastlane::Helper::AsanaHelper).to receive(:validate_task_accessible).with("1234567890", "secret-token").and_return(true)
       expect(Fastlane::Helper::ReleaseTaskHelper).to receive(:construct_release_task_description).with("Release notes content", ["1234567890"])
       expect(Fastlane::Helper::AsanaHelper).to receive(:move_tasks_to_section).with(["1234567890", "1234567890"], "987654321", "secret-token")
       expect(Fastlane::Helper::AsanaHelper).to receive(:tag_tasks).with("tag_id", ["1234567890", "1234567890"], "secret-token")
@@ -820,6 +821,41 @@ commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
     it "tags tasks in batches" do
       expect(Fastlane::UI).to receive(:message).with("Tagging tasks task1, task2, task3")
       Fastlane::Helper::AsanaHelper.tag_tasks(tag_id, task_ids, asana_access_token)
+    end
+  end
+
+  describe ".validate_task_accessible" do
+    subject { Fastlane::Helper::AsanaHelper.validate_task_accessible(task_id, asana_access_token) }
+
+    let(:task_id) { "1234567890" }
+    let(:asana_access_token) { "secret-token" }
+
+    before do
+      @asana_client = double("Asana::Client")
+      allow(Fastlane::Helper::AsanaHelper).to receive(:make_asana_client).with(asana_access_token).and_return(@asana_client)
+      allow(Fastlane::UI).to receive(:important)
+    end
+
+    context "when the task is accessible" do
+      before do
+        allow(@asana_client).to receive_message_chain(:tasks, :get_task).and_return(double(gid: task_id))
+      end
+
+      it "returns true" do
+        expect(subject).to eq(true)
+        expect(Fastlane::UI).not_to have_received(:important)
+      end
+    end
+
+    context "when the task is not accessible or fetching task data fails" do
+      before do
+        allow(@asana_client).to receive_message_chain(:tasks, :get_task).and_raise(StandardError, "API Error")
+      end
+
+      it "returns false" do
+        expect(subject).to be false
+        expect(Fastlane::UI).to have_received(:important)
+      end
     end
   end
 end

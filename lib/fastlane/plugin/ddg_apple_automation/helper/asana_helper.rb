@@ -231,6 +231,7 @@ module Fastlane
 
         UI.message("Extracting task IDs from git log since #{latest_public_release.tag_name} release")
         task_ids = get_task_ids_from_git_log(latest_public_release.tag_name)
+                   .filter { |task_id| validate_task_accessible(task_id, params[:asana_access_token]) }
         UI.success("#{task_ids.count} task(s) found.")
 
         UI.message("Fetching release notes from Asana release task (#{asana_task_url(params[:release_task_id])})")
@@ -426,6 +427,15 @@ module Fastlane
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
           .map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) }
           .uniq
+      end
+
+      def self.validate_task_accessible(task_id, asana_access_token)
+        asana_client = make_asana_client(asana_access_token)
+        asana_client.tasks.get_task(task_gid: task_id, options: { fields: ["gid"] })
+        true
+      rescue StandardError => e
+        UI.important("Failed to fetch #{task_id}, ignoring. Error: #{e}")
+        false
       end
 
       def self.fetch_release_notes(release_task_id, asana_access_token, output_type: "asana")
