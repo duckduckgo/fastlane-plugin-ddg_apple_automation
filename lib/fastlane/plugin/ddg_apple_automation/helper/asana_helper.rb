@@ -231,7 +231,7 @@ module Fastlane
 
         UI.message("Extracting task IDs from git log since #{latest_public_release.tag_name} release")
         task_ids = get_task_ids_from_git_log(latest_public_release.tag_name)
-          .filter { |task_id| validate_task_accessible(task_id, params[:asana_access_token]) }
+                   .filter { |task_id| validate_task_accessible(task_id, params[:asana_access_token]) }
         UI.success("#{task_ids.count} task(s) found.")
 
         UI.message("Fetching release notes from Asana release task (#{asana_task_url(params[:release_task_id])})")
