@@ -489,7 +489,7 @@ describe Fastlane::Helper::GitHelper do
 
     context "when the release branch has no changes since the latest tag" do
       it "returns false and shows a message" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("abc123\n")
 
@@ -500,7 +500,7 @@ describe Fastlane::Helper::GitHelper do
 
     context "when the release branch has changes since the latest tag" do
       it "returns true" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return("app/file1.rb\napp/file2.rb\n")
@@ -510,7 +510,7 @@ describe Fastlane::Helper::GitHelper do
 
     context "when changes are only in scripts or workflows" do
       it "returns false" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-v:refname | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")

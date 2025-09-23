@@ -74,7 +74,7 @@ module Fastlane
       end
 
       def self.release_branch_state(release_branch, platform)
-        latest_tag = `git tag --sort=-v:refname | grep '+#{platform}' | head -n 1`.chomp
+        latest_tag = `git tag --sort=-creatordate | grep '+#{platform}' | head -n 1`.chomp
         latest_tag_sha = commit_sha_for_tag(latest_tag)
         release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
 
