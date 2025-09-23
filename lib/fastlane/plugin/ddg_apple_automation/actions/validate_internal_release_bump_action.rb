@@ -35,13 +35,18 @@ module Fastlane
 
       def self.find_release_task_if_needed(params)
         if params[:release_task_url].to_s.empty?
-          params.merge!(
-            Fastlane::Actions::AsanaFindReleaseTaskAction.run(
-              asana_access_token: params[:asana_access_token],
-              github_token: params[:github_token],
-              platform: params[:platform]
+          begin
+            params.merge!(
+              Fastlane::Actions::AsanaFindReleaseTaskAction.run(
+                asana_access_token: params[:asana_access_token],
+                github_token: params[:github_token],
+                platform: params[:platform]
+              )
             )
-          )
+          rescue FastlaneCore::Interface::FastlaneError
+            UI.important("Regular release task not found. If this is an automatic bump after merging a hotfix branch, this failure is expected. Rerun this workflow from an internal release branch, providing the release task URL explicitly.")
+            raise
+          end
         else
           params[:release_task_id] = Helper::AsanaHelper.extract_asana_task_id(params[:release_task_url], set_gha_output: false)
           other_action.ensure_git_branch(branch: "^release/.+$")

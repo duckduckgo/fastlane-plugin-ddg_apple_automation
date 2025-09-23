@@ -21,11 +21,6 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
       allow(Fastlane::Actions).to receive(:other_action).and_return(@other_action)
       allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_latest_marketing_version)
         .and_return("1.0.0")
-
-      allow(Fastlane::Actions::ValidateInternalReleaseBumpAction).to receive(:find_release_task_if_needed) do |params|
-        params[:release_branch] = "release_branch_name"
-        params[:release_task_id] = "mock_task_id"
-      end
     end
   end
 
@@ -47,6 +42,13 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
       Fastlane::Actions::ValidateInternalReleaseBumpAction.run(configuration)
     end
     include_context "common setup"
+
+    before do
+      allow(Fastlane::Actions::ValidateInternalReleaseBumpAction).to receive(:find_release_task_if_needed) do |params|
+        params[:release_branch] = "release_branch_name"
+        params[:release_task_id] = "mock_task_id"
+      end
+    end
 
     context "when there are changes in the release branch" do
       it "proceeds with release bump if release notes are valid" do
@@ -94,11 +96,17 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
   describe "#find_release_task_if_needed" do
     include_context "common setup"
 
+    subject { Fastlane::Actions::ValidateInternalReleaseBumpAction.find_release_task_if_needed(@params) }
+
     context "when release_task_url is provided" do
+      before do
+        @params[:release_task_url] = "https://app.asana.com/0/1234567890/987654321"
+      end
+
       it "sets release_task_id and release_branch from release_task_url" do
         allow(Fastlane::Actions::ValidateInternalReleaseBumpAction).to receive(:find_release_task_if_needed).and_call_original
-        @params[:release_task_url] = "https://app.asana.com/0/1234567890/987654321"
-        Fastlane::Actions::ValidateInternalReleaseBumpAction.find_release_task_if_needed(@params)
+
+        subject
 
         expect(Fastlane::Helper::AsanaHelper).to have_received(:extract_asana_task_id).with(@params[:release_task_url], set_gha_output: false)
         expect(Fastlane::Actions.other_action).to have_received(:ensure_git_branch).with(branch: "^release/.+$")
@@ -108,10 +116,14 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
     end
 
     context "when release_task_url is not provided" do
+      before do
+        @params[:release_task_url] = nil
+      end
+
       it "runs AsanaFindReleaseTaskAction to find the release task" do
-        allow(Fastlane::Actions::ValidateInternalReleaseBumpAction).to receive(:find_release_task_if_needed).and_call_original
         allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:run).and_return({ release_task_id: "1234567890", release_branch: "release_branch_name" })
-        Fastlane::Actions::ValidateInternalReleaseBumpAction.find_release_task_if_needed(@params)
+
+        subject
 
         expect(Fastlane::Actions::AsanaFindReleaseTaskAction).to have_received(:run).with(
           asana_access_token: "secret-token",
@@ -120,6 +132,18 @@ describe Fastlane::Actions::ValidateInternalReleaseBumpAction do
         )
         expect(@params[:release_task_id]).to eq("1234567890")
         expect(@params[:release_branch]).to eq("release_branch_name")
+      end
+
+      context "when the release task is not found" do
+        before do
+          allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:run).and_raise(FastlaneCore::Interface::FastlaneError.new)
+          allow(Fastlane::UI).to receive(:important)
+        end
+
+        it "raises an error" do
+          expect { subject }.to raise_error(FastlaneCore::Interface::FastlaneError)
+          expect(Fastlane::UI).to have_received(:important).with("Regular release task not found. If this is an automatic bump after merging a hotfix branch, this failure is expected. Rerun this workflow from an internal release branch, providing the release task URL explicitly.")
+        end
       end
     end
   end
