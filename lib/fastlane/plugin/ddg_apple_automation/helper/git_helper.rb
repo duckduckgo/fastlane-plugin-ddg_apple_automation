@@ -74,7 +74,13 @@ module Fastlane
       end
 
       def self.release_branch_state(release_branch, platform)
-        latest_tag = `git tag --sort=-creatordate | grep '+#{platform}' | head -n 1`.chomp
+        marketing_version = extract_version_from_branch_name(release_branch)
+        if marketing_version.to_s.empty?
+          UI.user_error!("Unable to extract version from '#{release_branch}' branch name.")
+          return
+        end
+
+        latest_tag = `git tag --sort=-creatordate | grep '+#{platform}' | grep '#{marketing_version}' | head -n 1`.chomp
         latest_tag_sha = commit_sha_for_tag(latest_tag)
         release_branch_sha = `git rev-parse "origin/#{release_branch}"`.chomp
 

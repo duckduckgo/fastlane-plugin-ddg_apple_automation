@@ -478,10 +478,12 @@ describe Fastlane::Helper::GitHelper do
   end
 
   describe "#assert_branch_has_changes" do
-    subject { Fastlane::Helper::GitHelper.assert_branch_has_changes("release_branch", platform) }
+    subject { Fastlane::Helper::GitHelper.assert_branch_has_changes(release_branch, platform) }
 
+    let(:release_branch) { "release/ios/1.0.0" }
     let(:platform) { "ios" }
-    let(:version) { "1.0.0+#{platform}" }
+    let(:semver) { "1.0.0" }
+    let(:version) { "#{semver}+#{platform}" }
 
     before do
       allow(Fastlane::UI).to receive(:important)
@@ -489,9 +491,9 @@ describe Fastlane::Helper::GitHelper do
 
     context "when the release branch has no changes since the latest tag" do
       it "returns false and shows a message" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | grep '#{semver}' | head -n 1").and_return("#{version}\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("abc123\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"origin/#{release_branch}\"").and_return("abc123\n")
 
         expect(subject).to be_falsey
         expect(Fastlane::UI).to have_received(:important).with("Release branch's HEAD is already tagged. Skipping automatic release.")
@@ -500,20 +502,20 @@ describe Fastlane::Helper::GitHelper do
 
     context "when the release branch has changes since the latest tag" do
       it "returns true" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | grep '#{semver}' | head -n 1").and_return("#{version}\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return("app/file1.rb\napp/file2.rb\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"origin/#{release_branch}\"").and_return("def456\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/#{release_branch}\"").and_return("app/file1.rb\napp/file2.rb\n")
         expect(subject).to be_truthy
       end
     end
 
     context "when changes are only in scripts or workflows" do
       it "returns false" do
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | head -n 1").and_return("#{version}\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git tag --sort=-creatordate | grep '+#{platform}' | grep '#{semver}' | head -n 1").and_return("#{version}\n")
         allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"#{version}\"^{}").and_return("abc123\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with('git rev-parse "origin/release_branch"').and_return("def456\n")
-        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/release_branch\"").and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git rev-parse \"origin/#{release_branch}\"").and_return("def456\n")
+        allow(Fastlane::Helper::GitHelper).to receive(:`).with("git diff --name-only \"#{version}\"..\"origin/#{release_branch}\"").and_return(".github/workflows/workflow.yml\nscripts/deploy.sh\nfastlane/Fastfile\n")
         expect(subject).to be_falsey
       end
     end
