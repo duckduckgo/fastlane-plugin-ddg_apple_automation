@@ -319,7 +319,15 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           Failed to tag the release with <code>1.1.0-123</code> tag.<br>
           Please follow instructions below to tag the branch, make GitHub release and merge release branch to <code>main</code> manually.<br>
           <br>
-          Issue the following git commands to tag the release and merge the branch:
+          First, disable branch protection on the apple-browsers repository:
+          <ul>
+            <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
+            <li>Click on the 'Active' enforcement status dropdown and change it to 'Disabled'</li>
+            <li>Scroll down to the bottom and click 'Save changes'</li>
+            <li>Authenticate with GitHub to approve the ruleset change</li>
+          </ul>
+          <br>
+          Next, issue the following git commands to tag the release and merge the branch:
           <ul>
             <li><code>git fetch origin</code></li>
             <li><code>git checkout release/1.1.0</code> switch to the release branch</li>
@@ -338,7 +346,16 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
                   </ul></li>
               </ul></li>
             <li><code>git push origin main</code> push merged branch</li>
-          </ul><br>
+          </ul>
+          <br>
+          Finally, re-enable branch protection:
+          <ul>
+            <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
+            <li>Click on the 'Disabled' enforcement status dropdown and change it to 'Active'</li>
+            <li>Scroll down to the bottom and click 'Save changes'</li>
+            <li>Authenticate with GitHub to approve the ruleset change</li>
+          </ul>
+          <br>
           To create GitHub release:
           <ul>
             <li>Set up GH CLI if you haven't yet: <a data-asana-gid='1203791243007683'/></li>
