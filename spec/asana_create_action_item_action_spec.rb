@@ -374,7 +374,15 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           The <code>1.0.0-123</code> release has been successfully tagged and published in GitHub releases,#{' '}
           but merging to <code>main</code> failed. Please resolve conflicts and merge <code>1.0.0-123</code> tag to <code>main</code> manually.<br>
           <br>
-          Issue the following git commands:
+          First, disable branch protection on the apple-browsers repository:
+          <ul>
+            <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
+            <li>Click on the 'Active' enforcement status dropdown and change it to 'Disabled'</li>
+            <li>Scroll down to the bottom and click 'Save changes'</li>
+            <li>Authenticate with GitHub to approve the ruleset change</li>
+          </ul>
+          <br>
+          Next, issue the following git commands:
           <ul>
             <li><code>git fetch origin --tags</code></li>
             <li><code>git checkout main</code> switch to main</li>
@@ -391,6 +399,15 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
               </ul></li>
             <li><code>git push origin main</code> push merged branch</li>
           </ul>
+          <br>
+          Finally, re-enable branch protection:
+          <ul>
+            <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
+            <li>Click on the 'Disabled' enforcement status dropdown and change it to 'Active'</li>
+            <li>Scroll down to the bottom and click 'Save changes'</li>
+            <li>Authenticate with GitHub to approve the ruleset change</li>
+          </ul>
+          <br>
           Complete this task when ready and proceed with testing the build.<br>
           <br>
           🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
@@ -645,7 +662,15 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           You've requested proceeding with public release despite untagged commits on the <code>release/1.0.0</code> branch,#{' '}
           but merging to <code>main</code> failed. Please resolve conflicts and merge <code>release/1.0.0</code> to <code>main</code> manually.<br>
           <br>
-          Issue the following git commands:
+          First, disable branch protection on the apple-browsers repository:
+          <ul>
+            <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
+            <li>Click on the 'Active' enforcement status dropdown and change it to 'Disabled'</li>
+            <li>Scroll down to the bottom and click 'Save changes'</li>
+            <li>Authenticate with GitHub to approve the ruleset change</li>
+          </ul>
+          <br>
+          Next, issue the following git commands:
           <ul>
             <li><code>git fetch origin --tags</code></li>
             <li><code>git checkout release/1.0.0</code> switch to the release branch</li>
@@ -659,6 +684,15 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
               </ul></li>
             <li><code>git push origin main</code> push merged branch</li>
           </ul>
+          <br>
+          Finally, re-enable branch protection:
+          <ul>
+            <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
+            <li>Click on the 'Disabled' enforcement status dropdown and change it to 'Active'</li>
+            <li>Scroll down to the bottom and click 'Save changes'</li>
+            <li>Authenticate with GitHub to approve the ruleset change</li>
+          </ul>
+          <br>
           Complete this task when done with merging, and re-run the public release workflow, still setting <i>Ignore unreleased changes when making a public release?</i> option to <code>true</code>.<br>
           <br>
           🔗 Workflow URL: <a href='https://workflow.com'>https://workflow.com</a>.
