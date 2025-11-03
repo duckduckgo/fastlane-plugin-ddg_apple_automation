@@ -183,17 +183,17 @@ describe Fastlane::Helper::AsanaHelper do
 
     it "shows warning when handle does not exist" do
       expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: chicken")
-      get_asana_user_id_for_github_handle("chicken")
+      expect(get_asana_user_id_for_github_handle("chicken")).to eq(nil)
     end
 
     it "shows warning when handle is nil" do
       expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: pigeon")
-      get_asana_user_id_for_github_handle("pigeon")
+      expect(get_asana_user_id_for_github_handle("pigeon")).to eq(nil)
     end
 
     it "shows warning when handle is empty" do
       expect(Fastlane::UI).to receive(:message).with("Asana User ID not found for GitHub handle: hawk")
-      get_asana_user_id_for_github_handle("hawk")
+      expect(get_asana_user_id_for_github_handle("hawk")).to eq(nil)
     end
 
     def get_asana_user_id_for_github_handle(github_handle)
