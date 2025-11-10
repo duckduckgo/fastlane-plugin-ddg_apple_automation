@@ -21,14 +21,14 @@ module Fastlane
           "macos" => Set.new([
                                'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
                                'DuckDuckGo/ContentBlocker/AppTrackerDataSetProvider.swift',
-                               'DuckDuckGo/ContentBlocker/trackerData.json',
-                               'DuckDuckGo/ContentBlocker/macos-config.json',
+                               'DuckDuckGo/ContentBlocker/Resources/trackerData.json',
+                               'DuckDuckGo/ContentBlocker/Resources/macos-config.json',
                                '../SharedPackages/DataBrokerProtectionCore/Sources/DataBrokerProtectionCore/BundleResources/JSON/*.json'
                              ])
         }.freeze
 
       def self.update_embedded_files(platform, other_action)
-        perf_test_warning = !other_action.tds_perf_test
+        perf_test_warning = !other_action.tds_perf_test(platform: platform)
         Actions.sh("./scripts/update_embedded.sh")
 
         # Verify no unexpected files were modified
