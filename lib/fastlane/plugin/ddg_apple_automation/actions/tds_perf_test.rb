@@ -25,6 +25,7 @@ module Fastlane
         ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/macOS/DuckDuckGo/ContentBlocker/Resources/"
       }.freeze
 
+      # rubocop:disable Metrics/PerceivedComplexity
       def self.run(params)
         UI.message("Starting TDS Performance Testing...")
 
@@ -93,6 +94,7 @@ module Fastlane
           FileUtils.rm_rf(tmp_dir)
         end
       end
+      # rubocop:enable Metrics/PerceivedComplexity
 
       def self.description
         "Runs performance tests for Tracker Radar Kit with specified TDS files"
