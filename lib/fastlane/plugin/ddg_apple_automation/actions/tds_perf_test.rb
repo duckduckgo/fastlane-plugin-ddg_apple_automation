@@ -22,14 +22,14 @@ module Fastlane
         ut_file_name: "macos-tds.json",
         ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v6/current/",
         ref_file_name: "trackerData.json",
-        ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/macOS/DuckDuckGo/ContentBlocker/"
+        ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/macOS/DuckDuckGo/ContentBlocker/Resources/"
       }.freeze
 
       def self.run(params)
         UI.message("Starting TDS Performance Testing...")
 
         # Determine platform and set default parameters if needed
-        platform = lane_context[SharedValues::PLATFORM_NAME]
+        platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
         default_params = platform == :ios ? IOS_TEST_PARAMS : MAC_TEST_PARAMS
 
         # Use provided parameters or defaults
@@ -104,6 +104,12 @@ module Fastlane
 
       def self.available_options
         [
+          FastlaneCore::ConfigItem.new(
+            key: :platform,
+            description: "The platform (ios or macos)",
+            type: String,
+            optional: true
+          ),
           FastlaneCore::ConfigItem.new(
             key: :ut_file_name,
             env_name: "TEST_RUNNER_TDS_UT_FILE_NAME",
