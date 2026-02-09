@@ -668,6 +668,15 @@ commit 9587487662876eee3f2606cf5040d4ee80e0c0a7
     Template](https://app.asana.com/0/59792373528535/184709971311943)
     [Pull Request
     Documentation](https://app.asana.com/0/1202500774821704/1204012835277482/f)
+#{'    '}
+commit d2f1375d12282a8cb05fbdaf8b34801f7a4b928a
+
+    Duplicate linear onboarding for rebranding (#3420)
+
+    Task/Issue URL:
+    https://app.asana.com/1/137249556945/project/1204099484721401/
+      task/1213108253038169?focus=true
+    Tech Design URL:
       LOG
 
       allow(Fastlane::Helper::AsanaHelper).to receive(:`).with("git log v1.0.0..HEAD -- ./ ../SharedPackages/").and_return(git_log)
