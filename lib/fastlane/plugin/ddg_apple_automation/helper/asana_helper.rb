@@ -426,7 +426,13 @@ module Fastlane
           .gsub("\n", " ")
           .scan(%r{\b\*{2}?Task/Issue URL:\*{2}?\s*https://app\.asana\.com[/0-9a-z]+\b})
           .map { |task_line| task_line.gsub(/.*(https.*)/, '\1') }
-          .filter_map { |task_url| extract_asana_task_id(task_url, set_gha_output: false) rescue nil }
+          .filter_map do |task_url|
+            begin
+              extract_asana_task_id(task_url, set_gha_output: false)
+            rescue StandardError
+              nil
+            end
+          end
           .uniq
       end
 
