@@ -32,6 +32,9 @@ module Fastlane
       IOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1138897754570756"
       MACOS_APP_DEVELOPMENT_RELEASE_SECTION_ID = "1202202395298964"
 
+      IOS_APP_DEVELOPMENT_PROJECT_ID = "414709148257752"
+      MACOS_APP_DEVELOPMENT_PROJECT_ID = "1201037661562251"
+
       INCIDENTS_PARENT_TASK_ID = "1135688560894081"
       CURRENT_OBJECTIVES_PROJECT_ID = "72649045549333"
 
@@ -178,6 +181,62 @@ module Fastlane
         else
           UI.user_error!("Unsupported platform: #{platform}")
         end
+      end
+
+      def self.release_dri_project_id(platform)
+        case platform
+        when "ios"
+          IOS_APP_DEVELOPMENT_PROJECT_ID
+        when "macos"
+          MACOS_APP_DEVELOPMENT_PROJECT_ID
+        else
+          UI.user_error!("Unsupported platform: #{platform}")
+        end
+      end
+
+      def self.find_release_dri(platform, asana_access_token)
+        project_id = release_dri_project_id(platform)
+        platform_name = platform == "ios" ? "iOS" : "macOS"
+        task_name = "#{platform_name} App Weekly Release DRI"
+
+        UI.message("Searching for release DRI task: #{task_name}")
+
+        asana_client = make_asana_client(asana_access_token)
+        begin
+          tasks = asana_client.tasks.search_tasks_for_workspace(
+            workspace_gid: ASANA_WORKSPACE_ID,
+            text: task_name,
+            projects_any: project_id,
+            completed: false,
+            is_subtask: false,
+            options: { fields: ["name", "assignee"] }
+          )
+
+          dri_task = tasks.find { |task| task.name == task_name }
+        rescue StandardError => e
+          UI.important("Failed to search for release DRI task: #{e}")
+          return nil
+        end
+
+        unless dri_task
+          UI.important("Release DRI task '#{task_name}' not found")
+          return nil
+        end
+
+        assignee = dri_task.assignee
+        unless assignee
+          UI.important("Release DRI task '#{task_name}' has no assignee")
+          return nil
+        end
+
+        assignee_id = assignee["gid"]
+        if assignee_id.nil? || assignee_id.to_s.empty?
+          UI.important("Release DRI task '#{task_name}' assignee has no GID")
+          return nil
+        end
+
+        UI.success("Found release DRI: #{assignee_id}")
+        assignee_id
       end
 
       def self.create_release_task(platform, version, assignee_id, asana_access_token, is_hotfix: false)
