@@ -230,6 +230,11 @@ module Fastlane
         end
 
         assignee_id = assignee["gid"]
+        if assignee_id.nil? || assignee_id.to_s.empty?
+          UI.important("Release DRI task '#{task_name}' assignee has no GID")
+          return nil
+        end
+
         UI.success("Found release DRI: #{assignee_id}")
         assignee_id
       end
