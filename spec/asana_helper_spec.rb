@@ -201,6 +201,80 @@ describe Fastlane::Helper::AsanaHelper do
     end
   end
 
+  describe "#find_release_dri" do
+    let(:asana_access_token) { "secret-token" }
+
+    before do
+      @asana_client = double("Asana::Client")
+      @asana_tasks = double("Asana::Tasks")
+      allow(Asana::Client).to receive(:new).and_return(@asana_client)
+      allow(@asana_client).to receive(:tasks).and_return(@asana_tasks)
+      allow(Fastlane::UI).to receive(:message)
+      allow(Fastlane::UI).to receive(:success)
+      allow(Fastlane::UI).to receive(:important)
+    end
+
+    context "when DRI task is found and assigned" do
+      it "returns the assignee ID for iOS" do
+        dri_task = double(name: "iOS App Weekly Release DRI", assignee: { "gid" => "12345" })
+        allow(@asana_tasks).to receive(:search_tasks_for_workspace).and_return([dri_task])
+
+        result = Fastlane::Helper::AsanaHelper.find_release_dri("ios", asana_access_token)
+        expect(result).to eq("12345")
+        expect(Fastlane::UI).to have_received(:success).with("Found release DRI: 12345")
+      end
+
+      it "returns the assignee ID for macOS" do
+        dri_task = double(name: "macOS App Weekly Release DRI", assignee: { "gid" => "67890" })
+        allow(@asana_tasks).to receive(:search_tasks_for_workspace).and_return([dri_task])
+
+        result = Fastlane::Helper::AsanaHelper.find_release_dri("macos", asana_access_token)
+        expect(result).to eq("67890")
+      end
+    end
+
+    context "when DRI task is found but not assigned" do
+      it "returns nil" do
+        dri_task = double(name: "macOS App Weekly Release DRI", assignee: nil)
+        allow(@asana_tasks).to receive(:search_tasks_for_workspace).and_return([dri_task])
+
+        result = Fastlane::Helper::AsanaHelper.find_release_dri("macos", asana_access_token)
+        expect(result).to be_nil
+        expect(Fastlane::UI).to have_received(:important).with("Release DRI task 'macOS App Weekly Release DRI' has no assignee")
+      end
+    end
+
+    context "when DRI task is not found" do
+      it "returns nil" do
+        allow(@asana_tasks).to receive(:search_tasks_for_workspace).and_return([])
+
+        result = Fastlane::Helper::AsanaHelper.find_release_dri("ios", asana_access_token)
+        expect(result).to be_nil
+        expect(Fastlane::UI).to have_received(:important).with("Release DRI task 'iOS App Weekly Release DRI' not found")
+      end
+    end
+
+    context "when search returns tasks with non-matching names" do
+      it "returns nil" do
+        other_task = double(name: "iOS App Weekly Release DRI (old)", assignee: { "gid" => "99999" })
+        allow(@asana_tasks).to receive(:search_tasks_for_workspace).and_return([other_task])
+
+        result = Fastlane::Helper::AsanaHelper.find_release_dri("ios", asana_access_token)
+        expect(result).to be_nil
+      end
+    end
+
+    context "when API call fails" do
+      it "returns nil" do
+        allow(@asana_tasks).to receive(:search_tasks_for_workspace).and_raise(StandardError, "API error")
+
+        result = Fastlane::Helper::AsanaHelper.find_release_dri("ios", asana_access_token)
+        expect(result).to be_nil
+        expect(Fastlane::UI).to have_received(:important).with("Failed to search for release DRI task: API error")
+      end
+    end
+  end
+
   describe "#upload_file_to_asana_task" do
     before do
       @task = double("task")

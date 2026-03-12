@@ -25,6 +25,13 @@ module Fastlane
           release_branch_name, new_version, show_update_embedded_warning = Helper::DdgAppleAutomationHelper.prepare_release_branch(
             params[:platform], params[:version], other_action
           )
+
+          dri_user_id = Helper::AsanaHelper.find_release_dri(params[:platform], params[:asana_access_token])
+          if dri_user_id
+            options[:asana_user_id] = dri_user_id
+          else
+            UI.important("Falling back to assigning release task to #{options[:github_handle]}")
+          end
         end
 
         options[:version] = new_version

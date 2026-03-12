@@ -10,10 +10,12 @@ shared_context "common setup" do
 
     allow(Fastlane::Helper::GitHelper).to receive(:setup_git_user)
     allow(Fastlane::Helper::AsanaHelper).to receive(:get_asana_user_id_for_github_handle).and_return("user")
+    allow(Fastlane::Helper::AsanaHelper).to receive(:find_release_dri).and_return(nil)
     allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:prepare_release_branch).and_return(["release_branch_name", "1.1.0"])
     allow(Fastlane::Helper::AsanaHelper).to receive(:create_release_task).and_return("1234567890")
     allow(Fastlane::Helper::AsanaHelper).to receive(:update_asana_tasks_for_internal_release)
     allow(Fastlane::Actions).to receive(:lane_context).and_return({ Fastlane::Actions::SharedValues::PLATFORM_NAME => "ios" })
+    allow(Fastlane::UI).to receive(:important)
 
     other_action_double = double("other_action")
     allow(other_action_double).to receive(:setup_constants)
@@ -78,6 +80,34 @@ describe Fastlane::Actions::StartNewReleaseAction do
             asana_access_token: "secret-token"
           )
         )
+      end
+
+      it 'looks up release DRI' do
+        subject
+        expect(Fastlane::Helper::AsanaHelper).to have_received(:find_release_dri).with("ios", "secret-token")
+      end
+
+      context "when release DRI is found" do
+        before do
+          allow(Fastlane::Helper::AsanaHelper).to receive(:find_release_dri).and_return("dri_user_id")
+        end
+
+        it 'assigns release task to the DRI' do
+          subject
+          expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "dri_user_id", "secret-token", { is_hotfix: false })
+        end
+      end
+
+      context "when release DRI is not found" do
+        before do
+          allow(Fastlane::Helper::AsanaHelper).to receive(:find_release_dri).and_return(nil)
+        end
+
+        it 'falls back to the github_handle user' do
+          subject
+          expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task).with("ios", "1.1.0", "user", "secret-token", { is_hotfix: false })
+          expect(Fastlane::UI).to have_received(:important).with("Falling back to assigning release task to user")
+        end
       end
 
       it 'doesn\'t warn on TDS performance tests success' do
@@ -166,6 +196,17 @@ describe Fastlane::Actions::StartNewReleaseAction do
         end
 
         it "creates a hotfix release task in Asana" do
+          subject
+          expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task)
+            .with("macos", "1.0.1", "user", "secret-token", { is_hotfix: true })
+        end
+
+        it "does not look up release DRI" do
+          subject
+          expect(Fastlane::Helper::AsanaHelper).not_to have_received(:find_release_dri)
+        end
+
+        it "assigns release task to the github_handle user" do
           subject
           expect(Fastlane::Helper::AsanaHelper).to have_received(:create_release_task)
             .with("macos", "1.0.1", "user", "secret-token", { is_hotfix: true })
