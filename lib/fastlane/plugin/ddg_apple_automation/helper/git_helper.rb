@@ -158,6 +158,29 @@ module Fastlane
       end
       # rubocop:enable Metrics/PerceivedComplexity
 
+      def self.find_latest_public_release_tag(repo_name, platform, github_token)
+        latest_public_release = latest_release(repo_name, false, platform, github_token, allow_drafts: true)
+        return nil unless latest_public_release
+
+        unless latest_public_release.draft
+          UI.message("Latest public release: #{latest_public_release.tag_name}")
+          return latest_public_release.tag_name
+        end
+
+        UI.message("Latest public release is a draft: #{latest_public_release.name}")
+        version = extract_version_from_tag_name(latest_public_release.name)
+        UI.message("Extracted version: #{version}")
+
+        latest_internal_release = latest_release(repo_name, true, platform, github_token)
+        if latest_internal_release.nil?
+          UI.user_error!("Failed to find latest internal release for version #{version}")
+          return nil
+        end
+
+        UI.message("Latest internal release tag: #{latest_internal_release.tag_name}")
+        latest_internal_release.tag_name
+      end
+
       def self.delete_release(release_url, github_token)
         client = Octokit::Client.new(access_token: github_token)
         client.delete_release(release_url)
