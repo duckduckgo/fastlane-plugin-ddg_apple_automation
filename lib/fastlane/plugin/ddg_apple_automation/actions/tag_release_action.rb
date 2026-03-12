@@ -115,8 +115,7 @@ module Fastlane
       def self.create_tag_and_github_release(is_prerelease, platform, github_token)
         tag, promoted_tag = Helper::DdgAppleAutomationHelper.compute_tag(is_prerelease, platform)
 
-        latest_public_release = Helper::GitHelper.latest_release(@constants[:repo_name], false, platform, github_token)
-        UI.message("Latest public release: #{latest_public_release.tag_name}")
+        latest_public_release_tag = Helper::GitHelper.find_latest_public_release_tag(@constants[:repo_name], platform, github_token)
 
         begin
           # For public release, always tag the promoted tag. This is to ensure that if extra commits
@@ -134,7 +133,7 @@ module Fastlane
             tag: tag,
             promoted_tag: promoted_tag,
             tag_created: false,
-            latest_public_release_tag: latest_public_release.tag_name
+            latest_public_release_tag: latest_public_release_tag
           }
         end
 
@@ -149,7 +148,7 @@ module Fastlane
             path: "/repos/#{@constants[:repo_name]}/releases/generate-notes",
             body: {
               tag_name: tag,
-              previous_tag_name: latest_public_release.tag_name
+              previous_tag_name: latest_public_release_tag
             }
           )
 
@@ -172,7 +171,7 @@ module Fastlane
           tag: tag,
           promoted_tag: promoted_tag,
           tag_created: true,
-          latest_public_release_tag: latest_public_release.tag_name
+          latest_public_release_tag: latest_public_release_tag
         }
       end
 

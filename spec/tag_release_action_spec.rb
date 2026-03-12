@@ -299,14 +299,14 @@ describe Fastlane::Actions::TagReleaseAction do
     let(:platform) { "macos" }
     subject { Fastlane::Actions::TagReleaseAction.create_tag_and_github_release(@params[:is_prerelease], platform, @params[:github_token]) }
 
-    let (:latest_public_release) { double(tag_name: "1.0.0+macos", prerelease: false) }
+    let (:latest_public_release_tag) { "1.0.0+macos" }
     let (:generated_release_notes) { { body: { "name" => "1.1.0", "body" => "Release notes" } } }
     let (:other_action) { double(add_git_tag: nil, push_git_tags: nil, github_api: generated_release_notes, set_github_release: nil) }
     let (:commit_sha_for_tag) { "promoted-tag-sha" }
 
     shared_context "local setup" do
       before(:each) do
-        allow(Fastlane::Helper::GitHelper).to receive(:latest_release).and_return(latest_public_release)
+        allow(Fastlane::Helper::GitHelper).to receive(:find_latest_public_release_tag).and_return(latest_public_release_tag)
         allow(JSON).to receive(:parse).and_return(generated_release_notes[:body])
         allow(Fastlane::Action).to receive(:other_action).and_return(other_action)
         allow(Fastlane::UI).to receive(:message)
@@ -324,10 +324,9 @@ describe Fastlane::Actions::TagReleaseAction do
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: true,
-              latest_public_release_tag: latest_public_release.tag_name
+              latest_public_release_tag: latest_public_release_tag
             })
 
-        expect(Fastlane::UI).to have_received(:message).with("Latest public release: #{latest_public_release.tag_name}").ordered
         expect(Fastlane::UI).to have_received(:message).with("Generating #{repo_name} release notes for GitHub release for tag: #{@tag}").ordered
         if @params[:is_prerelease]
           expect(other_action).to have_received(:add_git_tag).with(tag: @tag)
@@ -343,7 +342,7 @@ describe Fastlane::Actions::TagReleaseAction do
           path: "/repos/#{repo_name}/releases/generate-notes",
           body: {
             tag_name: @tag,
-            previous_tag_name: latest_public_release.tag_name
+            previous_tag_name: latest_public_release_tag
           }
         )
 
@@ -394,7 +393,7 @@ describe Fastlane::Actions::TagReleaseAction do
     shared_examples "gracefully handling tagging error" do
       it "handles tagging error" do
         expect(subject).to eq({
-              latest_public_release_tag: latest_public_release.tag_name,
+              latest_public_release_tag: latest_public_release_tag,
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: false
@@ -410,7 +409,7 @@ describe Fastlane::Actions::TagReleaseAction do
               tag: @tag,
               promoted_tag: @promoted_tag,
               tag_created: true,
-              latest_public_release_tag: latest_public_release.tag_name
+              latest_public_release_tag: latest_public_release_tag
             })
         expect(Fastlane::UI).to have_received(:important).with("Failed to create GitHub release")
         expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:report_error).with(StandardError)

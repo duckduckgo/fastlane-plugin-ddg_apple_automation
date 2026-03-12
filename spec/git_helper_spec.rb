@@ -319,6 +319,86 @@ describe Fastlane::Helper::GitHelper do
     end
   end
 
+  describe "#find_latest_public_release_tag" do
+    subject { Fastlane::Helper::GitHelper.find_latest_public_release_tag(repo_name, platform, github_token) }
+    let(:platform) { "macos" }
+
+    include_context "common setup"
+
+    context "when latest public release is a published release" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, false, platform, github_token, allow_drafts: true)
+          .and_return(double(tag_name: "1.0.0+macos", draft: false))
+      end
+
+      it "returns the release tag_name" do
+        expect(subject).to eq("1.0.0+macos")
+      end
+    end
+
+    context "when latest public release is a draft" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, false, platform, github_token, allow_drafts: true)
+          .and_return(double(name: "1.0.0+macos", tag_name: "", draft: true))
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, true, platform, github_token)
+          .and_return(double(tag_name: "1.0.0-123+macos"))
+      end
+
+      it "returns the latest internal release tag for the draft version" do
+        expect(subject).to eq("1.0.0-123+macos")
+      end
+    end
+
+    context "when latest public release is a draft and internal release version doesn't match" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, false, platform, github_token, allow_drafts: true)
+          .and_return(double(name: "1.0.0+macos", tag_name: "", draft: true))
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, true, platform, github_token)
+          .and_return(double(tag_name: "2.0.0-1+macos"))
+        allow(Fastlane::UI).to receive(:user_error!)
+      end
+
+      it "shows error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with("Latest internal release 2.0.0-1+macos does not match expected version 1.0.0")
+      end
+    end
+
+    context "when latest public release is a draft and no internal release is found" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, false, platform, github_token, allow_drafts: true)
+          .and_return(double(name: "1.0.0+macos", tag_name: "", draft: true))
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, true, platform, github_token)
+          .and_return(nil)
+        allow(Fastlane::UI).to receive(:user_error!)
+      end
+
+      it "shows error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with("Failed to find latest internal release for version 1.0.0")
+      end
+    end
+
+    context "when no public release is found" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, false, platform, github_token, allow_drafts: true)
+          .and_return(nil)
+      end
+
+      it "returns nil" do
+        expect(subject).to be_nil
+      end
+    end
+  end
+
   describe "#delete_release" do
     subject { Fastlane::Helper::GitHelper.delete_release(release_url, github_token) }
     let(:release_url) { "https://api.github.com/repos/duckduckgo/apple-browsers/releases/1234567890" }
