@@ -177,6 +177,12 @@ module Fastlane
           return nil
         end
 
+        internal_version = extract_version_from_tag_name(latest_internal_release.tag_name)
+        unless version == internal_version
+          UI.user_error!("Latest internal release #{latest_internal_release.tag_name} does not match expected version #{version}")
+          return nil
+        end
+
         UI.message("Latest internal release tag: #{latest_internal_release.tag_name}")
         latest_internal_release.tag_name
       end

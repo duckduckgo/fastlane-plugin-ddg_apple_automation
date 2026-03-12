@@ -352,6 +352,23 @@ describe Fastlane::Helper::GitHelper do
       end
     end
 
+    context "when latest public release is a draft and internal release version doesn't match" do
+      before do
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, false, platform, github_token, allow_drafts: true)
+          .and_return(double(name: "1.0.0+macos", tag_name: "", draft: true))
+        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
+          .with(repo_name, true, platform, github_token)
+          .and_return(double(tag_name: "2.0.0-1+macos"))
+        allow(Fastlane::UI).to receive(:user_error!)
+      end
+
+      it "shows error" do
+        subject
+        expect(Fastlane::UI).to have_received(:user_error!).with("Latest internal release 2.0.0-1+macos does not match expected version 1.0.0")
+      end
+    end
+
     context "when latest public release is a draft and no internal release is found" do
       before do
         allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
