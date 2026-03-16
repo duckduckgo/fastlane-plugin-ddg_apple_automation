@@ -342,8 +342,8 @@ describe Fastlane::Helper::GitHelper do
         allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
           .with(repo_name, false, platform, github_token, allow_drafts: true)
           .and_return(double(name: "1.0.0+macos", tag_name: "", draft: true))
-        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
-          .with(repo_name, true, platform, github_token)
+        allow(Fastlane::Helper::GitHelper).to receive(:find_latest_internal_release_for_version)
+          .with(repo_name, platform, "1.0.0", github_token)
           .and_return(double(tag_name: "1.0.0-123+macos"))
       end
 
@@ -352,30 +352,13 @@ describe Fastlane::Helper::GitHelper do
       end
     end
 
-    context "when latest public release is a draft and internal release version doesn't match" do
+    context "when latest public release is a draft and no internal release is found for that version" do
       before do
         allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
           .with(repo_name, false, platform, github_token, allow_drafts: true)
           .and_return(double(name: "1.0.0+macos", tag_name: "", draft: true))
-        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
-          .with(repo_name, true, platform, github_token)
-          .and_return(double(tag_name: "2.0.0-1+macos"))
-        allow(Fastlane::UI).to receive(:user_error!)
-      end
-
-      it "shows error" do
-        subject
-        expect(Fastlane::UI).to have_received(:user_error!).with("Latest internal release 2.0.0-1+macos does not match expected version 1.0.0")
-      end
-    end
-
-    context "when latest public release is a draft and no internal release is found" do
-      before do
-        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
-          .with(repo_name, false, platform, github_token, allow_drafts: true)
-          .and_return(double(name: "1.0.0+macos", tag_name: "", draft: true))
-        allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
-          .with(repo_name, true, platform, github_token)
+        allow(Fastlane::Helper::GitHelper).to receive(:find_latest_internal_release_for_version)
+          .with(repo_name, platform, "1.0.0", github_token)
           .and_return(nil)
         allow(Fastlane::UI).to receive(:user_error!)
       end
@@ -391,6 +374,69 @@ describe Fastlane::Helper::GitHelper do
         allow(Fastlane::Helper::GitHelper).to receive(:latest_release)
           .with(repo_name, false, platform, github_token, allow_drafts: true)
           .and_return(nil)
+      end
+
+      it "returns nil" do
+        expect(subject).to be_nil
+      end
+    end
+  end
+
+  describe "#find_latest_internal_release_for_version" do
+    subject { Fastlane::Helper::GitHelper.find_latest_internal_release_for_version(repo_name, platform, version, github_token) }
+    let(:platform) { "macos" }
+    let(:version) { "1.0.0" }
+
+    include_context "common setup"
+
+    context "when a matching internal release exists on the first page" do
+      before do
+        allow(client).to receive(:releases)
+          .with(repo_name, per_page: 25, page: 1)
+          .and_return([
+                        double(tag_name: "1.1.0-2+macos", prerelease: true),
+                        double(tag_name: "1.0.0-5+macos", prerelease: true)
+                      ])
+      end
+
+      it "returns the first matching release" do
+        expect(subject.tag_name).to eq("1.0.0-5+macos")
+      end
+    end
+
+    context "when a matching internal release exists on a later page" do
+      before do
+        page1 = Array.new(25) { double(tag_name: "1.1.0-2+macos", prerelease: true) }
+        allow(client).to receive(:releases)
+          .with(repo_name, per_page: 25, page: 1)
+          .and_return(page1)
+        allow(client).to receive(:releases)
+          .with(repo_name, per_page: 25, page: 2)
+          .and_return([double(tag_name: "1.0.0-5+macos", prerelease: true)])
+      end
+
+      it "returns the matching release from the later page" do
+        expect(subject.tag_name).to eq("1.0.0-5+macos")
+      end
+    end
+
+    context "when no matching internal release exists" do
+      before do
+        allow(client).to receive(:releases)
+          .with(repo_name, per_page: 25, page: 1)
+          .and_return([double(tag_name: "2.0.0-1+macos", prerelease: true)])
+      end
+
+      it "returns nil" do
+        expect(subject).to be_nil
+      end
+    end
+
+    context "when no releases exist" do
+      before do
+        allow(client).to receive(:releases)
+          .with(repo_name, per_page: 25, page: 1)
+          .and_return([])
       end
 
       it "returns nil" do

@@ -171,20 +171,38 @@ module Fastlane
         version = extract_version_from_tag_name(latest_public_release.name)
         UI.message("Extracted version: #{version}")
 
-        latest_internal_release = latest_release(repo_name, true, platform, github_token)
-        if latest_internal_release.nil?
+        matching_release = find_latest_internal_release_for_version(repo_name, platform, version, github_token)
+        if matching_release.nil?
           UI.user_error!("Failed to find latest internal release for version #{version}")
           return nil
         end
 
-        internal_version = extract_version_from_tag_name(latest_internal_release.tag_name)
-        unless version == internal_version
-          UI.user_error!("Latest internal release #{latest_internal_release.tag_name} does not match expected version #{version}")
-          return nil
+        UI.message("Latest internal release tag for #{version}: #{matching_release.tag_name}")
+        matching_release.tag_name
+      end
+
+      def self.find_latest_internal_release_for_version(repo_name, platform, version, github_token)
+        client = Octokit::Client.new(access_token: github_token)
+        current_page = 1
+        page_size = 25
+
+        loop do
+          releases = client.releases(repo_name, per_page: page_size, page: current_page)
+          break if releases.empty?
+
+          matching_release = releases.find do |release|
+            release.prerelease &&
+              release.tag_name.end_with?("+#{platform}") &&
+              extract_version_from_tag_name(release.tag_name) == version
+          end
+
+          return matching_release if matching_release
+          break if releases.size < page_size
+
+          current_page += 1
         end
 
-        UI.message("Latest internal release tag: #{latest_internal_release.tag_name}")
-        latest_internal_release.tag_name
+        nil
       end
 
       def self.delete_release(release_url, github_token)
