@@ -389,11 +389,8 @@ describe Fastlane::Helper::AsanaHelper do
     end
 
     before do
-      @client = double("Octokit::Client")
-      allow(Octokit::Client).to receive(:new).and_return(@client)
-      allow(@client).to receive(:releases).with("iOS", { page: 1, per_page: 25 }).and_return([double(tag_name: "7.122.0+ios", prerelease: false)])
-      allow(@client).to receive(:releases).with("iOS", { page: 2, per_page: 25 }).and_return([])
       allow(Fastlane::Helper::GitHelper).to receive(:repo_name).and_return("iOS")
+      allow(Fastlane::Helper::GitHelper).to receive(:find_latest_public_release_tag).and_return("7.122.0+ios")
 
       @asana_client = double("Asana::Client")
       @asana_tasks = double("Asana::Tasks")
@@ -413,7 +410,7 @@ describe Fastlane::Helper::AsanaHelper do
     end
 
     it "completes the update of Asana tasks for internal release" do
-      expect(@client).to receive(:releases).with("iOS", { page: 1, per_page: 25 })
+      expect(Fastlane::Helper::GitHelper).to receive(:find_latest_public_release_tag).with("iOS", "ios", "github_token")
 
       expect(Fastlane::Helper::AsanaHelper).to receive(:fetch_release_notes).with("1234567890", "secret-token")
       expect(Fastlane::Helper::AsanaHelper).to receive(:validate_task_accessible).with("1234567890", "secret-token").and_return(true)
@@ -426,7 +423,6 @@ describe Fastlane::Helper::AsanaHelper do
       expect(@asana_tasks).to receive(:update_task).with(task_gid: "1234567890", html_notes: html_notes)
 
       expect(Fastlane::UI).to receive(:message).with("Checking latest public release in GitHub")
-      expect(Fastlane::UI).to receive(:success).with("Latest public release: 7.122.0+ios")
       expect(Fastlane::UI).to receive(:message).with("Extracting task IDs from git log since 7.122.0+ios release")
       expect(Fastlane::UI).to receive(:success).with("1 task(s) found.")
       expect(Fastlane::UI).to receive(:message).with("Fetching release notes from Asana release task (https://app.asana.com/0/1234567890/1234567890)")

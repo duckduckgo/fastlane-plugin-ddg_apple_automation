@@ -286,11 +286,14 @@ module Fastlane
       def self.update_asana_tasks_for_internal_release(params)
         UI.message("Checking latest public release in GitHub")
 
-        latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name, false, params[:platform], params[:github_token])
-        UI.success("Latest public release: #{latest_public_release.tag_name}")
+        latest_public_release_tag = Helper::GitHelper.find_latest_public_release_tag(Helper::GitHelper.repo_name, params[:platform], params[:github_token])
+        if latest_public_release_tag.to_s.empty?
+          UI.user_error!("Failed to find latest public release tag")
+          return
+        end
 
-        UI.message("Extracting task IDs from git log since #{latest_public_release.tag_name} release")
-        task_ids = get_task_ids_from_git_log(latest_public_release.tag_name)
+        UI.message("Extracting task IDs from git log since #{latest_public_release_tag} release")
+        task_ids = get_task_ids_from_git_log(latest_public_release_tag)
                    .filter { |task_id| validate_task_accessible(task_id, params[:asana_access_token]) }
         UI.success("#{task_ids.count} task(s) found.")
 
