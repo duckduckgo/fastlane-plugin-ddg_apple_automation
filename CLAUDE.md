@@ -9,9 +9,6 @@ Fastlane plugin providing custom actions and helpers for DuckDuckGo's iOS/macOS 
 ## Commands
 
 ```bash
-# Load Ruby environment (required before running any commands)
-source ~/.rvm/scripts/rvm
-
 # Run all tests + linting (default rake task)
 rake
 
