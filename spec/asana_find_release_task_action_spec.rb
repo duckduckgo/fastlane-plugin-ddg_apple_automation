@@ -51,26 +51,35 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
     end
 
     describe "queries the correct section" do
-      it "uses the Apple Releases iOS section for iOS" do
-        Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("ios")
-        expect(@tasks).to receive(:find_all).with(
-          hash_including(section: Fastlane::Helper::AsanaHelper::APPLE_RELEASES_IOS_SECTION_ID)
-        ).and_return(double(next_page: nil))
+      before do
         allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
         allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task_in_response)
+      end
+
+      it "uses the Apple Releases iOS section for iOS" do
+        Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("ios")
+        captured_section = nil
+        allow(@tasks).to receive(:find_all) do |args|
+          captured_section = args[:section]
+          double(next_page: nil)
+        end
 
         find_release_task("1.0.0")
+
+        expect(captured_section).to eq(Fastlane::Helper::AsanaHelper::APPLE_RELEASES_IOS_SECTION_ID)
       end
 
       it "uses the Apple Releases macOS section for macOS" do
         Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("macos")
-        expect(@tasks).to receive(:find_all).with(
-          hash_including(section: Fastlane::Helper::AsanaHelper::APPLE_RELEASES_MACOS_SECTION_ID)
-        ).and_return(double(next_page: nil))
-        allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
-        allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task_in_response)
+        captured_section = nil
+        allow(@tasks).to receive(:find_all) do |args|
+          captured_section = args[:section]
+          double(next_page: nil)
+        end
 
         find_release_task("1.0.0")
+
+        expect(captured_section).to eq(Fastlane::Helper::AsanaHelper::APPLE_RELEASES_MACOS_SECTION_ID)
       end
     end
 
