@@ -50,6 +50,39 @@ describe Fastlane::Actions::AsanaFindReleaseTaskAction do
       allow(Asana::Client).to receive(:new).and_return(asana_client)
     end
 
+    describe "queries the correct section" do
+      before do
+        allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_hotfix_task_in_response)
+        allow(Fastlane::Actions::AsanaFindReleaseTaskAction).to receive(:find_release_task_in_response)
+      end
+
+      it "uses the Apple Releases iOS section for iOS" do
+        Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("ios")
+        captured_section = nil
+        allow(@tasks).to receive(:find_all) do |args|
+          captured_section = args[:section]
+          double(next_page: nil)
+        end
+
+        find_release_task("1.0.0")
+
+        expect(captured_section).to eq(Fastlane::Helper::AsanaHelper::APPLE_RELEASES_IOS_SECTION_ID)
+      end
+
+      it "uses the Apple Releases macOS section for macOS" do
+        Fastlane::Actions::AsanaFindReleaseTaskAction.setup_constants("macos")
+        captured_section = nil
+        allow(@tasks).to receive(:find_all) do |args|
+          captured_section = args[:section]
+          double(next_page: nil)
+        end
+
+        find_release_task("1.0.0")
+
+        expect(captured_section).to eq(Fastlane::Helper::AsanaHelper::APPLE_RELEASES_MACOS_SECTION_ID)
+      end
+    end
+
     describe "when release task is found" do
       describe "on the first page" do
         before do

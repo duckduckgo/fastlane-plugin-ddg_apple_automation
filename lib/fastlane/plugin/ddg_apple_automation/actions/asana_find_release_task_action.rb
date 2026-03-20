@@ -20,13 +20,13 @@ module Fastlane
           @constants = {
             release_task_prefix: "iOS App Release",
             hotfix_task_prefix: "iOS App Hotfix Release",
-            release_section_id: "1138897754570756"
+            release_section_id: Helper::AsanaHelper::APPLE_RELEASES_IOS_SECTION_ID
           }
         when "macos"
           @constants = {
             release_task_prefix: "macOS App Release",
             hotfix_task_prefix: "macOS App Hotfix Release",
-            release_section_id: "1202202395298964"
+            release_section_id: Helper::AsanaHelper::APPLE_RELEASES_MACOS_SECTION_ID
           }
         end
       end
@@ -167,7 +167,7 @@ module Fastlane
       end
 
       def self.details
-        "This action searches macOS App Development or iOS App Development Asana project for an active release task
+        "This action searches the Apple Releases Asana project for an active release task
         matching the latest version (as specified by GitHub releases). Returns an error when no release task is found,
         or when there's an active (incomplete) hotfix release task. Tasks are identified by the name."
       end
