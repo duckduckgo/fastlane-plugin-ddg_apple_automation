@@ -160,7 +160,6 @@ module Fastlane
           update_version_config(new_version, other_action)
         end
         other_action.push_to_git_remote
-        increment_build_number(platform, options, other_action) if platform == "macos"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
         commit_sha = other_action.last_git_commit[:commit_hash]
         Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
