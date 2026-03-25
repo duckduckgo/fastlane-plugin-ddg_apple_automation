@@ -407,7 +407,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       new_version = "1.0.1+#{platform}"
       release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
-      options = { some_option: "value" }
       github_token = "github-token"
 
       @client = double("Octokit::Client")
@@ -426,16 +425,13 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:update_version_config)
         .with(new_version, other_action)
 
-      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:increment_build_number)
-        .with(platform, options, other_action)
-
       allow(Fastlane::Helper::GitHubActionsHelper).to receive(:set_output)
 
       expect(other_action).to receive(:push_to_git_remote)
       expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
-        github_token, platform, other_action, options
+        github_token, platform, other_action
       )
 
       expect(result_branch).to eq(release_branch_name)
@@ -445,7 +441,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:validate_hotfix_version).with(source_version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:create_hotfix_branch).with(platform, source_version, new_version)
       expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:update_version_config).with(new_version, other_action)
-      expect(Fastlane::Helper::DdgAppleAutomationHelper).to have_received(:increment_build_number).with(platform, options, other_action)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("last_release", source_version)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("release_branch_name", release_branch_name)
       expect(Fastlane::Helper::GitHubActionsHelper).to have_received(:set_output).with("commit_sha", "abc123")
@@ -458,7 +453,6 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       new_version = "1.0.1+#{platform}"
       release_branch_name = "hotfix/#{platform}/1.0.1"
       other_action = double("other_action")
-      options = { some_option: "value" }
       github_token = "github-token"
 
       @client = double("Octokit::Client")
@@ -486,7 +480,7 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(other_action).to receive(:last_git_commit).and_return({ commit_hash: "abc123" })
 
       result_branch, result_version = Fastlane::Helper::DdgAppleAutomationHelper.prepare_hotfix_branch(
-        github_token, platform, other_action, options
+        github_token, platform, other_action
       )
 
       expect(result_branch).to eq(release_branch_name)

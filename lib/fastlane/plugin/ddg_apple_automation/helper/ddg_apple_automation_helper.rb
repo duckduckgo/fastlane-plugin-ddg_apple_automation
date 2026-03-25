@@ -145,7 +145,7 @@ module Fastlane
         return release_branch_name, new_version, update_embedded_result
       end
 
-      def self.prepare_hotfix_branch(github_token, platform, other_action, options)
+      def self.prepare_hotfix_branch(github_token, platform, other_action)
         latest_public_release = Helper::GitHelper.latest_release(Helper::GitHelper.repo_name, false, platform, github_token)
         version = latest_public_release.tag_name
         Helper::GitHubActionsHelper.set_output("last_release", version)
@@ -160,7 +160,6 @@ module Fastlane
           update_version_config(new_version, other_action)
         end
         other_action.push_to_git_remote
-        increment_build_number(platform, options, other_action) if platform == "macos"
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
         commit_sha = other_action.last_git_commit[:commit_hash]
         Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
