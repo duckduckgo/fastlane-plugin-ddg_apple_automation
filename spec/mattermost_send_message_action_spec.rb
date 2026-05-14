@@ -105,6 +105,37 @@ describe Fastlane::Actions::MattermostSendMessageAction do
       })).to eq(expected)
     end
 
+    it "processes notarized-build-complete template with an empty dmg_url" do
+      expected = "Notarized macOS app `release` build is ready :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com)"
+
+      expect(process_template("notarized-build-complete", {
+        "release_type" => "release",
+        "workflow_url" => "https://workflow.com",
+        "dmg_url" => ""
+      })).to eq(expected)
+    end
+
+    it "processes notarized-build-complete template with DMG URL" do
+      expected = "Notarized macOS app `release` build is ready :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com) | [:package: DMG](https://example.com/duckduckgo.dmg)"
+
+      expect(process_template("notarized-build-complete", {
+        "release_type" => "release",
+        "workflow_url" => "https://workflow.com",
+        "dmg_url" => "https://example.com/duckduckgo.dmg"
+      })).to eq(expected)
+    end
+
+    it "processes notarized-build-complete template with DMG URL and Asana task URL" do
+      expected = "Notarized macOS app `release` build is ready :goose_honk_tada: | [:github: Workflow run summary](https://workflow.com) | [:package: DMG](https://example.com/duckduckgo.dmg) | [:asana: Asana Task](https://asana.com)"
+
+      expect(process_template("notarized-build-complete", {
+        "asana_task_url" => "https://asana.com",
+        "release_type" => "release",
+        "workflow_url" => "https://workflow.com",
+        "dmg_url" => "https://example.com/duckduckgo.dmg"
+      })).to eq(expected)
+    end
+
     it "processes notarized-build-failed template" do
       expected = ":rotating_light: Notarized macOS app `release` build failed | [:github: Workflow run summary](https://workflow.com)"
 
