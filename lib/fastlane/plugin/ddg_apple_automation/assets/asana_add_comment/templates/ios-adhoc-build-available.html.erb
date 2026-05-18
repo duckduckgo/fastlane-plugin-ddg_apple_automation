@@ -1,9 +1,10 @@
 <body>
-  <strong><%= defined?(title) && !title.to_s.strip.empty? ? title : "DuckDuckGo iOS" %> <%= app_version %> (<%= build_number %>)</strong>
+  <h2><%= defined?(title) && !title.to_s.strip.empty? ? title : "DuckDuckGo iOS" %> <%= app_version %> (<%= build_number %>) ready ✅</h2>
   <ul>
-<% if defined?(install_url) && !install_url.to_s.strip.empty? %>    <li><a href='<%= install_url %>'>Install on iPhone</a> - open in Safari</li>
-<% end %>    <li><a href='<%= ipa_url %>'>Download IPA</a></li>
-    <li><a href='<%= dsym_url %>'>Download dSYM</a></li>
-    <li><a href='<%= workflow_url %>'>Workflow run</a></li>
+<% if defined?(install_url) && !install_url.to_s.strip.empty? %>    <li>📲 <a href='<%= install_url %>'>Install on iPhone</a>.</li>
+<% end %>    <li>📦 <a href='<%= ipa_url %>'>Download IPA</a>.</li>
+    <li>🧩 <a href='<%= dsym_url %>'>Download dSYM</a>.</li>
   </ul>
+  <br>
+  🔗 <a href='<%= workflow_url %>'>Workflow run</a>.
 </body>
