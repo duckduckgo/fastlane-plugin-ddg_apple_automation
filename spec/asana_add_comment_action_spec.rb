@@ -171,6 +171,51 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       })).to eq(expected.chomp)
     end
 
+    it "processes ios-adhoc-build-available template" do
+      expected = <<~EXPECTED
+        <body>
+          <strong>DuckDuckGo Alpha 1.0.0 (123)</strong>
+          <ul>
+            <li><a href='https://cdn.com/build.install.html'>Install on iPhone</a> - open in Safari</li>
+            <li><a href='https://cdn.com/build.ipa'>Download IPA</a></li>
+            <li><a href='https://cdn.com/build.dSYM.zip'>Download dSYM</a></li>
+            <li><a href='https://workflow.com'>Workflow run</a></li>
+          </ul>
+        </body>
+      EXPECTED
+
+      expect(process_template("ios-adhoc-build-available", {
+        "title" => "DuckDuckGo Alpha",
+        "app_version" => "1.0.0",
+        "build_number" => "123",
+        "install_url" => "https://cdn.com/build.install.html",
+        "ipa_url" => "https://cdn.com/build.ipa",
+        "dsym_url" => "https://cdn.com/build.dSYM.zip",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected)
+    end
+
+    it "processes ios-adhoc-build-available template without install url" do
+      expected = <<~EXPECTED
+        <body>
+          <strong>DuckDuckGo iOS 1.0.0 (123)</strong>
+          <ul>
+            <li><a href='https://cdn.com/build.ipa'>Download IPA</a></li>
+            <li><a href='https://cdn.com/build.dSYM.zip'>Download dSYM</a></li>
+            <li><a href='https://workflow.com'>Workflow run</a></li>
+          </ul>
+        </body>
+      EXPECTED
+
+      expect(process_template("ios-adhoc-build-available", {
+        "app_version" => "1.0.0",
+        "build_number" => "123",
+        "ipa_url" => "https://cdn.com/build.ipa",
+        "dsym_url" => "https://cdn.com/build.dSYM.zip",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected)
+    end
+
     it "processes hotfix-branch-ready template" do
       expected = <<~EXPECTED
         <body>
