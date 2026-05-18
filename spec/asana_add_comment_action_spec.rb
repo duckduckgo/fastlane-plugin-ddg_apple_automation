@@ -192,7 +192,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
         "ipa_url" => "https://cdn.com/build.ipa",
         "dsym_url" => "https://cdn.com/build.dSYM.zip",
         "workflow_url" => "https://workflow.com"
-      })).to eq(expected)
+      })).to eq(expected.chomp)
     end
 
     it "processes ios-adhoc-build-available template without install url" do
@@ -213,7 +213,7 @@ describe Fastlane::Actions::AsanaAddCommentAction do
         "ipa_url" => "https://cdn.com/build.ipa",
         "dsym_url" => "https://cdn.com/build.dSYM.zip",
         "workflow_url" => "https://workflow.com"
-      })).to eq(expected)
+      })).to eq(expected.chomp)
     end
 
     it "processes hotfix-branch-ready template" do
