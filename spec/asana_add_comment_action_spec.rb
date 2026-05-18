@@ -174,13 +174,14 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     it "processes ios-adhoc-build-available template" do
       expected = <<~EXPECTED
         <body>
-          <strong>DuckDuckGo Alpha 1.0.0 (123)</strong>
+          <h2>DuckDuckGo Alpha 1.0.0 (123) ready ✅</h2>
           <ul>
-            <li><a href='https://cdn.com/build.install.html'>Install on iPhone</a> - open in Safari</li>
-            <li><a href='https://cdn.com/build.ipa'>Download IPA</a></li>
-            <li><a href='https://cdn.com/build.dSYM.zip'>Download dSYM</a></li>
-            <li><a href='https://workflow.com'>Workflow run</a></li>
+            <li>📲 <a href='https://cdn.com/build.install.html'>Install on iPhone</a>.</li>
+            <li>📦 <a href='https://cdn.com/build.ipa'>Download IPA</a>.</li>
+            <li>🧩 <a href='https://cdn.com/build.dSYM.zip'>Download dSYM</a>.</li>
           </ul>
+          <br>
+          🔗 <a href='https://workflow.com'>Workflow run</a>.
         </body>
       EXPECTED
 
@@ -198,12 +199,13 @@ describe Fastlane::Actions::AsanaAddCommentAction do
     it "processes ios-adhoc-build-available template without install url" do
       expected = <<~EXPECTED
         <body>
-          <strong>DuckDuckGo iOS 1.0.0 (123)</strong>
+          <h2>DuckDuckGo iOS 1.0.0 (123) ready ✅</h2>
           <ul>
-            <li><a href='https://cdn.com/build.ipa'>Download IPA</a></li>
-            <li><a href='https://cdn.com/build.dSYM.zip'>Download dSYM</a></li>
-            <li><a href='https://workflow.com'>Workflow run</a></li>
+            <li>📦 <a href='https://cdn.com/build.ipa'>Download IPA</a>.</li>
+            <li>🧩 <a href='https://cdn.com/build.dSYM.zip'>Download dSYM</a>.</li>
           </ul>
+          <br>
+          🔗 <a href='https://workflow.com'>Workflow run</a>.
         </body>
       EXPECTED
 
