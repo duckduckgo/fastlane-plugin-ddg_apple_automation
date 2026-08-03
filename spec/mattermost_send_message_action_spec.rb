@@ -58,6 +58,40 @@ describe Fastlane::Actions::MattermostSendMessageAction do
   end
 
   describe "process_template" do
+    it "processes ios-adhoc-build-complete template" do
+      expected = "iOS ad-hoc build for commit [`0123456789abcdef`](https://github.com/duckduckgo/apple-browsers/commit/0123456789abcdef) is ready :goose_honk_tada: | [:iphone: Install on iPhone](https://cdn.com/build.install.html) | [:package: IPA](https://cdn.com/build.ipa) | [:github: Workflow run summary](https://workflow.com)\n"
+
+      expect(process_template("ios-adhoc-build-complete", {
+        "commit_sha" => "0123456789abcdef",
+        "commit_url" => "https://github.com/duckduckgo/apple-browsers/commit/0123456789abcdef",
+        "install_url" => "https://cdn.com/build.install.html",
+        "ipa_url" => "https://cdn.com/build.ipa",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected)
+    end
+
+    it "processes ios-adhoc-build-complete template without an install URL" do
+      expected = "iOS ad-hoc build for commit [`0123456789abcdef`](https://github.com/duckduckgo/apple-browsers/commit/0123456789abcdef) is ready :goose_honk_tada: | [:package: IPA](https://cdn.com/build.ipa) | [:github: Workflow run summary](https://workflow.com)\n"
+
+      expect(process_template("ios-adhoc-build-complete", {
+        "commit_sha" => "0123456789abcdef",
+        "commit_url" => "https://github.com/duckduckgo/apple-browsers/commit/0123456789abcdef",
+        "install_url" => "",
+        "ipa_url" => "https://cdn.com/build.ipa",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected)
+    end
+
+    it "processes ios-adhoc-build-failed template" do
+      expected = ":rotating_light: iOS ad-hoc build for commit [`0123456789abcdef`](https://github.com/duckduckgo/apple-browsers/commit/0123456789abcdef) failed | [:github: Workflow run summary](https://workflow.com)\n"
+
+      expect(process_template("ios-adhoc-build-failed", {
+        "commit_sha" => "0123456789abcdef",
+        "commit_url" => "https://github.com/duckduckgo/apple-browsers/commit/0123456789abcdef",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected)
+    end
+
     it "processes ios-release-failed template" do
       expected = ":warning: **iOS release job failed** :thisisfine: | [:github: Workflow run summary](https://workflow.com)"
 
