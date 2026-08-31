@@ -380,7 +380,7 @@ module Fastlane
         end
 
         erb_template = ERB.new(template_content)
-        erb_template.result(ErbTemplateContext.new(args).template_binding)
+        erb_template.result(ErbTemplateContext.binding_for(args))
       end
 
       def self.compute_tag(is_prerelease, platform)

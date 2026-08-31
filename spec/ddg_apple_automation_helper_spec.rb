@@ -28,6 +28,34 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(process_erb_template("template.erb", { "title" => "given" })).to eq("given")
     end
 
+    it "handles arguments named after methods of the rendering context" do
+      # Actions merge the whole environment into the template arguments, so an environment
+      # variable can be named after anything. See ErbTemplateContext.
+      template = "<h1>Hello, <%= x %>!</h1>"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(template)
+      %w[template_binding define_singleton_method singleton_class send format].each do |name|
+        expect(process_erb_template("template.erb", { 'x' => "World", name => "env value" }))
+          .to eq("<h1>Hello, World!</h1>")
+      end
+    end
+
+    it "handles argument names that are not valid Ruby identifiers" do
+      template = "<h1>Hello, <%= x %>!</h1>"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(template)
+      expect(process_erb_template("template.erb", { 'x' => "World", 'bash_func_foo%%' => "()" }))
+        .to eq("<h1>Hello, World!</h1>")
+    end
+
+    it "expands environment variables" do
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file)
+        .and_return('<%= ENV.fetch("DDG_TEMPLATE_SPEC", "fallback") %>')
+      expect(process_erb_template("template.erb", {})).to eq("fallback")
+      ENV["DDG_TEMPLATE_SPEC"] = "from env"
+      expect(process_erb_template("template.erb", {})).to eq("from env")
+    ensure
+      ENV.delete("DDG_TEMPLATE_SPEC")
+    end
+
     it "shows error if provided template file does not exist" do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(nil)
       allow(Fastlane::UI).to receive(:user_error!)
