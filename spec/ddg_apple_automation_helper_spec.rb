@@ -12,6 +12,22 @@ describe Fastlane::Helper::DdgAppleAutomationHelper do
       expect(process_erb_template("template.erb", { 'x' => "World" })).to eq("<h1>Hello, World!</h1>")
     end
 
+    it "supports symbol keys" do
+      template = "<h1>Hello, <%= x %>!</h1>"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(template)
+      expect(process_erb_template("template.erb", { x: "World" })).to eq("<h1>Hello, World!</h1>")
+    end
+
+    it "does not let a top-level local variable satisfy a defined? guard" do
+      # RVM's ruby_executable_hooks wrapper sets a top-level `title` local variable, which used to
+      # leak into templates rendered with ERB#result_with_hash. See ErbTemplateContext.
+      TOPLEVEL_BINDING.eval("title = 'leaked from the ruby wrapper'")
+      template = "<%= defined?(title) ? title : 'default' %>"
+      allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(template)
+      expect(process_erb_template("template.erb", {})).to eq("default")
+      expect(process_erb_template("template.erb", { "title" => "given" })).to eq("given")
+    end
+
     it "shows error if provided template file does not exist" do
       allow(Fastlane::Helper::DdgAppleAutomationHelper).to receive(:load_file).and_return(nil)
       allow(Fastlane::UI).to receive(:user_error!)
