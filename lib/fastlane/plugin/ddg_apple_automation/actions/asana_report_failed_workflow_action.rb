@@ -23,13 +23,19 @@ module Fastlane
         unless commit_sha.empty?
           args[:last_commit_url] = "https://github.com/#{Helper::GitHelper.repo_name}/commit/#{commit_sha}"
           commit_author = Helper::GitHelper.commit_author(Helper::GitHelper.repo_name, commit_sha, params[:github_token])
-          args[:last_commit_author_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(commit_author)
-          extra_collaborators << args[:last_commit_author_id]
+          last_commit_author_id = Helper::AsanaHelper.get_asana_user_id_for_github_handle(commit_author)
+          if last_commit_author_id
+            args[:last_commit_author_id] = last_commit_author_id
+            extra_collaborators << args[:last_commit_author_id]
+          end
         end
 
         unless params[:is_scheduled_release]
-          args[:workflow_actor_id] = Helper::AsanaHelper.get_asana_user_id_for_github_handle(params[:github_handle])
-          extra_collaborators << args[:workflow_actor_id]
+          workflow_actor_id = Helper::AsanaHelper.get_asana_user_id_for_github_handle(params[:github_handle])
+          if workflow_actor_id
+            args[:workflow_actor_id] = workflow_actor_id
+            extra_collaborators << args[:workflow_actor_id]
+          end
         end
 
         extra_collaborators.uniq!

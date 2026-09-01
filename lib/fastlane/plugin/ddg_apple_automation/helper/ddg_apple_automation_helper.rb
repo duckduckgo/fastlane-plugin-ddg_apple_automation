@@ -6,6 +6,7 @@ require "semantic"
 require_relative "github_actions_helper"
 require_relative "git_helper"
 require_relative "embedded_files_helper"
+require_relative "erb_template_context"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -379,7 +380,7 @@ module Fastlane
         end
 
         erb_template = ERB.new(template_content)
-        erb_template.result_with_hash(args)
+        erb_template.result(ErbTemplateContext.binding_for(args))
       end
 
       def self.compute_tag(is_prerelease, platform)
