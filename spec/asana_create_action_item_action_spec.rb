@@ -567,7 +567,8 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           <h1>Build 1.1.0 has been released internally via Sparkle 🎉</h1>
           Please verify that "Check for Updates" works correctly:
           <ol>
-            <li>Launch a version of the app with an older version number. If you're already on this version it means updates work.</li>
+            <li>Launch the DMG release build of the app. If you don't have it installed, download it from duckduckgo.com.</li>
+            <li>If it's already on 1.1.0, it has updated itself, so you can mark this task complete. Otherwise, continue below.</li>
             <li>Identify as an internal user in the app.</li>
             <li>Go to Main Menu → DuckDuckGo → Check for Updates...</li>
             <li>Verify that you're being offered to update to 1.1.0.</li>
