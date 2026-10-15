@@ -177,7 +177,14 @@ describe Fastlane::Actions::TagReleaseAction do
         it "merges branch to base branch" do
           subject
           expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
-            .with("duckduckgo/apple-browsers", @branch, "base_branch", @params[:github_token])
+            .with("duckduckgo/apple-browsers", @branch, "base_branch", @params[:github_token], merge_strategy: nil)
+        end
+
+        it "passes the optional ort strategy when merging the public release branch" do
+          @params[:merge_strategy] = "ort"
+          subject
+          expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
+            .with("duckduckgo/apple-browsers", @branch, "base_branch", @params[:github_token], merge_strategy: "ort")
         end
 
         context "when merge fails" do
@@ -490,14 +497,21 @@ describe Fastlane::Actions::TagReleaseAction do
           it "merges tag to base branch" do
             subject
             expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
-              .with(platform_context[:repo_name], @params[:tag], @params[:base_branch], @params[:github_token])
+              .with(platform_context[:repo_name], @params[:tag], @params[:base_branch], @params[:github_token], merge_strategy: nil)
+          end
+
+          it "passes the optional ort strategy when merging the internal release tag" do
+            @params[:merge_strategy] = "ort"
+            subject
+            expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
+              .with(platform_context[:repo_name], @params[:tag], @params[:base_branch], @params[:github_token], merge_strategy: "ort")
           end
 
           it "uses elevated permissions GitHub token if provided" do
             @params[:github_elevated_permissions_token] = "elevated-permissions-token"
             subject
             expect(Fastlane::Helper::GitHelper).to have_received(:merge_branch)
-              .with(platform_context[:repo_name], @params[:tag], @params[:base_branch], @params[:github_elevated_permissions_token])
+              .with(platform_context[:repo_name], @params[:tag], @params[:base_branch], @params[:github_elevated_permissions_token], merge_strategy: nil)
           end
         end
 
