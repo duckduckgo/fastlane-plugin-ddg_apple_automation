@@ -28,7 +28,7 @@ describe Fastlane::Helper::LocalGitMergeHelper do
       'GIT_AUTHOR_NAME' => 'Test', 'GIT_AUTHOR_EMAIL' => 'test@example.com',
       'GIT_COMMITTER_NAME' => 'Test', 'GIT_COMMITTER_EMAIL' => 'test@example.com'
     }
-    @root = Dir.mktmpdir('ort-spec-', ENV['KAINBAN_FILES_DIR'])
+    @root = Dir.mktmpdir('ort-spec-', ENV.fetch('KAINBAN_FILES_DIR', nil))
     @remote = File.join(@root, 'remote')
     FileUtils.mkdir_p(@remote)
     fixture_git('init', '--quiet')
@@ -148,7 +148,8 @@ describe Fastlane::Helper::LocalGitMergeHelper do
     environment = helper.send(:git_environment, token)
     authorization = environment.fetch('GIT_CONFIG_VALUE_1').split.last
     status = double(success?: false)
-    allow(Open3).to receive(:capture3).with(environment, 'git', '-C', @remote, 'fetch', 'remote', 'source')
+    allow(Open3).to receive(:capture3)
+      .with(environment, 'git', '-C', @remote, 'fetch', 'remote', 'source')
       .and_return(['', "rejected #{token} #{authorization}", status])
 
     expect { helper.send(:git, @remote, environment, 'fetch', 'remote', 'source') }

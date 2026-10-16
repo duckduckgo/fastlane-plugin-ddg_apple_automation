@@ -9,10 +9,11 @@ module Fastlane
         unless repo_name.match?(%r{\A[\w.-]+/[\w.-]+\z})
           raise "Invalid GitHub repository: #{repo_name}"
         end
+
         remote = "https://github.com/#{repo_name}.git"
         environment = git_environment(github_token)
 
-        Dir.mktmpdir("release-merge-", ENV['KAINBAN_FILES_DIR']) do |directory|
+        Dir.mktmpdir("release-merge-", ENV.fetch('KAINBAN_FILES_DIR', nil)) do |directory|
           git(directory, environment, "init", "--quiet")
           git(directory, environment, "check-ref-format", "refs/heads/#{base_branch}")
           git(directory, environment, "check-ref-format", "refs/heads/#{source}")
@@ -22,7 +23,7 @@ module Fastlane
           source_sha = git(directory, environment, "rev-parse", "FETCH_HEAD^{commit}").strip
           base_sha = git(directory, environment, "rev-parse", "HEAD").strip
           git(directory, environment, "merge", "--strategy=ort", "--no-ff", "--no-edit", source_sha)
-          return if git(directory, environment, "rev-parse", "HEAD").strip == base_sha
+          next if git(directory, environment, "rev-parse", "HEAD").strip == base_sha
 
           begin
             git(directory, environment, "push", remote, "HEAD:refs/heads/#{base_branch}")
