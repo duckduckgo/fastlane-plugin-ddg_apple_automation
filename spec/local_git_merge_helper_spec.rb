@@ -144,6 +144,7 @@ describe Fastlane::Helper::LocalGitMergeHelper do
   end
 
   it 'keeps credentials out of command arguments, repository configuration and errors' do
+    allow(helper).to receive(:git).and_call_original
     environment = helper.send(:git_environment, token)
     authorization = environment.fetch('GIT_CONFIG_VALUE_1').split.last
     status = double(success?: false)
