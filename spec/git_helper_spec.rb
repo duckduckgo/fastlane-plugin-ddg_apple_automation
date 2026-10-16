@@ -15,58 +15,24 @@ describe Fastlane::Helper::GitHelper do
   end
 
   describe "#merge_branch" do
-    subject { Fastlane::Helper::GitHelper.merge_branch(repo_name, branch, base_branch, github_token) }
+    subject { described_class.merge_branch(repo_name, branch, base_branch, github_token) }
 
     include_context "common setup"
 
-    context "when merge is successful" do
-      before do
-        allow(client).to receive(:merge)
-      end
-
-      it "reports success" do
-        expect { subject }.not_to raise_error
-
-        expect(client).to have_received(:merge).with(repo_name, base_branch, branch)
-        expect(Fastlane::UI).to have_received(:success).with("Merged #{branch} branch to #{base_branch}")
-      end
-    end
-
-    context "when merge fails" do
-      before do
-        allow(client).to receive(:merge).and_raise(StandardError)
-      end
-
-      it "shows error" do
-        expect { subject }.to raise_error(StandardError)
-
-        expect(client).to have_received(:merge).with(repo_name, base_branch, branch)
-        expect(Fastlane::UI).to have_received(:important).with("Failed to merge #{branch} branch to #{base_branch}: StandardError")
-      end
-    end
-  end
-
-  describe "#merge_branch with a strategy" do
-    include_context "common setup"
-
-    it "delegates ort merges without calling the GitHub merge API" do
+    it "merges locally and reports success without calling the GitHub merge API" do
       expect(Fastlane::Helper::LocalGitMergeHelper).to receive(:merge).with(repo_name, branch, base_branch, github_token)
       expect(client).not_to receive(:merge)
 
-      described_class.merge_branch(repo_name, branch, base_branch, github_token, merge_strategy: "ort")
+      subject
+
       expect(Fastlane::UI).to have_received(:success).with("Merged #{branch} branch to #{base_branch}")
     end
 
     it "preserves merge failure reporting" do
       allow(Fastlane::Helper::LocalGitMergeHelper).to receive(:merge).and_raise("merge conflict")
 
-      expect { described_class.merge_branch(repo_name, branch, base_branch, github_token, merge_strategy: "ort") }.to raise_error("merge conflict")
+      expect { subject }.to raise_error("merge conflict")
       expect(Fastlane::UI).to have_received(:important).with("Failed to merge #{branch} branch to #{base_branch}: merge conflict")
-    end
-
-    it "rejects unsupported strategies" do
-      expect(client).not_to receive(:merge)
-      expect { described_class.merge_branch(repo_name, branch, base_branch, github_token, merge_strategy: "recursive") }.to raise_error(/Unsupported merge strategy/)
     end
   end
 

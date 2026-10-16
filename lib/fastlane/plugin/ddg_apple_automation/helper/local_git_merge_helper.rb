@@ -13,7 +13,7 @@ module Fastlane
         remote = "https://github.com/#{repo_name}.git"
         environment = git_environment(github_token)
 
-        Dir.mktmpdir("release-merge-", ENV.fetch('KAINBAN_FILES_DIR', nil)) do |directory|
+        Dir.mktmpdir("release-merge-") do |directory|
           git(directory, environment, "init", "--quiet")
           git(directory, environment, "check-ref-format", "refs/heads/#{base_branch}")
           git(directory, environment, "check-ref-format", "refs/heads/#{source}")

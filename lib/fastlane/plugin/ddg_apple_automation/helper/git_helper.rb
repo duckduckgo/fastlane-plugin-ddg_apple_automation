@@ -33,15 +33,8 @@ module Fastlane
         allowed_branches.any? { |allowed_branch| allowed_branch.match?(branch) }
       end
 
-      def self.merge_branch(repo_name, branch, base_branch, github_token, merge_strategy: nil)
-        if merge_strategy.nil?
-          client = Octokit::Client.new(access_token: github_token)
-          client.merge(repo_name, base_branch, branch)
-        elsif merge_strategy == "ort"
-          LocalGitMergeHelper.merge(repo_name, branch, base_branch, github_token)
-        else
-          UI.user_error!("Unsupported merge strategy: #{merge_strategy}. Expected ort.")
-        end
+      def self.merge_branch(repo_name, branch, base_branch, github_token)
+        LocalGitMergeHelper.merge(repo_name, branch, base_branch, github_token)
         UI.success("Merged #{branch} branch to #{base_branch}")
       rescue StandardError => e
         UI.important("Failed to merge #{branch} branch to #{base_branch}: #{e}")

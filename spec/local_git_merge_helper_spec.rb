@@ -28,7 +28,7 @@ describe Fastlane::Helper::LocalGitMergeHelper do
       'GIT_AUTHOR_NAME' => 'Test', 'GIT_AUTHOR_EMAIL' => 'test@example.com',
       'GIT_COMMITTER_NAME' => 'Test', 'GIT_COMMITTER_EMAIL' => 'test@example.com'
     }
-    @root = Dir.mktmpdir('ort-spec-', ENV.fetch('KAINBAN_FILES_DIR', nil))
+    @root = Dir.mktmpdir('ort-spec-')
     @remote = File.join(@root, 'remote')
     FileUtils.mkdir_p(@remote)
     fixture_git('init', '--quiet')

@@ -64,7 +64,7 @@ module Fastlane
             branch = other_action.git_branch
             # merge the branch (not the tag) to the base branch first to have untagged commits in the base branch
             UI.important("Merging branch before deleting to have untagged commits in the base branch")
-            Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token], merge_strategy: params[:merge_strategy])
+            Helper::GitHelper.merge_branch(@constants[:repo_name], branch, params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
           rescue StandardError => e
             report_merge_release_branch_before_deleting_failed(params.values.merge(branch: branch))
             UI.important("Merging release branch to base branch failed. Cannot proceed with the public release. Please merge manually and run the workflow again.")
@@ -178,7 +178,7 @@ module Fastlane
       def self.merge_or_delete_branch(params)
         if params[:is_prerelease]
           # we actually merge the tag, not the branch
-          Helper::GitHelper.merge_branch(@constants[:repo_name], params[:tag], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token], merge_strategy: params[:merge_strategy])
+          Helper::GitHelper.merge_branch(@constants[:repo_name], params[:tag], params[:base_branch], params[:github_elevated_permissions_token] || params[:github_token])
         else
           branch = other_action.git_branch
           Helper::GitHelper.delete_branch(@constants[:repo_name], branch, params[:github_elevated_permissions_token] || params[:github_token])
@@ -315,13 +315,6 @@ module Fastlane
                                        optional: true,
                                        type: String,
                                        default_value: "main"),
-          FastlaneCore::ConfigItem.new(key: :merge_strategy,
-                                       description: "Use local Git ort merges instead of the GitHub merge API",
-                                       optional: true,
-                                       type: String,
-                                       verify_block: proc do |value|
-                                         UI.user_error!("Unsupported merge strategy: #{value}. Expected ort.") unless value == "ort"
-                                       end),
           FastlaneCore::ConfigItem.new(key: :github_handle,
                                        description: "Github user handle",
                                        optional: true,
