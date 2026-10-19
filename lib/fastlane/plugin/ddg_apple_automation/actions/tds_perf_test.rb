@@ -15,7 +15,7 @@ module Fastlane
         ut_file_name: "ios-tds.json",
         ut_url: "https://staticcdn.duckduckgo.com/trackerblocking/v5/current/",
         ref_file_name: "trackerData.json",
-        ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/iOS/Core/"
+        ref_url: "https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/iOS/Core/ContentBlocker/Domain/"
       }.freeze
 
       MAC_TEST_PARAMS = {
@@ -31,7 +31,7 @@ module Fastlane
 
         # Determine platform and set default parameters if needed
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        default_params = platform == :ios ? IOS_TEST_PARAMS : MAC_TEST_PARAMS
+        default_params = platform.to_s == "ios" ? IOS_TEST_PARAMS : MAC_TEST_PARAMS
 
         # Use provided parameters or defaults
         ut_file_name = params[:ut_file_name] || default_params[:ut_file_name]

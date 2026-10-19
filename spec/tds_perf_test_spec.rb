@@ -103,6 +103,50 @@ describe Fastlane::Actions::TdsPerfTestAction do
     end
   end
 
+  describe 'default parameters' do
+    let(:ios_ref_url) { 'https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/iOS/Core/ContentBlocker/Domain/' }
+    let(:macos_ref_url) { 'https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/macOS/DuckDuckGo/ContentBlocker/Resources/' }
+
+    before do
+      allow(Dir).to receive(:chdir).and_yield
+      allow(FileUtils).to receive(:mkdir_p)
+      allow(FileUtils).to receive(:rm_rf)
+      allow(Fastlane::UI).to receive(:message)
+      allow(Fastlane::UI).to receive(:error)
+    end
+
+    def test_command_for(params, lane_platform: nil)
+      commands = []
+      allow(Fastlane::Actions).to receive(:sh) { |command| commands << command }
+      allow(Fastlane::Actions).to receive(:lane_context).and_return({ Fastlane::Actions::SharedValues::PLATFORM_NAME => lane_platform })
+
+      Fastlane::Actions::TdsPerfTestAction.run(params)
+
+      commands.find { |command| command.include?('xcodebuild test-without-building') }
+    end
+
+    it 'uses the iOS files when the platform is passed as a string, as the release workflows do' do
+      command = test_command_for({ platform: 'ios' })
+
+      expect(command).to include('TEST_RUNNER_TDS_UT_FILE_NAME=ios-tds.json')
+      expect(command).to include("TEST_RUNNER_TDS_REF_URL=#{ios_ref_url}")
+    end
+
+    it 'uses the iOS files when the platform comes from the lane context' do
+      command = test_command_for({}, lane_platform: :ios)
+
+      expect(command).to include('TEST_RUNNER_TDS_UT_FILE_NAME=ios-tds.json')
+      expect(command).to include("TEST_RUNNER_TDS_REF_URL=#{ios_ref_url}")
+    end
+
+    it 'uses the macOS files for macOS' do
+      command = test_command_for({ platform: 'macos' })
+
+      expect(command).to include('TEST_RUNNER_TDS_UT_FILE_NAME=macos-tds.json')
+      expect(command).to include("TEST_RUNNER_TDS_REF_URL=#{macos_ref_url}")
+    end
+  end
+
   # Rest of the tests remain the same
   describe '#available_options' do
     it 'includes all required parameters' do
