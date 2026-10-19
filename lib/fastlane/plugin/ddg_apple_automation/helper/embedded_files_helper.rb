@@ -13,10 +13,10 @@ module Fastlane
     class EmbeddedFilesHelper
       UPGRADABLE_EMBEDDED_FILES = {
           "ios" => Set.new([
-                             'Core/AppPrivacyConfigurationDataProvider.swift',
-                             'Core/AppTrackerDataSetProvider.swift',
-                             'Core/ios-config.json',
-                             'Core/trackerData.json'
+                             'Core/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
+                             'Core/ContentBlocker/AppTrackerDataSetProvider.swift',
+                             'Core/ContentBlocker/PrivacyConfiguration/ios-config.json',
+                             'Core/ContentBlocker/Domain/trackerData.json'
                            ]),
           "macos" => Set.new([
                                'DuckDuckGo/ContentBlocker/AppPrivacyConfigurationDataProvider.swift',
