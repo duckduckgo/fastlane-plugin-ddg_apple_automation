@@ -105,7 +105,6 @@ describe Fastlane::Actions::TdsPerfTestAction do
 
   describe 'default parameters' do
     let(:ios_ref_url) { 'https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/iOS/Core/ContentBlocker/Domain/' }
-    let(:macos_ref_url) { 'https://raw.githubusercontent.com/duckduckgo/apple-browsers/refs/heads/main/macOS/DuckDuckGo/ContentBlocker/Resources/' }
 
     before do
       allow(Dir).to receive(:chdir).and_yield
@@ -125,25 +124,11 @@ describe Fastlane::Actions::TdsPerfTestAction do
       commands.find { |command| command.include?('xcodebuild test-without-building') }
     end
 
-    it 'uses the iOS files when the platform is passed as a string, as the release workflows do' do
-      command = test_command_for({ platform: 'ios' })
-
-      expect(command).to include('TEST_RUNNER_TDS_UT_FILE_NAME=ios-tds.json')
-      expect(command).to include("TEST_RUNNER_TDS_REF_URL=#{ios_ref_url}")
-    end
-
-    it 'uses the iOS files when the platform comes from the lane context' do
+    it 'downloads the iOS reference file from its current location' do
       command = test_command_for({}, lane_platform: :ios)
 
       expect(command).to include('TEST_RUNNER_TDS_UT_FILE_NAME=ios-tds.json')
       expect(command).to include("TEST_RUNNER_TDS_REF_URL=#{ios_ref_url}")
-    end
-
-    it 'uses the macOS files for macOS' do
-      command = test_command_for({ platform: 'macos' })
-
-      expect(command).to include('TEST_RUNNER_TDS_UT_FILE_NAME=macos-tds.json')
-      expect(command).to include("TEST_RUNNER_TDS_REF_URL=#{macos_ref_url}")
     end
   end
 

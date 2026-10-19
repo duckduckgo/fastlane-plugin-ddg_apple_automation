@@ -31,7 +31,7 @@ module Fastlane
 
         # Determine platform and set default parameters if needed
         platform = params[:platform] || Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
-        default_params = platform.to_s == "ios" ? IOS_TEST_PARAMS : MAC_TEST_PARAMS
+        default_params = platform == :ios ? IOS_TEST_PARAMS : MAC_TEST_PARAMS
 
         # Use provided parameters or defaults
         ut_file_name = params[:ut_file_name] || default_params[:ut_file_name]
