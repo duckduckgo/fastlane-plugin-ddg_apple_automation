@@ -25,6 +25,10 @@ module Fastlane
       VERSION_CONFIG_DEFINITION = 'MARKETING_VERSION'
       BUILD_NUMBER_CONFIG_DEFINITION = 'CURRENT_PROJECT_VERSION'
 
+      # Release and hotfix branches are pushed with a token that triggers workflows, unlike GITHUB_TOKEN.
+      # GitHub doesn't start push workflows when the last pushed commit contains this marker.
+      SKIP_CI_MARKER = '[skip ci]'
+
       def self.release_branch_name(platform, version)
         "#{RELEASE_BRANCH}/#{platform}/#{version}"
       end
@@ -132,12 +136,13 @@ module Fastlane
         update_embedded_result = update_embedded_files(platform, other_action)
         if platform == "ios"
           # Any time we prepare a release branch for iOS the the build number should be reset to 0
-          update_version_and_build_number_config(new_version, 0, other_action)
-          update_root_plist_version(new_version, other_action)
+          update_version_and_build_number_config(new_version, 0, other_action, skip_ci: true)
+          update_root_plist_version(new_version, other_action, skip_ci: true)
         else
-          update_version_config(new_version, other_action)
+          update_version_config(new_version, other_action, skip_ci: true)
         end
-        other_action.push_to_git_remote
+        # Creates the release branch on GitHub together with its commits
+        other_action.push_to_git_remote(set_upstream: true)
         release_branch_name = release_branch_name(platform, new_version)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
         commit_sha = other_action.last_git_commit[:commit_hash]
@@ -155,12 +160,13 @@ module Fastlane
         new_version = validate_hotfix_version(source_version)
         release_branch_name = create_hotfix_branch(platform, source_version, new_version)
         if platform == "ios"
-          update_version_and_build_number_config(new_version, 0, other_action)
-          update_root_plist_version(new_version, other_action)
+          update_version_and_build_number_config(new_version, 0, other_action, skip_ci: true)
+          update_root_plist_version(new_version, other_action, skip_ci: true)
         else
-          update_version_config(new_version, other_action)
+          update_version_config(new_version, other_action, skip_ci: true)
         end
-        other_action.push_to_git_remote
+        # Creates the hotfix branch on GitHub together with its commits
+        other_action.push_to_git_remote(set_upstream: true)
         Helper::GitHubActionsHelper.set_output("release_branch_name", release_branch_name)
         commit_sha = other_action.last_git_commit[:commit_hash]
         Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
@@ -175,8 +181,8 @@ module Fastlane
         existing_branch = Actions.sh("git", "branch", "--list", branch_name).strip
         UI.abort_with_message!("Branch #{branch_name} already exists in this repository. Aborting.") unless existing_branch.empty?
         Actions.sh("git", "fetch", "--tags")
+        # Create the branch locally. It's pushed once the version commits are in place, so that the push ends with a commit marked with SKIP_CI_MARKER.
         Actions.sh("git", "checkout", "-b", branch_name, source_version)
-        Actions.sh("git", "push", "-u", "origin", branch_name)
         branch_name
       end
 
@@ -212,9 +218,8 @@ module Fastlane
           'git', 'branch', '--list', release_branch
         ).empty?
 
-        # Create the branch and push
+        # Create the branch locally. It's pushed once the version commits are in place, so that the push ends with a commit marked with SKIP_CI_MARKER.
         Actions.sh('git', 'checkout', '-b', release_branch)
-        Actions.sh('git', 'push', '-u', 'origin', release_branch)
       end
 
       def self.update_embedded_files(platform, other_action)
@@ -233,7 +238,7 @@ module Fastlane
           UI.abort_with_message!('Aborted by user.')
         end
 
-        update_version_and_build_number_config(current_version, build_number, other_action)
+        update_version_and_build_number_config(current_version, build_number, other_action, skip_ci: true)
         other_action.push_to_git_remote
         commit_sha = other_action.last_git_commit[:commit_hash]
         Helper::GitHubActionsHelper.set_output("commit_sha", commit_sha)
@@ -343,15 +348,15 @@ module Fastlane
         end
       end
 
-      def self.update_version_config(version, other_action)
+      def self.update_version_config(version, other_action, skip_ci: false)
         File.write(VERSION_CONFIG_PATH, "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
         other_action.git_commit(
           path: VERSION_CONFIG_PATH,
-          message: "Set marketing version to #{version}"
+          message: commit_message("Set marketing version to #{version}", skip_ci: skip_ci)
         )
       end
 
-      def self.update_version_and_build_number_config(version, build_number, other_action)
+      def self.update_version_and_build_number_config(version, build_number, other_action, skip_ci: false)
         File.write(VERSION_CONFIG_PATH, "#{VERSION_CONFIG_DEFINITION} = #{version}\n")
         File.write(BUILD_NUMBER_CONFIG_PATH, "#{BUILD_NUMBER_CONFIG_DEFINITION} = #{build_number}\n")
         other_action.git_commit(
@@ -359,17 +364,21 @@ module Fastlane
             VERSION_CONFIG_PATH,
             BUILD_NUMBER_CONFIG_PATH
           ],
-          message: "Bump version to #{version} (#{build_number})"
+          message: commit_message("Bump version to #{version} (#{build_number})", skip_ci: skip_ci)
         )
       end
 
-      def self.update_root_plist_version(version, other_action)
+      def self.update_root_plist_version(version, other_action, skip_ci: false)
         Actions.sh("/usr/libexec/PlistBuddy -c \"Set :PreferenceSpecifiers:0:DefaultValue #{version}\" #{ROOT_PLIST}")
         other_action.git_commit(
           path: ROOT_PLIST,
-          message: "Update Root.plist version to #{version}"
+          message: commit_message("Update Root.plist version to #{version}", skip_ci: skip_ci)
         )
         UI.message("Updated Root.plist version to #{version}")
+      end
+
+      def self.commit_message(message, skip_ci: false)
+        skip_ci ? "#{message} #{SKIP_CI_MARKER}" : message
       end
 
       def self.process_erb_template(erb_file_path, args)
