@@ -1,6 +1,7 @@
 require "fastlane/action"
 require "fastlane_core/ui/ui"
 require "octokit"
+require_relative "local_git_merge_helper"
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?(:UI)
@@ -33,14 +34,11 @@ module Fastlane
       end
 
       def self.merge_branch(repo_name, branch, base_branch, github_token)
-        client = Octokit::Client.new(access_token: github_token)
-        begin
-          client.merge(repo_name, base_branch, branch)
-          UI.success("Merged #{branch} branch to #{base_branch}")
-        rescue StandardError => e
-          UI.important("Failed to merge #{branch} branch to #{base_branch}: #{e}")
-          raise e
-        end
+        LocalGitMergeHelper.merge(repo_name, branch, base_branch, github_token)
+        UI.success("Merged #{branch} branch to #{base_branch}")
+      rescue StandardError => e
+        UI.important("Failed to merge #{branch} branch to #{base_branch}: #{e}")
+        raise e
       end
 
       def self.delete_branch(repo_name, branch, github_token)
