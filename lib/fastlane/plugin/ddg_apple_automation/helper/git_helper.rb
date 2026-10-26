@@ -149,7 +149,7 @@ module Fastlane
           end
 
           return matching_release if matching_release
-          break if releases.size < page_size
+          break unless client.last_response.rels[:next]
 
           current_page += 1
         end
@@ -197,7 +197,7 @@ module Fastlane
           end
 
           return matching_release if matching_release
-          break if releases.size < page_size
+          break unless client.last_response.rels[:next]
 
           current_page += 1
         end

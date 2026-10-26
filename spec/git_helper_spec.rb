@@ -8,6 +8,7 @@ describe Fastlane::Helper::GitHelper do
   shared_context "common setup" do
     before do
       allow(Octokit::Client).to receive(:new).and_return(client)
+      allow(client).to receive(:last_response).and_return(double(rels: {}))
       allow(Fastlane::UI).to receive(:message)
       allow(Fastlane::UI).to receive(:success)
       allow(Fastlane::UI).to receive(:important)
@@ -317,6 +318,24 @@ describe Fastlane::Helper::GitHelper do
         end
       end
     end
+
+    context "when the matching release is on a later page and an earlier page is not full" do
+      let(:platform) { "macos" }
+      let(:prerelease) { false }
+
+      before do
+        page1 = Array.new(24) { double(tag_name: "1.1.0-2+macos", prerelease: true) }
+        allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 1).and_return(page1)
+        allow(client).to receive(:releases).with(repo_name, per_page: 25, page: 2).and_return(
+          [double(tag_name: "1.0.0+macos", prerelease: false)]
+        )
+        allow(client).to receive(:last_response).and_return(double(rels: { next: double }), double(rels: {}))
+      end
+
+      it "follows the next page link" do
+        expect(subject.tag_name).to eq("1.0.0+macos")
+      end
+    end
   end
 
   describe "#find_latest_public_release_tag" do
@@ -413,6 +432,7 @@ describe Fastlane::Helper::GitHelper do
         allow(client).to receive(:releases)
           .with(repo_name, per_page: 25, page: 2)
           .and_return([double(tag_name: "1.0.0-5+macos", prerelease: true)])
+        allow(client).to receive(:last_response).and_return(double(rels: { next: double }), double(rels: {}))
       end
 
       it "returns the matching release from the later page" do
