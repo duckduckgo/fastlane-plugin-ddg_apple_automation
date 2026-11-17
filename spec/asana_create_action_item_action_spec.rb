@@ -319,7 +319,8 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           Failed to tag the release with <code>1.1.0-123</code> tag.<br>
           Please follow instructions below to tag the branch, make GitHub release and merge release branch to <code>main</code> manually.<br>
           <br>
-          First, add your GitHub username to the Main Branch ruleset bypass list. Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.
+          <b>‼️ Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.</b><br>
+          First, add your GitHub username to the Main Branch ruleset bypass list:
           <ul>
             <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
             <li>In the 'Bypass list' section, click 'Add bypass', search for your GitHub username and select it</li>
@@ -392,7 +393,8 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           The <code>1.0.0-123</code> release has been successfully tagged and published in GitHub releases,#{' '}
           but merging to <code>main</code> failed. Please resolve conflicts and merge <code>1.0.0-123</code> tag to <code>main</code> manually.<br>
           <br>
-          First, add your GitHub username to the Main Branch ruleset bypass list. Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.
+          <b>‼️ Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.</b><br>
+          First, add your GitHub username to the Main Branch ruleset bypass list:
           <ul>
             <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
             <li>In the 'Bypass list' section, click 'Add bypass', search for your GitHub username and select it</li>
@@ -682,7 +684,8 @@ describe Fastlane::Actions::AsanaCreateActionItemAction do
           You've requested proceeding with public release despite untagged commits on the <code>release/1.0.0</code> branch,#{' '}
           but merging to <code>main</code> failed. Please resolve conflicts and merge <code>release/1.0.0</code> to <code>main</code> manually.<br>
           <br>
-          First, add your GitHub username to the Main Branch ruleset bypass list. Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.
+          <b>‼️ Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.</b><br>
+          First, add your GitHub username to the Main Branch ruleset bypass list:
           <ul>
             <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
             <li>In the 'Bypass list' section, click 'Add bypass', search for your GitHub username and select it</li>

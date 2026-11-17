@@ -4,7 +4,8 @@ html_notes: |
     Failed to tag the release with <code><%= tag %></code> tag.<br>
     Please follow instructions below to tag the branch, make GitHub release and merge release branch to <code><%= base_branch %></code> manually.<br>
     <br>
-    First, add your GitHub username to the Main Branch ruleset bypass list. Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.
+    <b>‼️ Do not disable the ruleset: while it is disabled, queued auto-merge pull requests merge without approval.</b><br>
+    First, add your GitHub username to the Main Branch ruleset bypass list:
     <ul>
       <li>Open the <a href='https://github.com/duckduckgo/apple-browsers/settings/rules/3717807'>Main Branch branch protection ruleset settings</a></li>
       <li>In the 'Bypass list' section, click 'Add bypass', search for your GitHub username and select it</li>
