@@ -196,6 +196,34 @@ describe Fastlane::Actions::AsanaAddCommentAction do
       })).to eq(expected.chomp)
     end
 
+    it "processes ios-adhoc-build-available template with QR code attachment" do
+      expected = <<~EXPECTED
+        <body>
+          <h2>DuckDuckGo Alpha 1.0.0 (123) ready ✅</h2>
+          <ul>
+            <li>📲 <a href='https://cdn.com/build.install.html'>Install on iPhone</a>.</li>
+            <li>📦 <a href='https://cdn.com/build.ipa'>Download IPA</a>.</li>
+            <li>🧩 <a href='https://cdn.com/build.dSYM.zip'>Download dSYM</a>.</li>
+            <li>📸 Scan with your iPhone to install:</li>
+          </ul>
+          <img data-asana-gid="1234567890" />
+          <br>
+          🔗 <a href='https://workflow.com'>Workflow run</a>.
+        </body>
+      EXPECTED
+
+      expect(process_template("ios-adhoc-build-available", {
+        "title" => "DuckDuckGo Alpha",
+        "app_version" => "1.0.0",
+        "build_number" => "123",
+        "install_url" => "https://cdn.com/build.install.html",
+        "ipa_url" => "https://cdn.com/build.ipa",
+        "dsym_url" => "https://cdn.com/build.dSYM.zip",
+        "qr_attachment_gid" => "1234567890",
+        "workflow_url" => "https://workflow.com"
+      })).to eq(expected.chomp)
+    end
+
     it "processes ios-adhoc-build-available template without install url" do
       expected = <<~EXPECTED
         <body>
